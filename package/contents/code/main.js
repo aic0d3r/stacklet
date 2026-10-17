@@ -93,13 +93,15 @@ if (typeof workspace !== "undefined") {
         try {
             for (const t of root.tiles.slice()) t.remove();
             root.padding = gap; // KWin spreads it: full at screen edges, half between tiles
+            root.minimumSize = { width: 0.05, height: 0.05 }; // default 0.15 breaks stacks of 7+ windows; children inherit
             let slots = [root];
             if (wins.length > 1) {
                 const rects = slotRects(wins.length, ratio, mainCount, mirror);
                 const m = Math.min(mainCount, wins.length - 1);
                 const cols = root.split(HORIZONTAL);
                 slots = [...column(cols[mirror ? 1 : 0], m), ...column(cols[mirror ? 0 : 1], wins.length - m)];
-                slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
+                // KWin shifts neighbours when one tile is resized, so a second pass settles longer stacks
+                for (let pass = 0; pass < 2; pass++) slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
             }
             wins.forEach((w, i) => {
                 if (w.maximizeMode) w.setMaximize(false, false);
