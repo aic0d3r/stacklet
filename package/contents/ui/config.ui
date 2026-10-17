@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>StackletConfig</class>
+ <widget class="QWidget" name="StackletConfig">
+  <layout class="QFormLayout" name="form">
+   <item row="0" column="0">
+    <widget class="QLabel" name="classesLabel">
+     <property name="text"><string>Apps to tile:</string></property>
+     <property name="buddy"><cstring>kcfg_tileClasses</cstring></property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLineEdit" name="kcfg_tileClasses">
+     <property name="toolTip"><string>Comma-separated window classes. To find one: Alt+F3 → More Actions → Configure Special Window Settings → Window class.</string></property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="ratioLabel">
+     <property name="text"><string>Main window width:</string></property>
+     <property name="buddy"><cstring>kcfg_masterRatio</cstring></property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QDoubleSpinBox" name="kcfg_masterRatio">
+     <property name="toolTip"><string>Share of the screen width for the first window, from 0.15 to 0.85.</string></property>
+     <property name="minimum"><double>0.15</double></property>
+     <property name="maximum"><double>0.85</double></property>
+     <property name="singleStep"><double>0.05</double></property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QLabel" name="hint">
+     <property name="wordWrap"><bool>true</bool></property>
+     <property name="text"><string>Meta+Shift+Return makes the focused window the main one. Meta+F floats or re-tiles it. Drag a tile border to resize. Changes apply after you turn the script off and on.</string></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,15 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Authors": [{ "Name": "ezflow" }],
+        "Name": "Stacklet",
+        "Description": "Auto-tile terminals (or any listed apps) into a main window + stack using Plasma's native tiles. Everything else floats.",
+        "Icon": "view-split-left-right",
+        "Id": "stacklet",
+        "Version": "0.1.0",
+        "License": "GPL-3.0-or-later"
+    },
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js",
+    "X-KDE-ConfigModule": "kwin/effects/configs/kcm_kwin4_genericscripted"
+}
