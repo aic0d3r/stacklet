@@ -5,12 +5,48 @@
   <kcfgfile name=""/>
   <group name="">
     <entry name="tileClasses" type="String">
-      <label>Window classes to tile (comma-separated)</label>
-      <default>kitty,org.kde.konsole,Alacritty,com.mitchellh.ghostty</default>
+      <label>Window classes (comma-separated): tiled, or excluded when "Tile every window" is on</label>
+      <default>kitty,org.kde.konsole,Alacritty,com.mitchellh.ghostty,foot,org.wezfurlong.wezterm</default>
+    </entry>
+    <entry name="tileAll" type="Bool">
+      <label>Tile every normal window except the listed apps</label>
+      <default>false</default>
     </entry>
     <entry name="masterRatio" type="Double">
       <label>Width of the main window (0.15 to 0.85)</label>
       <default>0.55</default>
+    </entry>
+    <entry name="mainSide" type="Int">
+      <label>Main window side (0 left, 1 right)</label>
+      <default>0</default>
+      <min>0</min>
+      <max>1</max>
+    </entry>
+    <entry name="maxMain" type="Int">
+      <label>Windows in the main column</label>
+      <default>1</default>
+      <min>1</min>
+      <max>2</max>
+    </entry>
+    <entry name="newWindow" type="Int">
+      <label>New windows go (0 stack bottom, 1 stack top, 2 main)</label>
+      <default>0</default>
+      <min>0</min>
+      <max>2</max>
+    </entry>
+    <entry name="gap" type="Int">
+      <label>Gap between tiles and screen edges (pixels)</label>
+      <default>0</default>
+      <min>0</min>
+      <max>64</max>
+    </entry>
+    <entry name="disabledScreens" type="String">
+      <label>Screens where tiling is off (comma-separated names, e.g. HDMI-A-1)</label>
+      <default></default>
+    </entry>
+    <entry name="disabledDesktops" type="String">
+      <label>Virtual desktops where tiling is off (comma-separated numbers, e.g. 3,4)</label>
+      <default></default>
     </entry>
   </group>
 </kcfg>

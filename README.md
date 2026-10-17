@@ -2,8 +2,9 @@
 
 Tiny auto-tiling KWin script for Plasma 6.8+, built on Plasma's native tiles.
 
-- Only the apps you list get tiled (default: kitty, Konsole, Alacritty, Ghostty). Everything else floats.
-- First window takes the left side, the rest stack on the right. One window fills the screen.
+- Only the apps you list get tiled (default: kitty, Konsole, Alacritty, Ghostty, foot, WezTerm). Everything else floats. Or tick "Tile every window" and the list becomes an exclude list.
+- First window takes the left side (or right), the rest stack on the other side. One window fills the screen.
+- Settings: main width, side, 1–2 main windows, where new windows land, gap, and screens/desktops where tiling is off.
 - Separate layout per screen and virtual desktop.
 - Resize by dragging the border between tiles; the width sticks until that desktop has no tiled windows.
 
@@ -11,6 +12,9 @@ Tiny auto-tiling KWin script for Plasma 6.8+, built on Plasma's native tiles.
 | --- | --- |
 | Meta+Shift+Return | Make the focused window the main one |
 | Meta+F | Float / re-tile the focused window (dragging a tile out also floats it) |
+| Meta+Shift+A | Tile / untile the focused window's app until restart; the on-screen note shows its window class for the settings list |
+| Meta+Alt+arrows | Focus the neighbouring tile |
+| Meta+Alt+Shift+arrows | Swap with the neighbouring tile |
 
 ## Install
 

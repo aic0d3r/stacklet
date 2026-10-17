@@ -3,35 +3,113 @@
  <class>StackletConfig</class>
  <widget class="QWidget" name="StackletConfig">
   <layout class="QFormLayout" name="form">
-   <item row="0" column="0">
-    <widget class="QLabel" name="classesLabel">
-     <property name="text"><string>Apps to tile:</string></property>
-     <property name="buddy"><cstring>kcfg_tileClasses</cstring></property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QLineEdit" name="kcfg_tileClasses">
-     <property name="toolTip"><string>Comma-separated window classes. To find one: Alt+F3 → More Actions → Configure Special Window Settings → Window class.</string></property>
+   <item row="0" column="0" colspan="2">
+    <widget class="QCheckBox" name="kcfg_tileAll">
+     <property name="text"><string>Tile every window, except the apps listed below</string></property>
+     <property name="toolTip"><string>Off: only the listed apps are tiled. On: all normal resizable windows are tiled and the list becomes an exclude list.</string></property>
     </widget>
    </item>
    <item row="1" column="0">
+    <widget class="QLabel" name="classesLabel">
+     <property name="text"><string>Apps:</string></property>
+     <property name="buddy"><cstring>kcfg_tileClasses</cstring></property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QLineEdit" name="kcfg_tileClasses">
+     <property name="toolTip"><string>Comma-separated window classes. Press Meta+Shift+A on a window to see its class.</string></property>
+    </widget>
+   </item>
+   <item row="2" column="0">
     <widget class="QLabel" name="ratioLabel">
      <property name="text"><string>Main window width:</string></property>
      <property name="buddy"><cstring>kcfg_masterRatio</cstring></property>
     </widget>
    </item>
-   <item row="1" column="1">
+   <item row="2" column="1">
     <widget class="QDoubleSpinBox" name="kcfg_masterRatio">
-     <property name="toolTip"><string>Share of the screen width for the first window, from 0.15 to 0.85.</string></property>
+     <property name="toolTip"><string>Share of the screen width for the main column, from 0.15 to 0.85.</string></property>
      <property name="minimum"><double>0.15</double></property>
      <property name="maximum"><double>0.85</double></property>
      <property name="singleStep"><double>0.05</double></property>
     </widget>
    </item>
-   <item row="2" column="0" colspan="2">
+   <item row="3" column="0">
+    <widget class="QLabel" name="sideLabel">
+     <property name="text"><string>Main window side:</string></property>
+     <property name="buddy"><cstring>kcfg_mainSide</cstring></property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QComboBox" name="kcfg_mainSide">
+     <item><property name="text"><string>Left</string></property></item>
+     <item><property name="text"><string>Right</string></property></item>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="mainLabel">
+     <property name="text"><string>Windows in main column:</string></property>
+     <property name="buddy"><cstring>kcfg_maxMain</cstring></property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QSpinBox" name="kcfg_maxMain">
+     <property name="minimum"><number>1</number></property>
+     <property name="maximum"><number>2</number></property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="newLabel">
+     <property name="text"><string>New windows go:</string></property>
+     <property name="buddy"><cstring>kcfg_newWindow</cstring></property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QComboBox" name="kcfg_newWindow">
+     <item><property name="text"><string>Bottom of the stack</string></property></item>
+     <item><property name="text"><string>Top of the stack</string></property></item>
+     <item><property name="text"><string>Main column</string></property></item>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="gapLabel">
+     <property name="text"><string>Gap:</string></property>
+     <property name="buddy"><cstring>kcfg_gap</cstring></property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QSpinBox" name="kcfg_gap">
+     <property name="suffix"><string> px</string></property>
+     <property name="minimum"><number>0</number></property>
+     <property name="maximum"><number>64</number></property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="screensLabel">
+     <property name="text"><string>Off on screens:</string></property>
+     <property name="buddy"><cstring>kcfg_disabledScreens</cstring></property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <widget class="QLineEdit" name="kcfg_disabledScreens">
+     <property name="placeholderText"><string>e.g. HDMI-A-1</string></property>
+    </widget>
+   </item>
+   <item row="8" column="0">
+    <widget class="QLabel" name="desktopsLabel">
+     <property name="text"><string>Off on desktops:</string></property>
+     <property name="buddy"><cstring>kcfg_disabledDesktops</cstring></property>
+    </widget>
+   </item>
+   <item row="8" column="1">
+    <widget class="QLineEdit" name="kcfg_disabledDesktops">
+     <property name="placeholderText"><string>e.g. 3,4</string></property>
+    </widget>
+   </item>
+   <item row="9" column="0" colspan="2">
     <widget class="QLabel" name="hint">
      <property name="wordWrap"><bool>true</bool></property>
-     <property name="text"><string>Meta+Shift+Return makes the focused window the main one. Meta+F floats or re-tiles it. Drag a tile border to resize. Changes apply after you turn the script off and on.</string></property>
+     <property name="text"><string>Meta+Shift+Return: make focused window main. Meta+F: float or re-tile. Meta+Shift+A: tile or untile this app until restart (shows its class). Meta+Alt+arrows: move focus; add Shift to swap. Drag a tile border to resize. Turn the script off and on to apply changes.</string></property>
     </widget>
    </item>
   </layout>
