@@ -11,7 +11,7 @@ function slotRects(n, ratio, main = 1, mirror = false) {
     const rects = [];
     for (let i = 0; i < m; i++) rects.push({ x: 0, y: i / m, width: ratio, height: 1 / m });
     for (let i = 0; i < k; i++) rects.push({ x: ratio, y: i / k, width: 1 - ratio, height: 1 / k });
-    return mirror ? rects.map(r => ({ ...r, x: 1 - r.x - r.width })) : rects;
+    return mirror ? rects.map(r => ({ x: 1 - r.x - r.width, y: r.y, width: r.width, height: r.height })) : rects;
 }
 
 function clampRatio(r) {
