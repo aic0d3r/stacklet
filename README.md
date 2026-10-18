@@ -6,6 +6,7 @@ Tiny auto-tiling KWin script for Plasma 6.8+, built on Plasma's native tiles.
 - First window takes the left side (or right), the rest stack on the other side. One window fills the screen.
 - Settings: main width, side, 1–2 main windows, where new windows land, gap, and screens/desktops where tiling is off.
 - Portrait screens get the layout turned 90°: main window on top, the rest side by side below. It re-tiles when you rotate a screen.
+- Pin apps as "always main" (e.g. keep a browser big, terminals beside it). After closing a window, focus moves to the tile before it.
 - Separate layout per screen and virtual desktop.
 - Resize by dragging the border between tiles; the width sticks until that desktop has no tiled windows.
 
@@ -17,6 +18,8 @@ Tiny auto-tiling KWin script for Plasma 6.8+, built on Plasma's native tiles.
 | Meta+Alt+arrows | Focus the neighbouring tile (KWin's own shortcut) |
 | Meta+Alt+Shift+arrows | Swap with the neighbouring tile |
 | Meta+Alt+] / Meta+Alt+[ | Grow / shrink the main window by 5% |
+| Meta+Alt+R / Meta+Alt+Shift+R | Rotate the stack forwards / backwards |
+| Drag a window onto another tile | Swap the two |
 
 ## Install
 

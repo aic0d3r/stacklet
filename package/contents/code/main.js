@@ -49,6 +49,8 @@ if (typeof workspace !== "undefined") {
     const newWindow = Number(readConfig("newWindow", 0)); // 0 stack bottom, 1 stack top, 2 becomes main
     const gap = Math.max(0, Number(readConfig("gap", 0)) || 0);
     const smartGaps = String(readConfig("smartGaps", true)) === "true"; // no gap around a lone window
+    const mainClasses = list(readConfig("mainClasses", "")); // apps that always take the main slot
+    const focusAfterClose = String(readConfig("focusAfterClose", true)) === "true";
     const offScreens = list(readConfig("disabledScreens", ""));
     const offDesktops = list(readConfig("disabledDesktops", ""));
     const overrides = new Map(); // class -> tile it? Set by the per-app toggle shortcut, lasts until restart.
@@ -56,6 +58,10 @@ if (typeof workspace !== "undefined") {
     let order = [];             // tracked windows, oldest first; index 0 of a group = master
     const floating = new Set(); // windows the user took out of the layout
     const hooked = new WeakSet();
+    const moving = new Set();     // windows being dragged right now
+    const draggedOut = new Set(); // tiled windows the current drag pulled out of the layout
+    const home = new WeakMap();   // window -> {output, desktop} it was last laid out in
+    let active = null, closedActive = null, pendingFocus = null;
     const ratios = {};          // group key -> master width, kept when the user resizes it
     let groups = {};            // group key -> {output, desktop} that we laid out last time
     let busy = false;           // ignore tile changes we cause ourselves
@@ -69,7 +75,12 @@ if (typeof workspace !== "undefined") {
         w.output && w.desktops.length === 1 &&
         !offScreens.includes(String(w.output.name).toLowerCase()) &&
         !offDesktops.includes(String(w.desktops[0].x11DesktopNumber));
-    const groupOf = (output, desktop) => order.filter(w => tileable(w) && w.output === output && w.desktops[0] === desktop);
+    // windows of a screen + desktop in layout order; apps pinned as "always main" come first
+    const groupOf = (output, desktop) => {
+        const g = order.filter(w => tileable(w) && w.output === output && w.desktops[0] === desktop);
+        const pinned = w => mainClasses.includes(cls(w));
+        return [...g.filter(pinned), ...g.filter(w => !pinned(w))];
+    };
     const osd = text => callDBus("org.kde.plasmashell", "/org/kde/osdService", "org.kde.osdService",
         "showText", "view-split-left-right", text);
 
@@ -130,7 +141,10 @@ if (typeof workspace !== "undefined") {
     function retileAll() {
         const next = {};
         for (const w of order) if (tileable(w)) next[key(w.output, w.desktops[0])] = { output: w.output, desktop: w.desktops[0] };
-        for (const k in next) layOut(next[k].output, next[k].desktop);
+        for (const k in next) {
+            layOut(next[k].output, next[k].desktop);
+            for (const w of groupOf(next[k].output, next[k].desktop)) home.set(w, next[k]);
+        }
         // groups that just lost their last window: nothing to lay out, forget the saved ratio
         for (const k in groups) if (!next[k]) delete ratios[k];
         groups = next;
@@ -146,7 +160,24 @@ if (typeof workspace !== "undefined") {
                 w[sig].connect(retileAll);
             w.tileChanged.connect(() => {
                 // user dragged a tiled window out: let it float instead of snapping it back
-                if (!busy && order.includes(w) && !w.tile && tileable(w)) { floating.add(w); retileAll(); }
+                if (!busy && order.includes(w) && !w.tile && tileable(w)) {
+                    floating.add(w);
+                    if (moving.has(w)) draggedOut.add(w);
+                    retileAll();
+                }
+            });
+            w.interactiveMoveResizeStarted.connect(() => moving.add(w));
+            w.interactiveMoveResizeFinished.connect(() => {
+                moving.delete(w);
+                if (!draggedOut.delete(w) || !order.includes(w)) return;
+                // dropped onto another tile: take its place, it takes ours
+                const p = workspace.cursorPos;
+                const hit = order.find(x => x !== w && tileable(x) && (g => p.x >= g.x && p.x < g.x + g.width && p.y >= g.y && p.y < g.y + g.height)(x.frameGeometry));
+                if (!hit) return;
+                floating.delete(w);
+                const [a, b] = [order.indexOf(w), order.indexOf(hit)];
+                [order[a], order[b]] = [order[b], order[a]];
+                retileAll();
             });
         }
         return true;
@@ -171,10 +202,28 @@ if (typeof workspace !== "undefined") {
     workspace.screensChanged.connect(retileAll);
     for (const o of workspace.screens) o.geometryChanged.connect(retileAll); // rotation
     workspace.windowAdded.connect(w => { if (track(w)) place(w); retileAll(); });
+    workspace.windowActivated.connect(a => {
+        // KWin may move focus before windowRemoved fires: remember if the old active window just died
+        if (active && active !== a && active.deleted) closedActive = active;
+        if (a) active = a;
+        const t = pendingFocus;
+        pendingFocus = null;
+        if (t && a !== t && order.includes(t)) workspace.activeWindow = t; // KWin picked its own; ours wins
+    });
     workspace.windowRemoved.connect(w => {
+        let next = null;
+        const h = home.get(w);
+        if (focusAfterClose && (w === active || w === closedActive) && h && order.includes(w)) {
+            // focus the tile before the closed one, else the first remaining
+            const g = groupOf(h.output, h.desktop).filter(x => x !== w), pos = order.indexOf(w);
+            next = g.filter(x => order.indexOf(x) < pos).pop() || g[0] || null;
+        }
         order = order.filter(x => x !== w);
         floating.delete(w);
+        moving.delete(w);
+        draggedOut.delete(w);
         retileAll();
+        if (next) { pendingFocus = next; workspace.activeWindow = next; }
     });
 
     const tracked = () => {
@@ -228,6 +277,21 @@ if (typeof workspace !== "undefined") {
             if (j < 0) return;
             const [a, b] = [w, wins[j]].map(x => order.indexOf(x));
             [order[a], order[b]] = [order[b], order[a]];
+            retileAll();
+        });
+    }
+
+    // rotate the stack (everything after the main windows) one step; Shift rotates back
+    for (const [name, keys, dir] of [["Next", "Meta+Alt+R", 1], ["Prev", "Meta+Alt+Shift+R", -1]]) {
+        registerShortcut("StackletRotate" + name, "Stacklet: Rotate stack " + name.toLowerCase(), keys, () => {
+            const w = tracked();
+            if (!w || !tileable(w)) return;
+            const g = groupOf(w.output, w.desktops[0]);
+            const stack = g.slice(Math.min(mainCount, g.length - 1));
+            if (stack.length < 2) return;
+            const rotated = dir > 0 ? [...stack.slice(1), stack[0]] : [stack[stack.length - 1], ...stack.slice(0, -1)];
+            const slots = stack.map(x => order.indexOf(x)).sort((a, b) => a - b);
+            rotated.forEach((x, i) => { order[slots[i]] = x; });
             retileAll();
         });
     }

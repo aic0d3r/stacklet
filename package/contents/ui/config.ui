@@ -90,31 +90,48 @@
     </widget>
    </item>
    <item row="8" column="0">
+    <widget class="QLabel" name="mainClassesLabel">
+     <property name="text"><string>Always main:</string></property>
+     <property name="buddy"><cstring>kcfg_mainClasses</cstring></property>
+    </widget>
+   </item>
+   <item row="8" column="1">
+    <widget class="QLineEdit" name="kcfg_mainClasses">
+     <property name="placeholderText"><string>e.g. firefox,code</string></property>
+     <property name="toolTip"><string>Apps (window classes) that always take the main slot; everything else stacks beside them.</string></property>
+    </widget>
+   </item>
+   <item row="9" column="0" colspan="2">
+    <widget class="QCheckBox" name="kcfg_focusAfterClose">
+     <property name="text"><string>After closing a window, focus the tile before it</string></property>
+    </widget>
+   </item>
+   <item row="10" column="0">
     <widget class="QLabel" name="screensLabel">
      <property name="text"><string>Off on screens:</string></property>
      <property name="buddy"><cstring>kcfg_disabledScreens</cstring></property>
     </widget>
    </item>
-   <item row="8" column="1">
+   <item row="10" column="1">
     <widget class="QLineEdit" name="kcfg_disabledScreens">
      <property name="placeholderText"><string>e.g. HDMI-A-1</string></property>
     </widget>
    </item>
-   <item row="9" column="0">
+   <item row="11" column="0">
     <widget class="QLabel" name="desktopsLabel">
      <property name="text"><string>Off on desktops:</string></property>
      <property name="buddy"><cstring>kcfg_disabledDesktops</cstring></property>
     </widget>
    </item>
-   <item row="9" column="1">
+   <item row="11" column="1">
     <widget class="QLineEdit" name="kcfg_disabledDesktops">
      <property name="placeholderText"><string>e.g. 3,4</string></property>
     </widget>
    </item>
-   <item row="10" column="0" colspan="2">
+   <item row="12" column="0" colspan="2">
     <widget class="QLabel" name="hint">
      <property name="wordWrap"><bool>true</bool></property>
-     <property name="text"><string>Meta+Shift+Return: make focused window main. Meta+F: float or re-tile. Meta+Shift+A: tile or untile this app until restart (shows its class). Meta+Alt+Shift+arrows: swap with a neighbour (Meta+Alt+arrows moves focus, built into KWin). Meta+Alt+] and [: grow or shrink the main window. You can also drag a tile border. Turn the script off and on to apply changes.</string></property>
+     <property name="text"><string>Meta+Shift+Return: make focused window main. Meta+F: float or re-tile. Meta+Shift+A: tile or untile this app until restart (shows its class). Meta+Alt+Shift+arrows: swap with a neighbour (Meta+Alt+arrows moves focus, built into KWin). Meta+Alt+] and [: grow or shrink the main window. Meta+Alt+R: rotate the stack (Shift: backwards). Drag a window onto another tile to swap them. You can also drag a tile border. Turn the script off and on to apply changes.</string></property>
     </widget>
    </item>
   </layout>

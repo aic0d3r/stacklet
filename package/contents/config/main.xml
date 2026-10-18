@@ -44,6 +44,14 @@
       <label>No gap when only one window is tiled</label>
       <default>true</default>
     </entry>
+    <entry name="mainClasses" type="String">
+      <label>Window classes (comma-separated) that always take the main slot</label>
+      <default></default>
+    </entry>
+    <entry name="focusAfterClose" type="Bool">
+      <label>After closing a tiled window, focus the tile before it</label>
+      <default>true</default>
+    </entry>
     <entry name="disabledScreens" type="String">
       <label>Screens where tiling is off (comma-separated names, e.g. HDMI-A-1)</label>
       <default></default>
