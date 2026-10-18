@@ -48,6 +48,7 @@ if (typeof workspace !== "undefined") {
     const mainCount = Math.max(1, Math.min(2, Number(readConfig("maxMain", 1)) || 1));
     const newWindow = Number(readConfig("newWindow", 0)); // 0 stack bottom, 1 stack top, 2 becomes main
     const gap = Math.max(0, Number(readConfig("gap", 0)) || 0);
+    const smartGaps = String(readConfig("smartGaps", true)) === "true"; // no gap around a lone window
     const offScreens = list(readConfig("disabledScreens", ""));
     const offDesktops = list(readConfig("disabledDesktops", ""));
     const overrides = new Map(); // class -> tile it? Set by the per-app toggle shortcut, lasts until restart.
@@ -72,6 +73,14 @@ if (typeof workspace !== "undefined") {
     const osd = text => callDBus("org.kde.plasmashell", "/org/kde/osdService", "org.kde.osdService",
         "showText", "view-split-left-right", text);
 
+    const isPortrait = o => o.geometry.height > o.geometry.width;
+    // main size as currently laid out in root's tiles, or undefined if the layout isn't ours
+    function draggedRatio(root, portrait) {
+        if (root.tiles.length !== 2 || root.layoutDirection !== (portrait ? VERTICAL : HORIZONTAL)) return undefined;
+        const g = root.tiles[mirror ? 1 : 0].relativeGeometry;
+        return clampRatio(portrait ? g.height : g.width);
+    }
+
     // n tiles in a row (or column) inside one tile, split along dir
     function column(col, n, dir) {
         if (n === 1) return [col];
@@ -86,19 +95,17 @@ if (typeof workspace !== "undefined") {
         if (!wins.length) return false;
         const root = workspace.rootTile(output, desktop);
         if (!root) return false;
-        const portrait = output.geometry.height > output.geometry.width;
+        const portrait = isPortrait(output);
         const [outer, inner] = portrait ? [VERTICAL, HORIZONTAL] : [HORIZONTAL, VERTICAL];
         // keep a main size the user dragged, if the layout is still ours
-        if (groups[k] && root.tiles.length === 2 && root.layoutDirection === outer) {
-            const g = root.tiles[mirror ? 1 : 0].relativeGeometry;
-            ratios[k] = clampRatio(portrait ? g.height : g.width);
-        }
+        const dragged = groups[k] && draggedRatio(root, portrait);
+        if (dragged) ratios[k] = dragged;
         const ratio = ratios[k] || defaultRatio;
 
         busy = true;
         try {
             for (const t of root.tiles.slice()) t.remove();
-            root.padding = gap; // KWin spreads it: full at screen edges, half between tiles
+            root.padding = smartGaps && wins.length === 1 ? 0 : gap; // KWin spreads it: full at screen edges, half between tiles
             root.minimumSize = { width: 0.05, height: 0.05 }; // default 0.15 breaks stacks of 7+ windows; children inherit
             let slots = [root];
             if (wins.length > 1) {
@@ -210,25 +217,30 @@ if (typeof workspace !== "undefined") {
         osd("Stacklet: " + (now ? "tiling " : "not tiling ") + c + " until restart. Add it in settings to keep.");
     });
 
+    // Focus by direction is KWin's own Meta+Alt+arrows, so only swapping lives here.
     for (const dir of ["Left", "Right", "Up", "Down"]) {
         const d = dir.toLowerCase();
-        // returns [window, neighbour] in the focused window's layout, or null
-        const pair = () => {
+        registerShortcut("StackletSwap" + dir, "Stacklet: Swap with window " + d, "Meta+Alt+Shift+" + dir, () => {
             const w = tracked();
-            if (!w || !tileable(w)) return null;
+            if (!w || !tileable(w)) return;
             const wins = groupOf(w.output, w.desktops[0]);
             const j = pickNeighbor(wins.map(x => x.frameGeometry), wins.indexOf(w), d);
-            return j < 0 ? null : [w, wins[j]];
-        };
-        registerShortcut("StackletFocus" + dir, "Stacklet: Focus window " + d, "Meta+Alt+" + dir, () => {
-            const p = pair();
-            if (p) workspace.activeWindow = p[1];
-        });
-        registerShortcut("StackletSwap" + dir, "Stacklet: Swap with window " + d, "Meta+Alt+Shift+" + dir, () => {
-            const p = pair();
-            if (!p) return;
-            const [a, b] = p.map(x => order.indexOf(x));
+            if (j < 0) return;
+            const [a, b] = [w, wins[j]].map(x => order.indexOf(x));
             [order[a], order[b]] = [order[b], order[a]];
+            retileAll();
+        });
+    }
+
+    // keyboard resize of the main size, in 5% steps, for the focused window's screen + desktop
+    for (const [name, label, keys, delta] of [["Grow", "Grow", "Meta+Alt+]", 0.05], ["Shrink", "Shrink", "Meta+Alt+[", -0.05]]) {
+        registerShortcut("Stacklet" + name + "Main", "Stacklet: " + label + " main window", keys, () => {
+            const w = tracked();
+            if (!w || !tileable(w)) return;
+            const o = w.output, d = w.desktops[0], k = key(o, d), root = workspace.rootTile(o, d);
+            const cur = (root && draggedRatio(root, isPortrait(o))) || ratios[k] || defaultRatio;
+            ratios[k] = Math.min(0.85, Math.max(0.15, cur + delta));
+            delete groups[k]; // so layOut uses this value instead of re-reading the old tiles
             retileAll();
         });
     }

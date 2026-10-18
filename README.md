@@ -14,8 +14,9 @@ Tiny auto-tiling KWin script for Plasma 6.8+, built on Plasma's native tiles.
 | Meta+Shift+Return | Make the focused window the main one |
 | Meta+F | Float / re-tile the focused window (dragging a tile out also floats it) |
 | Meta+Shift+A | Tile / untile the focused window's app until restart; the on-screen note shows its window class for the settings list |
-| Meta+Alt+arrows | Focus the neighbouring tile |
+| Meta+Alt+arrows | Focus the neighbouring tile (KWin's own shortcut) |
 | Meta+Alt+Shift+arrows | Swap with the neighbouring tile |
+| Meta+Alt+] / Meta+Alt+[ | Grow / shrink the main window by 5% |
 
 ## Install
 

@@ -40,6 +40,10 @@
       <min>0</min>
       <max>64</max>
     </entry>
+    <entry name="smartGaps" type="Bool">
+      <label>No gap when only one window is tiled</label>
+      <default>true</default>
+    </entry>
     <entry name="disabledScreens" type="String">
       <label>Screens where tiling is off (comma-separated names, e.g. HDMI-A-1)</label>
       <default></default>
