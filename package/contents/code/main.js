@@ -93,10 +93,12 @@ if (typeof workspace !== "undefined") {
 
     let order = [];             // tracked windows, oldest first; index 0 of a group = master
     const floating = new Set(); // windows the user took out of the layout
-    const hooked = new WeakSet();
+    // Never use WeakSet/WeakMap with windows: after KWin destroys a window the weak table keeps a dangling
+    // entry and the next lookup segfaults KWin. Plain Set/Map, cleaned in windowRemoved, instead.
+    const hooked = new Set();     // windows whose signals we already connected
     const moving = new Set();     // windows being dragged right now
     const draggedOut = new Set(); // tiled windows the current drag pulled out of the layout
-    const home = new WeakMap();   // window -> {output, desktop} it was last laid out in
+    const home = new Map();       // window -> {output, desktop} it was last laid out in
     let active = null, closedActive = null, pendingFocus = null;
     const ratios = {};          // group key -> master width, kept when the user resizes it
     let groups = {};            // group key -> {output, desktop} that we laid out last time
@@ -276,6 +278,11 @@ if (typeof workspace !== "undefined") {
         floating.delete(w);
         moving.delete(w);
         draggedOut.delete(w);
+        hooked.delete(w);
+        home.delete(w);
+        if (active === w) active = null;
+        if (closedActive === w) closedActive = null;
+        if (pendingFocus === w) pendingFocus = null;
         retileAll();
         if (next) { pendingFocus = next; workspace.activeWindow = next; }
     });
