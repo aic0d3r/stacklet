@@ -4,6 +4,22 @@
       xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
   <kcfgfile name=""/>
   <group name="">
+    <entry name="layoutTile" type="Bool">
+      <label>Layout: master and stack</label>
+      <default>true</default>
+    </entry>
+    <entry name="layoutSpiral" type="Bool">
+      <label>Layout: spiral</label>
+      <default>false</default>
+    </entry>
+    <entry name="layoutMonocle" type="Bool">
+      <label>Layout: monocle</label>
+      <default>false</default>
+    </entry>
+    <entry name="desktopLayouts" type="String">
+      <label>Layout per virtual desktop, e.g. 2=monocle,3=spiral</label>
+      <default></default>
+    </entry>
     <entry name="tileClasses" type="String">
       <label>Window classes (comma-separated): tiled, or excluded when "Tile every window" is on</label>
       <default>kitty,org.kde.konsole,Alacritty,com.mitchellh.ghostty,foot,org.wezfurlong.wezterm</default>

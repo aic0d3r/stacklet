@@ -12,8 +12,31 @@ function slotRects(n, ratio, main = 1, mirror = false, portrait = false) {
     const rects = [];
     for (let i = 0; i < m; i++) rects.push({ x: 0, y: i / m, width: ratio, height: 1 / m });
     for (let i = 0; i < k; i++) rects.push({ x: ratio, y: i / k, width: 1 - ratio, height: 1 / k });
+    return orient(rects, mirror, portrait);
+}
+
+// landscape rects -> mirrored left/right, then turned 90° for portrait screens
+function orient(rects, mirror, portrait) {
     const flipped = mirror ? rects.map(r => ({ x: 1 - r.x - r.width, y: r.y, width: r.width, height: r.height })) : rects;
     return portrait ? flipped.map(r => ({ x: r.y, y: r.x, width: r.height, height: r.width })) : flipped;
+}
+
+// Spiral (dwindle): window 1 takes `ratio` of the screen, each next window takes half of what is
+// left, turning left, top, right, bottom in turn; the last window gets the remainder.
+function spiralRects(n, ratio, mirror = false, portrait = false) {
+    const out = [];
+    let x = 0, y = 0, w = 1, h = 1;
+    for (let i = 0; i < n - 1; i++) {
+        const r = i === 0 ? ratio : 0.5;
+        switch (i % 4) {
+            case 0: out.push({ x, y, width: w * r, height: h }); x += w * r; w *= 1 - r; break;
+            case 1: out.push({ x, y, width: w, height: h * r }); y += h * r; h *= 1 - r; break;
+            case 2: out.push({ x: x + w * (1 - r), y, width: w * r, height: h }); w *= 1 - r; break;
+            default: out.push({ x, y: y + h * (1 - r), width: w, height: h * r }); h *= 1 - r;
+        }
+    }
+    out.push({ x, y, width: w, height: h });
+    return orient(out, mirror, portrait);
 }
 
 function clampRatio(r) {
@@ -37,7 +60,7 @@ function pickNeighbor(rects, i, dir) {
     return best;
 }
 
-if (typeof module !== "undefined") module.exports = { slotRects, clampRatio, pickNeighbor }; // node self-test
+if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, clampRatio, pickNeighbor }; // node self-test
 
 if (typeof workspace !== "undefined") {
     const list = s => String(s).split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
@@ -53,7 +76,19 @@ if (typeof workspace !== "undefined") {
     const focusAfterClose = String(readConfig("focusAfterClose", true)) === "true";
     const offScreens = list(readConfig("disabledScreens", ""));
     const offDesktops = list(readConfig("disabledDesktops", ""));
-    const monocle = new Set();  // group keys currently in monocle
+    const flag = k => String(readConfig(k, false)) === "true";
+    const TILE = 0, SPIRAL = 1, MONOCLE = 2;
+    const LAYOUT_LABELS = ["master and stack", "spiral", "monocle"];
+    const layoutDefault = flag("layoutMonocle") ? MONOCLE : flag("layoutSpiral") ? SPIRAL : TILE;
+    const layoutNames = { master: TILE, tile: TILE, spiral: SPIRAL, dwindle: SPIRAL, monocle: MONOCLE };
+    const desktopLayouts = {}; // desktop number -> layout, from "2=monocle,3=spiral"
+    String(readConfig("desktopLayouts", "")).split(",").forEach(s => {
+        const [d, n] = s.split("=").map(x => x.trim().toLowerCase());
+        if (d && n in layoutNames) desktopLayouts[d] = layoutNames[n];
+    });
+    const modes = new Map();     // group key -> layout picked with the shortcuts; lasts until restart
+    const baseOf = desktop => String(desktop.x11DesktopNumber) in desktopLayouts ? desktopLayouts[String(desktop.x11DesktopNumber)] : layoutDefault;
+    const modeOf = (k, desktop) => modes.has(k) ? modes.get(k) : baseOf(desktop);
     const overrides = new Map(); // class -> tile it? Set by the per-app toggle shortcut, lasts until restart.
 
     let order = [];             // tracked windows, oldest first; index 0 of a group = master
@@ -120,8 +155,25 @@ if (typeof workspace !== "undefined") {
             root.padding = smartGaps && wins.length === 1 ? 0 : gap; // KWin spreads it: full at screen edges, half between tiles
             root.minimumSize = { width: 0.05, height: 0.05 }; // default 0.15 breaks stacks of 7+ windows; children inherit
             let slots = [root];
-            const one = monocle.has(k); // monocle: every window shares the root tile, the focused one is on top
-            if (wins.length > 1 && !one) {
+            const mode = modeOf(k, desktop);
+            const one = mode === MONOCLE; // monocle: every window shares the root tile, the focused one is on top
+            if (wins.length > 1 && mode === SPIRAL) {
+                const rects = spiralRects(wins.length, ratio, mirror, portrait);
+                slots = [];
+                let cur = root;
+                for (let i = 0; i < wins.length - 1; i++) {
+                    // landscape frame: split left|right, top|bottom, ...; portrait turns the directions
+                    let dir = i % 2 === 0 ? HORIZONTAL : VERTICAL;
+                    let first = i % 4 < 2; // does window i take the first (left/top) half?
+                    if (mirror && dir === HORIZONTAL) first = !first;
+                    if (portrait) dir = dir === HORIZONTAL ? VERTICAL : HORIZONTAL;
+                    const halves = cur.split(dir);
+                    slots.push(halves[first ? 0 : 1]);
+                    cur = halves[first ? 1 : 0];
+                }
+                slots.push(cur);
+                for (let pass = 0; pass < 2; pass++) slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
+            } else if (wins.length > 1 && !one) {
                 const rects = slotRects(wins.length, ratio, mainCount, mirror, portrait);
                 const m = Math.min(mainCount, wins.length - 1);
                 const cols = root.split(outer);
@@ -286,10 +338,21 @@ if (typeof workspace !== "undefined") {
     registerShortcut("StackletMonocle", "Stacklet: Monocle on / off (focused window fills the screen)", "Meta+Shift+M", () => {
         const w = tracked();
         if (!w || !tileable(w)) return;
-        const k = key(w.output, w.desktops[0]);
-        if (!monocle.delete(k)) monocle.add(k);
+        const k = key(w.output, w.desktops[0]), base = baseOf(w.desktops[0]);
+        const now = modeOf(k, w.desktops[0]) === MONOCLE ? (base === MONOCLE ? TILE : base) : MONOCLE;
+        modes.set(k, now);
         retileAll();
-        osd("Stacklet: monocle " + (monocle.has(k) ? "on" : "off"));
+        osd("Stacklet: " + LAYOUT_LABELS[now]);
+    });
+
+    registerShortcut("StackletNextLayout", "Stacklet: Switch layout (master and stack / spiral / monocle)", "Meta+Shift+Space", () => {
+        const w = tracked();
+        if (!w || !tileable(w)) return;
+        const k = key(w.output, w.desktops[0]);
+        const now = (modeOf(k, w.desktops[0]) + 1) % 3;
+        modes.set(k, now);
+        retileAll();
+        osd("Stacklet: " + LAYOUT_LABELS[now]);
     });
 
     // focus the next / previous tile in layout order (cycles windows in monocle, where directions don't apply)
@@ -300,7 +363,7 @@ if (typeof workspace !== "undefined") {
             const g = groupOf(w.output, w.desktops[0]);
             const t = g[(g.indexOf(w) + dir + g.length) % g.length];
             workspace.activeWindow = t;
-            if (monocle.has(key(w.output, w.desktops[0]))) osd("Stacklet: " + (g.indexOf(t) + 1) + " of " + g.length);
+            if (modeOf(key(w.output, w.desktops[0]), w.desktops[0]) === MONOCLE) osd("Stacklet: " + (g.indexOf(t) + 1) + " of " + g.length);
         });
     }
 

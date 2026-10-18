@@ -3,7 +3,7 @@
 Tiny auto-tiling KWin script for Plasma 6.8+, built on Plasma's native tiles.
 
 - Only the apps you list get tiled (default: kitty, Konsole, Alacritty, Ghostty, foot, WezTerm). Everything else floats. Or tick "Tile every window" and the list becomes an exclude list.
-- First window takes the left side (or right), the rest stack on the other side. One window fills the screen.
+- Three layouts, picked on the settings page with a preview: **master and stack** (first window on the left or right, the rest stacked beside it), **spiral** (each new window takes half of the space left) and **monocle** (one window fills the screen). Set a starting layout, or one per virtual desktop, and switch on the fly. One window always fills the screen.
 - Settings: main width, side, 1–2 main windows, where new windows land, gap, and screens/desktops where tiling is off.
 - Portrait screens get the layout turned 90°: main window on top, the rest side by side below. It re-tiles when you rotate a screen.
 - Pin apps as "always main" (e.g. keep a browser big, terminals beside it). After closing a window, focus moves to the tile before it.
@@ -18,6 +18,7 @@ Tiny auto-tiling KWin script for Plasma 6.8+, built on Plasma's native tiles.
 | Meta+Alt+arrows | Focus the neighbouring tile (KWin's own shortcut) |
 | Meta+Alt+Shift+arrows | Swap with the neighbouring tile |
 | Meta+Alt+] / Meta+Alt+[ | Grow / shrink the main window by 5% |
+| Meta+Shift+Space | Switch layout (master and stack, spiral, monocle) for this screen and desktop, until restart |
 | Meta+Shift+M | Monocle on / off for this screen and desktop: every tiled window fills the area, the focused one on top |
 | Meta+Alt+. / Meta+Alt+, | Focus the next / previous tiled window (use this to cycle in monocle) |
 | Meta+Alt+R / Meta+Alt+Shift+R | Rotate the stack forwards / backwards |

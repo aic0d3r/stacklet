@@ -5,6 +5,74 @@
   <layout class="QVBoxLayout" name="page">
 
    <item>
+    <widget class="QGroupBox" name="styleGroup">
+     <property name="title"><string>Layout style</string></property>
+     <layout class="QGridLayout" name="styleGrid">
+      <item row="0" column="0">
+       <widget class="QLabel" name="previewTile">
+        <property name="alignment"><set>Qt::AlignCenter</set></property>
+        <property name="accessibleDescription"><string>Preview: one large window on the left, the others stacked on the right</string></property>
+        <property name="text"><string>&lt;img src=&quot;data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTYwIDEwMCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjE1NiIgaGVpZ2h0PSI5NiIgcng9IjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzg4OCIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48ZyBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMS41IiBmaWxsPSIjM2I4MmY2Ij48cmVjdCB4PSI3IiB5PSI3IiB3aWR0aD0iNzgiIGhlaWdodD0iODYiIHJ4PSIzIiBmaWxsLW9wYWNpdHk9Ii41NSIvPjxyZWN0IHg9Ijg5IiB5PSI3IiB3aWR0aD0iNjQiIGhlaWdodD0iMjYiIHJ4PSIzIiBmaWxsLW9wYWNpdHk9Ii4yMiIvPjxyZWN0IHg9Ijg5IiB5PSIzNyIgd2lkdGg9IjY0IiBoZWlnaHQ9IjI2IiByeD0iMyIgZmlsbC1vcGFjaXR5PSIuMjIiLz48cmVjdCB4PSI4OSIgeT0iNjciIHdpZHRoPSI2NCIgaGVpZ2h0PSIyNiIgcng9IjMiIGZpbGwtb3BhY2l0eT0iLjIyIi8+PC9nPjwvc3ZnPgo=&quot; width=&quot;128&quot; height=&quot;80&quot;&gt;</string></property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="previewSpiral">
+        <property name="alignment"><set>Qt::AlignCenter</set></property>
+        <property name="accessibleDescription"><string>Preview: a large window on the left, the others spiralling into the right half</string></property>
+        <property name="text"><string>&lt;img src=&quot;data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTYwIDEwMCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjE1NiIgaGVpZ2h0PSI5NiIgcng9IjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzg4OCIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48ZyBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMS41IiBmaWxsPSIjM2I4MmY2Ij48cmVjdCB4PSI3IiB5PSI3IiB3aWR0aD0iNzgiIGhlaWdodD0iODYiIHJ4PSIzIiBmaWxsLW9wYWNpdHk9Ii41NSIvPjxyZWN0IHg9Ijg5IiB5PSI3IiB3aWR0aD0iNjQiIGhlaWdodD0iNDIiIHJ4PSIzIiBmaWxsLW9wYWNpdHk9Ii4yMiIvPjxyZWN0IHg9IjEyMSIgeT0iNTMiIHdpZHRoPSIzMiIgaGVpZ2h0PSI0MCIgcng9IjMiIGZpbGwtb3BhY2l0eT0iLjIyIi8+PHJlY3QgeD0iODkiIHk9IjUzIiB3aWR0aD0iMjgiIGhlaWdodD0iNDAiIHJ4PSIzIiBmaWxsLW9wYWNpdHk9Ii4yMiIvPjwvZz48L3N2Zz4K&quot; width=&quot;128&quot; height=&quot;80&quot;&gt;</string></property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="previewMonocle">
+        <property name="alignment"><set>Qt::AlignCenter</set></property>
+        <property name="accessibleDescription"><string>Preview: one window fills the screen, the others are stacked behind it</string></property>
+        <property name="text"><string>&lt;img src=&quot;data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTYwIDEwMCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjE1NiIgaGVpZ2h0PSI5NiIgcng9IjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzg4OCIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48ZyBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMS41IiBmaWxsPSIjM2I4MmY2Ij48cmVjdCB4PSIxNyIgeT0iNyIgd2lkdGg9IjEzNiIgaGVpZ2h0PSI4MCIgcng9IjMiIGZpbGwtb3BhY2l0eT0iLjEiLz48cmVjdCB4PSIxMiIgeT0iMTAiIHdpZHRoPSIxMzYiIGhlaWdodD0iODAiIHJ4PSIzIiBmaWxsLW9wYWNpdHk9Ii4xNiIvPjxyZWN0IHg9IjciIHk9IjEzIiB3aWR0aD0iMTM2IiBoZWlnaHQ9IjgwIiByeD0iMyIgZmlsbC1vcGFjaXR5PSIuNTUiLz48L2c+PC9zdmc+Cg==&quot; width=&quot;128&quot; height=&quot;80&quot;&gt;</string></property>
+       </widget>
+      </item>
+      <item row="1" column="0" alignment="Qt::AlignHCenter">
+       <widget class="QRadioButton" name="kcfg_layoutTile">
+        <property name="text"><string>Master and stack</string></property>
+        <property name="toolTip"><string>One main window, the rest stacked beside it.</string></property>
+       </widget>
+      </item>
+      <item row="1" column="1" alignment="Qt::AlignHCenter">
+       <widget class="QRadioButton" name="kcfg_layoutSpiral">
+        <property name="text"><string>Spiral</string></property>
+        <property name="toolTip"><string>Each new window takes half of the space left, turning clockwise.</string></property>
+       </widget>
+      </item>
+      <item row="1" column="2" alignment="Qt::AlignHCenter">
+       <widget class="QRadioButton" name="kcfg_layoutMonocle">
+        <property name="text"><string>Monocle</string></property>
+        <property name="toolTip"><string>One window fills the screen; cycle through the others.</string></property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="3">
+       <layout class="QFormLayout" name="styleForm">
+        <item row="0" column="0">
+         <widget class="QLabel" name="desktopLayoutsLabel">
+          <property name="text"><string>Per desk&amp;top:</string></property>
+          <property name="buddy"><cstring>kcfg_desktopLayouts</cstring></property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="kcfg_desktopLayouts">
+          <property name="placeholderText"><string>e.g. 2=monocle,3=spiral</string></property>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="2">
+         <widget class="QLabel" name="styleHint">
+          <property name="wordWrap"><bool>true</bool></property>
+          <property name="text"><string>This is the starting layout. Desktops listed here use their own (by number). Meta+Shift+Space switches the layout on the current screen and desktop until restart.</string></property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <item>
     <widget class="QGroupBox" name="appsGroup">
      <property name="title"><string>Apps</string></property>
      <layout class="QFormLayout" name="appsForm">
@@ -48,7 +116,7 @@
 
    <item>
     <widget class="QGroupBox" name="layoutGroup">
-     <property name="title"><string>Layout</string></property>
+     <property name="title"><string>Sizes and gaps</string></property>
      <layout class="QFormLayout" name="layoutForm">
       <item row="0" column="0">
        <widget class="QLabel" name="sideLabel">
@@ -205,7 +273,9 @@
       <item row="8" column="1"><widget class="QLabel"><property name="text"><string>Meta+Shift+M</string></property></widget></item>
       <item row="9" column="0"><widget class="QLabel"><property name="text"><string>Focus next / previous window (cycles in monocle)</string></property></widget></item>
       <item row="9" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+. / Meta+Alt+,</string></property></widget></item>
-      <item row="10" column="0" colspan="2">
+      <item row="10" column="0"><widget class="QLabel"><property name="text"><string>Switch layout on this screen and desktop</string></property></widget></item>
+      <item row="10" column="1"><widget class="QLabel"><property name="text"><string>Meta+Shift+Space</string></property></widget></item>
+      <item row="11" column="0" colspan="2">
        <widget class="QLabel" name="keysHint">
         <property name="wordWrap"><bool>true</bool></property>
         <property name="text"><string>Change keys in System Settings → Shortcuts → KWin. You can also resize by dragging the border between tiles.</string></property>
