@@ -26,12 +26,17 @@ Tiny auto-tiling KWin script for Plasma 6.8+, built on Plasma's native tiles.
 
 ## Install
 
+From the KDE Store: System Settings → Window Management → KWin Scripts → **Get New Scripts**, search for *Stacklet*, install, then tick it in the list.
+
+From a checkout:
+
 ```sh
 kpackagetool6 -t KWin/Script -i package        # first time
 kpackagetool6 -t KWin/Script -u package        # update
+./package.sh                                   # or build build/stacklet-<version>.kwinscript
 ```
 
-Then enable **Stacklet** in System Settings → Window Management → KWin Scripts. Settings (apps, main width) are under the gear icon there; turn the script off and on to apply them.
+Then enable **Stacklet** in System Settings → Window Management → KWin Scripts. Settings (layout, apps, sizes) are under the gear icon there; turn the script off and on to apply them. The shortcuts work right away.
 
 Don't run it together with another tiling script (Kröhnkite, Polonium, …).
 

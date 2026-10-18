@@ -3,10 +3,10 @@
     "KPlugin": {
         "Authors": [{ "Name": "ezflow" }],
         "Name": "Stacklet",
-        "Description": "Auto-tile terminals (or any listed apps) into a main window + stack using Plasma's native tiles. Everything else floats.",
+        "Description": "Auto-tile terminals and other listed apps on Plasma's native tiles: master and stack, spiral or monocle. Everything else floats.",
         "Icon": "view-split-left-right",
         "Id": "stacklet",
-        "Version": "0.1.0",
+        "Version": "1.0.0",
         "License": "GPL-3.0-or-later"
     },
     "X-Plasma-API": "javascript",
