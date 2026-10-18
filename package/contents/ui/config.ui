@@ -53,7 +53,31 @@
         <property name="toolTip"><string>One window fills the screen; cycle through the others.</string></property>
        </widget>
       </item>
-      <item row="2" column="0" colspan="3">
+      <item row="2" column="0">
+       <widget class="QLabel" name="hintTile">
+        <property name="alignment"><set>Qt::AlignHCenter|Qt::AlignTop</set></property>
+        <property name="wordWrap"><bool>true</bool></property>
+        <property name="minimumSize"><size><width>0</width><height>68</height></size></property>
+        <property name="text"><string>A main window and a stack. For 2 to 4 terminals.</string></property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="hintSpiral">
+        <property name="alignment"><set>Qt::AlignHCenter|Qt::AlignTop</set></property>
+        <property name="wordWrap"><bool>true</bool></property>
+        <property name="minimumSize"><size><width>0</width><height>68</height></size></property>
+        <property name="text"><string>Many terminals on a big screen. Looks like master until 4 windows.</string></property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="hintMonocle">
+        <property name="alignment"><set>Qt::AlignHCenter|Qt::AlignTop</set></property>
+        <property name="wordWrap"><bool>true</bool></property>
+        <property name="minimumSize"><size><width>0</width><height>68</height></size></property>
+        <property name="text"><string>Small screens, or one job per desktop.</string></property>
+       </widget>
+      </item>
+      <item row="3" column="0" colspan="3">
        <layout class="QFormLayout" name="styleForm">
         <item row="0" column="0">
          <widget class="QLabel" name="desktopLayoutsLabel">
@@ -63,13 +87,13 @@
         </item>
         <item row="0" column="1">
          <widget class="QLineEdit" name="kcfg_desktopLayouts">
-          <property name="placeholderText"><string>e.g. 2=monocle,3=spiral</string></property>
+          <property name="placeholderText"><string>e.g. 1=master,2=monocle</string></property>
          </widget>
         </item>
         <item row="1" column="0" colspan="2">
          <widget class="QLabel" name="styleHint">
           <property name="wordWrap"><bool>true</bool></property>
-          <property name="text"><string>This is the starting layout. Desktops listed here use their own (by number). Meta+Shift+Space switches the layout on the current screen and desktop until restart. Spiral looks the same as master and stack until the fourth window.</string></property>
+          <property name="text"><string>Starting layout; desktops listed here use their own. Meta+Shift+Space switches the layout on the current screen and desktop until restart.</string></property>
          </widget>
         </item>
        </layout>
