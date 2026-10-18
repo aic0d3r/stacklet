@@ -3,6 +3,12 @@
  <class>StackletConfig</class>
  <widget class="QWidget" name="StackletConfig">
   <layout class="QVBoxLayout" name="page">
+   <item>
+    <widget class="QTabWidget" name="tabs">
+     <property name="currentIndex"><number>0</number></property>
+     <widget class="QWidget" name="tabLayout">
+      <attribute name="title"><string>Layout</string></attribute>
+      <layout class="QVBoxLayout" name="tabLayoutBox">
 
    <item>
     <widget class="QGroupBox" name="styleGroup">
@@ -73,48 +79,6 @@
    </item>
 
    <item>
-    <widget class="QGroupBox" name="appsGroup">
-     <property name="title"><string>Apps</string></property>
-     <layout class="QFormLayout" name="appsForm">
-      <item row="0" column="0" colspan="2">
-       <widget class="QCheckBox" name="kcfg_tileAll">
-        <property name="text"><string>Tile all windows, except the apps listed below</string></property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="classesLabel">
-        <property name="text"><string>App &amp;list:</string></property>
-        <property name="buddy"><cstring>kcfg_tileClasses</cstring></property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QLineEdit" name="kcfg_tileClasses">
-        <property name="placeholderText"><string>e.g. kitty,org.kde.konsole</string></property>
-       </widget>
-      </item>
-      <item row="2" column="0" colspan="2">
-       <widget class="QLabel" name="classesHint">
-        <property name="wordWrap"><bool>true</bool></property>
-        <property name="text"><string>Window classes, separated by commas. Listed apps are tiled; with the box above ticked they stay floating instead. Meta+Shift+A shows the class of the focused window.</string></property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="mainClassesLabel">
-        <property name="text"><string>Always &amp;main:</string></property>
-        <property name="buddy"><cstring>kcfg_mainClasses</cstring></property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QLineEdit" name="kcfg_mainClasses">
-        <property name="placeholderText"><string>e.g. firefox,code</string></property>
-        <property name="toolTip"><string>These apps always take the main slot; other windows stack beside them.</string></property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-
-   <item>
     <widget class="QGroupBox" name="layoutGroup">
      <property name="title"><string>Sizes and gaps</string></property>
      <layout class="QFormLayout" name="layoutForm">
@@ -179,6 +143,60 @@
     </widget>
    </item>
 
+   <item><spacer name="spacerLayout"><property name="orientation"><enum>Qt::Vertical</enum></property><property name="sizeType"><enum>QSizePolicy::Expanding</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>0</height></size></property></spacer></item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabApps">
+      <attribute name="title"><string>Apps</string></attribute>
+      <layout class="QVBoxLayout" name="tabAppsBox">
+   <item>
+    <widget class="QGroupBox" name="appsGroup">
+     <property name="flat"><bool>true</bool></property>
+     <layout class="QFormLayout" name="appsForm">
+      <item row="0" column="0" colspan="2">
+       <widget class="QCheckBox" name="kcfg_tileAll">
+        <property name="text"><string>Tile all windows, except the apps listed below</string></property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="classesLabel">
+        <property name="text"><string>App &amp;list:</string></property>
+        <property name="buddy"><cstring>kcfg_tileClasses</cstring></property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="kcfg_tileClasses">
+        <property name="placeholderText"><string>e.g. kitty,org.kde.konsole</string></property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QLabel" name="classesHint">
+        <property name="wordWrap"><bool>true</bool></property>
+        <property name="text"><string>Window classes, separated by commas. Listed apps are tiled; with the box above ticked they stay floating instead. Meta+Shift+A shows the class of the focused window.</string></property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="mainClassesLabel">
+        <property name="text"><string>Always &amp;main:</string></property>
+        <property name="buddy"><cstring>kcfg_mainClasses</cstring></property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLineEdit" name="kcfg_mainClasses">
+        <property name="placeholderText"><string>e.g. firefox,code</string></property>
+        <property name="toolTip"><string>These apps always take the main slot; other windows stack beside them.</string></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <item><spacer name="spacerApps"><property name="orientation"><enum>Qt::Vertical</enum></property><property name="sizeType"><enum>QSizePolicy::Expanding</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>0</height></size></property></spacer></item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabBehaviour">
+      <attribute name="title"><string>Behaviour</string></attribute>
+      <layout class="QVBoxLayout" name="tabBehaviourBox">
    <item>
     <widget class="QGroupBox" name="windowsGroup">
      <property name="title"><string>New and closed windows</string></property>
@@ -241,16 +259,15 @@
     </widget>
    </item>
 
-   <item>
-    <widget class="QLabel" name="applyNote">
-     <property name="wordWrap"><bool>true</bool></property>
-     <property name="text"><string>Changes apply after you turn Stacklet off and on again in KWin Scripts.</string></property>
-    </widget>
-   </item>
-
+   <item><spacer name="spacerBehaviour"><property name="orientation"><enum>Qt::Vertical</enum></property><property name="sizeType"><enum>QSizePolicy::Expanding</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>0</height></size></property></spacer></item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabShortcuts">
+      <attribute name="title"><string>Shortcuts</string></attribute>
+      <layout class="QVBoxLayout" name="tabShortcutsBox">
    <item>
     <widget class="QGroupBox" name="keysGroup">
-     <property name="title"><string>Shortcuts</string></property>
+     <property name="flat"><bool>true</bool></property>
      <layout class="QFormLayout" name="keysForm">
       <property name="labelAlignment"><set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set></property>
       <item row="0" column="0"><widget class="QLabel"><property name="text"><string>Make the focused window main</string></property></widget></item>
@@ -282,6 +299,19 @@
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+
+   <item><spacer name="spacerShortcuts"><property name="orientation"><enum>Qt::Vertical</enum></property><property name="sizeType"><enum>QSizePolicy::Expanding</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>0</height></size></property></spacer></item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+
+   <item>
+    <widget class="QLabel" name="applyNote">
+     <property name="wordWrap"><bool>true</bool></property>
+     <property name="text"><string>Changes apply after you turn Stacklet off and on again in KWin Scripts.</string></property>
     </widget>
    </item>
 
