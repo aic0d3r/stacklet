@@ -53,6 +53,7 @@ if (typeof workspace !== "undefined") {
     const focusAfterClose = String(readConfig("focusAfterClose", true)) === "true";
     const offScreens = list(readConfig("disabledScreens", ""));
     const offDesktops = list(readConfig("disabledDesktops", ""));
+    const monocle = new Set();  // group keys currently in monocle
     const overrides = new Map(); // class -> tile it? Set by the per-app toggle shortcut, lasts until restart.
 
     let order = [];             // tracked windows, oldest first; index 0 of a group = master
@@ -119,7 +120,8 @@ if (typeof workspace !== "undefined") {
             root.padding = smartGaps && wins.length === 1 ? 0 : gap; // KWin spreads it: full at screen edges, half between tiles
             root.minimumSize = { width: 0.05, height: 0.05 }; // default 0.15 breaks stacks of 7+ windows; children inherit
             let slots = [root];
-            if (wins.length > 1) {
+            const one = monocle.has(k); // monocle: every window shares the root tile, the focused one is on top
+            if (wins.length > 1 && !one) {
                 const rects = slotRects(wins.length, ratio, mainCount, mirror, portrait);
                 const m = Math.min(mainCount, wins.length - 1);
                 const cols = root.split(outer);
@@ -129,7 +131,7 @@ if (typeof workspace !== "undefined") {
             }
             wins.forEach((w, i) => {
                 if (w.maximizeMode) w.setMaximize(false, false);
-                if (!slots[i].manage(w)) // root.manage can refuse; fall back to filling the work area
+                if (!slots[one ? 0 : i].manage(w)) // root.manage can refuse; fall back to filling the work area
                     w.frameGeometry = workspace.clientArea(KWin.MaximizeArea, output, desktop);
             });
         } finally {
@@ -278,6 +280,27 @@ if (typeof workspace !== "undefined") {
             const [a, b] = [w, wins[j]].map(x => order.indexOf(x));
             [order[a], order[b]] = [order[b], order[a]];
             retileAll();
+        });
+    }
+
+    registerShortcut("StackletMonocle", "Stacklet: Monocle on / off (focused window fills the screen)", "Meta+Shift+M", () => {
+        const w = tracked();
+        if (!w || !tileable(w)) return;
+        const k = key(w.output, w.desktops[0]);
+        if (!monocle.delete(k)) monocle.add(k);
+        retileAll();
+        osd("Stacklet: monocle " + (monocle.has(k) ? "on" : "off"));
+    });
+
+    // focus the next / previous tile in layout order (cycles windows in monocle, where directions don't apply)
+    for (const [name, keys, dir] of [["Next", "Meta+Alt+.", 1], ["Prev", "Meta+Alt+,", -1]]) {
+        registerShortcut("StackletFocus" + name, "Stacklet: Focus " + name.toLowerCase() + " window", keys, () => {
+            const w = tracked();
+            if (!w || !tileable(w)) return;
+            const g = groupOf(w.output, w.desktops[0]);
+            const t = g[(g.indexOf(w) + dir + g.length) % g.length];
+            workspace.activeWindow = t;
+            if (monocle.has(key(w.output, w.desktops[0]))) osd("Stacklet: " + (g.indexOf(t) + 1) + " of " + g.length);
         });
     }
 

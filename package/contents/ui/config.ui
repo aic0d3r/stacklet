@@ -2,138 +2,219 @@
 <ui version="4.0">
  <class>StackletConfig</class>
  <widget class="QWidget" name="StackletConfig">
-  <layout class="QFormLayout" name="form">
-   <item row="0" column="0" colspan="2">
-    <widget class="QCheckBox" name="kcfg_tileAll">
-     <property name="text"><string>Tile every window, except the apps listed below</string></property>
-     <property name="toolTip"><string>Off: only the listed apps are tiled. On: all normal resizable windows are tiled and the list becomes an exclude list.</string></property>
+  <layout class="QVBoxLayout" name="page">
+
+   <item>
+    <widget class="QGroupBox" name="appsGroup">
+     <property name="title"><string>Apps</string></property>
+     <layout class="QFormLayout" name="appsForm">
+      <item row="0" column="0" colspan="2">
+       <widget class="QCheckBox" name="kcfg_tileAll">
+        <property name="text"><string>Tile all windows, except the apps listed below</string></property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="classesLabel">
+        <property name="text"><string>App &amp;list:</string></property>
+        <property name="buddy"><cstring>kcfg_tileClasses</cstring></property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="kcfg_tileClasses">
+        <property name="placeholderText"><string>e.g. kitty,org.kde.konsole</string></property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QLabel" name="classesHint">
+        <property name="wordWrap"><bool>true</bool></property>
+        <property name="text"><string>Window classes, separated by commas. Listed apps are tiled; with the box above ticked they stay floating instead. Meta+Shift+A shows the class of the focused window.</string></property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="mainClassesLabel">
+        <property name="text"><string>Always &amp;main:</string></property>
+        <property name="buddy"><cstring>kcfg_mainClasses</cstring></property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLineEdit" name="kcfg_mainClasses">
+        <property name="placeholderText"><string>e.g. firefox,code</string></property>
+        <property name="toolTip"><string>These apps always take the main slot; other windows stack beside them.</string></property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="classesLabel">
-     <property name="text"><string>Apps:</string></property>
-     <property name="buddy"><cstring>kcfg_tileClasses</cstring></property>
+
+   <item>
+    <widget class="QGroupBox" name="layoutGroup">
+     <property name="title"><string>Layout</string></property>
+     <layout class="QFormLayout" name="layoutForm">
+      <item row="0" column="0">
+       <widget class="QLabel" name="sideLabel">
+        <property name="text"><string>Main window &amp;side:</string></property>
+        <property name="buddy"><cstring>kcfg_mainSide</cstring></property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="kcfg_mainSide">
+        <item><property name="text"><string>Left</string></property></item>
+        <item><property name="text"><string>Right</string></property></item>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="ratioLabel">
+        <property name="text"><string>Main window &amp;width:</string></property>
+        <property name="buddy"><cstring>kcfg_masterRatio</cstring></property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="kcfg_masterRatio">
+        <property name="toolTip"><string>Share of the screen for the main window (0.15 to 0.85). On a portrait screen this is its height.</string></property>
+        <property name="minimum"><double>0.15</double></property>
+        <property name="maximum"><double>0.85</double></property>
+        <property name="singleStep"><double>0.05</double></property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="mainLabel">
+        <property name="text"><string>Windows in the &amp;main column:</string></property>
+        <property name="buddy"><cstring>kcfg_maxMain</cstring></property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QSpinBox" name="kcfg_maxMain">
+        <property name="minimum"><number>1</number></property>
+        <property name="maximum"><number>2</number></property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="gapLabel">
+        <property name="text"><string>&amp;Gap:</string></property>
+        <property name="buddy"><cstring>kcfg_gap</cstring></property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QSpinBox" name="kcfg_gap">
+        <property name="toolTip"><string>Space between tiles and around the screen edge.</string></property>
+        <property name="suffix"><string> px</string></property>
+        <property name="minimum"><number>0</number></property>
+        <property name="maximum"><number>64</number></property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QCheckBox" name="kcfg_smartGaps">
+        <property name="text"><string>No gap around a single window</string></property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
-   <item row="1" column="1">
-    <widget class="QLineEdit" name="kcfg_tileClasses">
-     <property name="toolTip"><string>Comma-separated window classes. Press Meta+Shift+A on a window to see its class.</string></property>
+
+   <item>
+    <widget class="QGroupBox" name="windowsGroup">
+     <property name="title"><string>New and closed windows</string></property>
+     <layout class="QFormLayout" name="windowsForm">
+      <item row="0" column="0">
+       <widget class="QLabel" name="newLabel">
+        <property name="text"><string>New windows &amp;go to:</string></property>
+        <property name="buddy"><cstring>kcfg_newWindow</cstring></property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="kcfg_newWindow">
+        <item><property name="text"><string>Bottom of the stack</string></property></item>
+        <item><property name="text"><string>Top of the stack</string></property></item>
+        <item><property name="text"><string>Main column</string></property></item>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QCheckBox" name="kcfg_focusAfterClose">
+        <property name="text"><string>After closing a window, focus the tile before it</string></property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="ratioLabel">
-     <property name="text"><string>Main window width:</string></property>
-     <property name="buddy"><cstring>kcfg_masterRatio</cstring></property>
+
+   <item>
+    <widget class="QGroupBox" name="offGroup">
+     <property name="title"><string>Turn tiling off</string></property>
+     <layout class="QFormLayout" name="offForm">
+      <item row="0" column="0">
+       <widget class="QLabel" name="screensLabel">
+        <property name="text"><string>On s&amp;creens:</string></property>
+        <property name="buddy"><cstring>kcfg_disabledScreens</cstring></property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="kcfg_disabledScreens">
+        <property name="placeholderText"><string>e.g. HDMI-A-1</string></property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="desktopsLabel">
+        <property name="text"><string>On &amp;desktops:</string></property>
+        <property name="buddy"><cstring>kcfg_disabledDesktops</cstring></property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="kcfg_disabledDesktops">
+        <property name="placeholderText"><string>e.g. 3,4</string></property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QLabel" name="offHint">
+        <property name="wordWrap"><bool>true</bool></property>
+        <property name="text"><string>Screens by name (see System Settings → Display), desktops by number. Separate several with commas.</string></property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
-   <item row="2" column="1">
-    <widget class="QDoubleSpinBox" name="kcfg_masterRatio">
-     <property name="toolTip"><string>Share of the screen width for the main column, from 0.15 to 0.85.</string></property>
-     <property name="minimum"><double>0.15</double></property>
-     <property name="maximum"><double>0.85</double></property>
-     <property name="singleStep"><double>0.05</double></property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="sideLabel">
-     <property name="text"><string>Main window side:</string></property>
-     <property name="buddy"><cstring>kcfg_mainSide</cstring></property>
-    </widget>
-   </item>
-   <item row="3" column="1">
-    <widget class="QComboBox" name="kcfg_mainSide">
-     <item><property name="text"><string>Left</string></property></item>
-     <item><property name="text"><string>Right</string></property></item>
-    </widget>
-   </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="mainLabel">
-     <property name="text"><string>Windows in main column:</string></property>
-     <property name="buddy"><cstring>kcfg_maxMain</cstring></property>
-    </widget>
-   </item>
-   <item row="4" column="1">
-    <widget class="QSpinBox" name="kcfg_maxMain">
-     <property name="minimum"><number>1</number></property>
-     <property name="maximum"><number>2</number></property>
-    </widget>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="newLabel">
-     <property name="text"><string>New windows go:</string></property>
-     <property name="buddy"><cstring>kcfg_newWindow</cstring></property>
-    </widget>
-   </item>
-   <item row="5" column="1">
-    <widget class="QComboBox" name="kcfg_newWindow">
-     <item><property name="text"><string>Bottom of the stack</string></property></item>
-     <item><property name="text"><string>Top of the stack</string></property></item>
-     <item><property name="text"><string>Main column</string></property></item>
-    </widget>
-   </item>
-   <item row="6" column="0">
-    <widget class="QLabel" name="gapLabel">
-     <property name="text"><string>Gap:</string></property>
-     <property name="buddy"><cstring>kcfg_gap</cstring></property>
-    </widget>
-   </item>
-   <item row="6" column="1">
-    <widget class="QSpinBox" name="kcfg_gap">
-     <property name="suffix"><string> px</string></property>
-     <property name="minimum"><number>0</number></property>
-     <property name="maximum"><number>64</number></property>
-    </widget>
-   </item>
-   <item row="7" column="0" colspan="2">
-    <widget class="QCheckBox" name="kcfg_smartGaps">
-     <property name="text"><string>No gap when only one window is tiled</string></property>
-    </widget>
-   </item>
-   <item row="8" column="0">
-    <widget class="QLabel" name="mainClassesLabel">
-     <property name="text"><string>Always main:</string></property>
-     <property name="buddy"><cstring>kcfg_mainClasses</cstring></property>
-    </widget>
-   </item>
-   <item row="8" column="1">
-    <widget class="QLineEdit" name="kcfg_mainClasses">
-     <property name="placeholderText"><string>e.g. firefox,code</string></property>
-     <property name="toolTip"><string>Apps (window classes) that always take the main slot; everything else stacks beside them.</string></property>
-    </widget>
-   </item>
-   <item row="9" column="0" colspan="2">
-    <widget class="QCheckBox" name="kcfg_focusAfterClose">
-     <property name="text"><string>After closing a window, focus the tile before it</string></property>
-    </widget>
-   </item>
-   <item row="10" column="0">
-    <widget class="QLabel" name="screensLabel">
-     <property name="text"><string>Off on screens:</string></property>
-     <property name="buddy"><cstring>kcfg_disabledScreens</cstring></property>
-    </widget>
-   </item>
-   <item row="10" column="1">
-    <widget class="QLineEdit" name="kcfg_disabledScreens">
-     <property name="placeholderText"><string>e.g. HDMI-A-1</string></property>
-    </widget>
-   </item>
-   <item row="11" column="0">
-    <widget class="QLabel" name="desktopsLabel">
-     <property name="text"><string>Off on desktops:</string></property>
-     <property name="buddy"><cstring>kcfg_disabledDesktops</cstring></property>
-    </widget>
-   </item>
-   <item row="11" column="1">
-    <widget class="QLineEdit" name="kcfg_disabledDesktops">
-     <property name="placeholderText"><string>e.g. 3,4</string></property>
-    </widget>
-   </item>
-   <item row="12" column="0" colspan="2">
-    <widget class="QLabel" name="hint">
+
+   <item>
+    <widget class="QLabel" name="applyNote">
      <property name="wordWrap"><bool>true</bool></property>
-     <property name="text"><string>Meta+Shift+Return: make focused window main. Meta+F: float or re-tile. Meta+Shift+A: tile or untile this app until restart (shows its class). Meta+Alt+Shift+arrows: swap with a neighbour (Meta+Alt+arrows moves focus, built into KWin). Meta+Alt+] and [: grow or shrink the main window. Meta+Alt+R: rotate the stack (Shift: backwards). Drag a window onto another tile to swap them. You can also drag a tile border. Turn the script off and on to apply changes.</string></property>
+     <property name="text"><string>Changes apply after you turn Stacklet off and on again in KWin Scripts.</string></property>
     </widget>
    </item>
+
+   <item>
+    <widget class="QGroupBox" name="keysGroup">
+     <property name="title"><string>Shortcuts</string></property>
+     <layout class="QFormLayout" name="keysForm">
+      <property name="labelAlignment"><set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set></property>
+      <item row="0" column="0"><widget class="QLabel"><property name="text"><string>Make the focused window main</string></property></widget></item>
+      <item row="0" column="1"><widget class="QLabel"><property name="text"><string>Meta+Shift+Return</string></property></widget></item>
+      <item row="1" column="0"><widget class="QLabel"><property name="text"><string>Float or re-tile the focused window</string></property></widget></item>
+      <item row="1" column="1"><widget class="QLabel"><property name="text"><string>Meta+F</string></property></widget></item>
+      <item row="2" column="0"><widget class="QLabel"><property name="text"><string>Tile or untile this app until restart</string></property></widget></item>
+      <item row="2" column="1"><widget class="QLabel"><property name="text"><string>Meta+Shift+A</string></property></widget></item>
+      <item row="3" column="0"><widget class="QLabel"><property name="text"><string>Move focus (built into KWin)</string></property></widget></item>
+      <item row="3" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+arrows</string></property></widget></item>
+      <item row="4" column="0"><widget class="QLabel"><property name="text"><string>Swap with the neighbouring window</string></property></widget></item>
+      <item row="4" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+Shift+arrows</string></property></widget></item>
+      <item row="5" column="0"><widget class="QLabel"><property name="text"><string>Grow or shrink the main window</string></property></widget></item>
+      <item row="5" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+] / Meta+Alt+[</string></property></widget></item>
+      <item row="6" column="0"><widget class="QLabel"><property name="text"><string>Rotate the stack (add Shift to go back)</string></property></widget></item>
+      <item row="6" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+R</string></property></widget></item>
+      <item row="7" column="0"><widget class="QLabel"><property name="text"><string>Swap two windows with the mouse</string></property></widget></item>
+      <item row="7" column="1"><widget class="QLabel"><property name="text"><string>Drag one onto the other</string></property></widget></item>
+      <item row="8" column="0"><widget class="QLabel"><property name="text"><string>Monocle on / off (one window fills the screen)</string></property></widget></item>
+      <item row="8" column="1"><widget class="QLabel"><property name="text"><string>Meta+Shift+M</string></property></widget></item>
+      <item row="9" column="0"><widget class="QLabel"><property name="text"><string>Focus next / previous window (cycles in monocle)</string></property></widget></item>
+      <item row="9" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+. / Meta+Alt+,</string></property></widget></item>
+      <item row="10" column="0" colspan="2">
+       <widget class="QLabel" name="keysHint">
+        <property name="wordWrap"><bool>true</bool></property>
+        <property name="text"><string>Change keys in System Settings → Shortcuts → KWin. You can also resize by dragging the border between tiles.</string></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
   </layout>
  </widget>
  <resources/>
