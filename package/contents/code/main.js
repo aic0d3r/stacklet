@@ -342,25 +342,27 @@ if (typeof workspace !== "undefined") {
         });
     }
 
-    registerShortcut("StackletMonocle", "Stacklet: Monocle on / off (focused window fills the screen)", "Meta+Shift+M", () => {
+    // Layout shortcuts act on the focused tile's screen + desktop, or on the current ones when focus is on
+    // something Stacklet doesn't tile, and always say what happened.
+    function switchLayout(pick) {
         const w = tracked();
-        if (!w || !tileable(w)) return;
-        const k = key(w.output, w.desktops[0]), base = baseOf(w.desktops[0]);
-        const now = modeOf(k, w.desktops[0]) === MONOCLE ? (base === MONOCLE ? TILE : base) : MONOCLE;
+        const output = w && tileable(w) ? w.output : workspace.activeScreen;
+        const desktop = w && tileable(w) ? w.desktops[0] : workspace.currentDesktop;
+        const n = groupOf(output, desktop).length;
+        if (!n) { osd("Stacklet: no tiled windows on this screen and desktop"); return; }
+        const k = key(output, desktop);
+        const now = pick(modeOf(k, desktop), baseOf(desktop));
         modes.set(k, now);
         retileAll();
-        osd("Stacklet: " + LAYOUT_LABELS[now]);
-    });
+        // spiral and master and stack only differ from the fourth window on
+        osd("Stacklet: " + LAYOUT_LABELS[now] + (now === SPIRAL && n < 4 ? " (same as master and stack until 4 windows)" : ""));
+    }
 
-    registerShortcut("StackletNextLayout", "Stacklet: Switch layout (master and stack / spiral / monocle)", "Meta+Shift+Space", () => {
-        const w = tracked();
-        if (!w || !tileable(w)) return;
-        const k = key(w.output, w.desktops[0]);
-        const now = (modeOf(k, w.desktops[0]) + 1) % 3;
-        modes.set(k, now);
-        retileAll();
-        osd("Stacklet: " + LAYOUT_LABELS[now]);
-    });
+    registerShortcut("StackletMonocle", "Stacklet: Monocle on / off (focused window fills the screen)", "Meta+Shift+M", () =>
+        switchLayout((cur, base) => cur === MONOCLE ? (base === MONOCLE ? TILE : base) : MONOCLE));
+
+    registerShortcut("StackletNextLayout", "Stacklet: Switch layout (master and stack / spiral / monocle)", "Meta+Shift+Space", () =>
+        switchLayout(cur => (cur + 1) % 3));
 
     // focus the next / previous tile in layout order (cycles windows in monocle, where directions don't apply)
     for (const [name, keys, dir] of [["Next", "Meta+Alt+.", 1], ["Prev", "Meta+Alt+,", -1]]) {

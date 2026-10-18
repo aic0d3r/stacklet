@@ -69,7 +69,7 @@
         <item row="1" column="0" colspan="2">
          <widget class="QLabel" name="styleHint">
           <property name="wordWrap"><bool>true</bool></property>
-          <property name="text"><string>This is the starting layout. Desktops listed here use their own (by number). Meta+Shift+Space switches the layout on the current screen and desktop until restart.</string></property>
+          <property name="text"><string>This is the starting layout. Desktops listed here use their own (by number). Meta+Shift+Space switches the layout on the current screen and desktop until restart. Spiral looks the same as master and stack until the fourth window.</string></property>
          </widget>
         </item>
        </layout>

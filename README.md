@@ -49,11 +49,17 @@ tests/stress/run.sh            # or: tests/stress/run.sh spiral
 
 Crash stress test: runs Stacklet in a private virtual KWin (its own D-Bus session, config and script folder, your session is not touched) and opens and closes a few hundred windows in each layout. It fails if KWin dies. Needs `kwin_wayland`, `dbus-run-session`, `qdbus6` and python3 with PyQt6. It exists because holding windows in a `WeakSet`/`WeakMap` crashed KWin when a window closed.
 
-The rest of the KWin side (real tiling, shortcuts, the settings page) is checked by hand in a live Plasma session.
+```sh
+tests/layouts/run.sh            # where do 2, 3, 4 and 6 windows end up in each layout?
+```
+
+Same private virtual KWin. It prints every window's position and fails if a layout has the wrong shape (for example monocle not stacking windows). To reproduce a setup, pass your own kwinrc section: `KWINRC=$'[Script-stacklet]\nlayoutSpiral=true' tests/layouts/run.sh - 5`.
+
+The rest (shortcuts, the settings page) is checked by hand in a live Plasma session.
 
 ## Known limits
 
 - Windows on all desktops, minimized or fullscreen are left alone.
 - Settings apply when the script is loaded: turn Stacklet off and on in KWin Scripts after changing them.
-- Spiral looks the same as master and stack with two windows; it differs from three windows on.
+- Spiral looks the same as master and stack until the fourth window.
 - Stacklet replaces the Meta+T tile layout on every desktop where it tiles a window.
