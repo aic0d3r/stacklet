@@ -15,6 +15,9 @@ four.slice(1).forEach((r, i) => {
 assert.strictEqual(clampRatio("0.7"), 0.7);
 assert.strictEqual(clampRatio(0.99), 0.55);
 assert.strictEqual(clampRatio("junk"), 0.55);
+// portrait turns the layout 90 degrees: main row on top
+const pt = slotRects(3, 0.6, 1, false, true);
+assert.deepStrictEqual(pt.map(r => [r.x, r.y, r.width, r.height]), [[0, 0, 1, 0.6], [0, 0.6, 0.5, 0.4], [0.5, 0.6, 0.5, 0.4]]);
 // main column count, mirroring, neighbours
 const three = slotRects(3, 0.6, 2); // two main on the left, one stack on the right
 assert.deepStrictEqual(three.map(r => [r.x, r.y]), [[0, 0], [0, 0.5], [0.6, 0]]);

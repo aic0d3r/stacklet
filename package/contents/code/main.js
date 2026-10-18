@@ -4,14 +4,16 @@
 const HORIZONTAL = 1, VERTICAL = 2; // KWin::Tile::LayoutDirection
 
 // Target rects (relative to the screen, 0..1) for n windows: `main` windows stacked in one column,
-// the rest in the other. `mirror` puts the main column on the right.
-function slotRects(n, ratio, main = 1, mirror = false) {
+// the rest in the other. `mirror` puts the main column on the right. `portrait` turns the layout
+// 90°: main row on top (bottom if mirrored), the rest side by side below.
+function slotRects(n, ratio, main = 1, mirror = false, portrait = false) {
     if (n <= 1) return [{ x: 0, y: 0, width: 1, height: 1 }];
     const m = Math.max(1, Math.min(main, n - 1)), k = n - m;
     const rects = [];
     for (let i = 0; i < m; i++) rects.push({ x: 0, y: i / m, width: ratio, height: 1 / m });
     for (let i = 0; i < k; i++) rects.push({ x: ratio, y: i / k, width: 1 - ratio, height: 1 / k });
-    return mirror ? rects.map(r => ({ x: 1 - r.x - r.width, y: r.y, width: r.width, height: r.height })) : rects;
+    const flipped = mirror ? rects.map(r => ({ x: 1 - r.x - r.width, y: r.y, width: r.width, height: r.height })) : rects;
+    return portrait ? flipped.map(r => ({ x: r.y, y: r.x, width: r.height, height: r.width })) : flipped;
 }
 
 function clampRatio(r) {
@@ -70,11 +72,11 @@ if (typeof workspace !== "undefined") {
     const osd = text => callDBus("org.kde.plasmashell", "/org/kde/osdService", "org.kde.osdService",
         "showText", "view-split-left-right", text);
 
-    // n tiles stacked vertically inside one column tile
-    function column(col, n) {
+    // n tiles in a row (or column) inside one tile, split along dir
+    function column(col, n, dir) {
         if (n === 1) return [col];
-        col.split(VERTICAL);
-        while (col.tiles.length < n) col.tiles[col.tiles.length - 1].split(VERTICAL);
+        col.split(dir);
+        while (col.tiles.length < n) col.tiles[col.tiles.length - 1].split(dir);
         return col.tiles.slice();
     }
 
@@ -84,9 +86,13 @@ if (typeof workspace !== "undefined") {
         if (!wins.length) return false;
         const root = workspace.rootTile(output, desktop);
         if (!root) return false;
-        // keep a master width the user dragged, if the layout is still ours
-        if (groups[k] && root.tiles.length === 2 && root.layoutDirection === HORIZONTAL)
-            ratios[k] = clampRatio(root.tiles[mirror ? 1 : 0].relativeGeometry.width);
+        const portrait = output.geometry.height > output.geometry.width;
+        const [outer, inner] = portrait ? [VERTICAL, HORIZONTAL] : [HORIZONTAL, VERTICAL];
+        // keep a main size the user dragged, if the layout is still ours
+        if (groups[k] && root.tiles.length === 2 && root.layoutDirection === outer) {
+            const g = root.tiles[mirror ? 1 : 0].relativeGeometry;
+            ratios[k] = clampRatio(portrait ? g.height : g.width);
+        }
         const ratio = ratios[k] || defaultRatio;
 
         busy = true;
@@ -96,10 +102,10 @@ if (typeof workspace !== "undefined") {
             root.minimumSize = { width: 0.05, height: 0.05 }; // default 0.15 breaks stacks of 7+ windows; children inherit
             let slots = [root];
             if (wins.length > 1) {
-                const rects = slotRects(wins.length, ratio, mainCount, mirror);
+                const rects = slotRects(wins.length, ratio, mainCount, mirror, portrait);
                 const m = Math.min(mainCount, wins.length - 1);
-                const cols = root.split(HORIZONTAL);
-                slots = [...column(cols[mirror ? 1 : 0], m), ...column(cols[mirror ? 0 : 1], wins.length - m)];
+                const cols = root.split(outer);
+                slots = [...column(cols[mirror ? 1 : 0], m, inner), ...column(cols[mirror ? 0 : 1], wins.length - m, inner)];
                 // KWin shifts neighbours when one tile is resized, so a second pass settles longer stacks
                 for (let pass = 0; pass < 2; pass++) slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
             }
@@ -155,6 +161,8 @@ if (typeof workspace !== "undefined") {
         if (w.tile && !w.deleted) { busy = true; w.tile.unmanage(w); busy = false; }
     }
 
+    workspace.screensChanged.connect(retileAll);
+    for (const o of workspace.screens) o.geometryChanged.connect(retileAll); // rotation
     workspace.windowAdded.connect(w => { if (track(w)) place(w); retileAll(); });
     workspace.windowRemoved.connect(w => {
         order = order.filter(x => x !== w);
