@@ -335,7 +335,7 @@
    <item>
     <widget class="QLabel" name="applyNote">
      <property name="wordWrap"><bool>true</bool></property>
-     <property name="text"><string>Changes apply after you turn Stacklet off and on again in KWin Scripts.</string></property>
+     <property name="text"><string>After Apply, turn Stacklet off and on in KWin Scripts to use these settings. The shortcuts work right away.</string></property>
     </widget>
    </item>
 
