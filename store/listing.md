@@ -73,5 +73,5 @@ focus after close; a stress test that runs the script in a private virtual KWin.
 
 ## Before uploading
 
-- Fill in `Website` in `package/metadata.json` once the repository has a public URL, and rebuild.
 - Upload the `.kwinscript` file, not a zip of the repository.
+- Repository: https://github.com/aic0d3r/stacklet (set as `Website` in `metadata.json`).
