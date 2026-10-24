@@ -1,4 +1,4 @@
-# Stacklet
+# Stacklet: tiling window manager script for KDE Plasma 6
 
 Tiny auto-tiling window manager script for KDE Plasma 6.8+ (a KWin script), built on Plasma's native tiles. Tile your terminals i3-style with master and stack, spiral and monocle layouts, on Wayland.
 
