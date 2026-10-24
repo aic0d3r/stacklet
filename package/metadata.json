@@ -3,7 +3,7 @@
     "KPlugin": {
         "Authors": [{ "Name": "ezflow" }],
         "Name": "Stacklet",
-        "Description": "Auto-tile terminals and other listed apps on Plasma's native tiles: master and stack, spiral or monocle. Everything else floats.",
+        "Description": "Tiling window manager for KDE Plasma 6: auto-tile terminals and other listed apps on Plasma's native tiles: master and stack, spiral or monocle. Everything else floats.",
         "Icon": "view-split-left-right",
         "Id": "stacklet",
         "Version": "1.0.0",

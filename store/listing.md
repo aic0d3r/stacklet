@@ -18,11 +18,11 @@ Stacklet
 
 ## Summary (one line)
 
-Auto-tiling for your terminals on Plasma's own tiles: master and stack, spiral or monocle.
+Tiling window manager for KDE Plasma 6: auto-tile your terminals on Plasma's own tiles with master and stack, spiral or monocle.
 
 ## Description
 
-Stacklet tiles the apps you choose into a main window plus a stack, and leaves everything
+Stacklet is a tiling window manager script for KDE Plasma 6 (a KWin script). It tiles the apps you choose into a main window plus a stack, and leaves everything
 else floating. It drives Plasma's native tiles, so resizing, Meta+T layouts and per-desktop
 tile layouts keep working.
 
@@ -56,13 +56,13 @@ Shortcuts (all changeable in System Settings → Shortcuts → KWin):
 Install, then enable **Stacklet** under System Settings → Window Management → KWin Scripts.
 Settings are behind the gear icon there; turn the script off and on to apply them.
 
-Do not run it together with another tiling script (Krohnkite, Polonium, …).
+Do not run it together with another tiling script (Kröhnkite, Polonium, …).
 
 Requires Plasma 6.8 or later. GPL-3.0-or-later.
 
 ## Tags
 
-tiling, window management, terminals, productivity, tiling window manager, kwin script
+tiling, tiling window manager, window management, kwin script, plasma 6, terminals, i3, productivity
 
 ## Changelog 1.0.0
 

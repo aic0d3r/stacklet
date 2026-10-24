@@ -1,6 +1,8 @@
 # Stacklet
 
-Tiny auto-tiling KWin script for Plasma 6.8+, built on Plasma's native tiles.
+Tiny auto-tiling window manager script for KDE Plasma 6.8+ (a KWin script), built on Plasma's native tiles. Tile your terminals i3-style with master and stack, spiral and monocle layouts, on Wayland or X11.
+
+![Stacklet tiling terminal windows in a master and stack layout on KDE Plasma](store/screenshot-tiling.png)
 
 - Only the apps you list get tiled (default: kitty, Konsole, Alacritty, Ghostty, foot, WezTerm). Everything else floats. Or tick "Tile every window" and the list becomes an exclude list.
 - Three layouts, picked on the settings page with a preview: **master and stack** (first window on the left or right, the rest stacked beside it), **spiral** (each new window takes half of the space left) and **monocle** (one window fills the screen). Set a starting layout, or one per virtual desktop, and switch on the fly. One window always fills the screen.
@@ -9,6 +11,10 @@ Tiny auto-tiling KWin script for Plasma 6.8+, built on Plasma's native tiles.
 - Pin apps as "always main" (e.g. keep a browser big, terminals beside it). After closing a window, focus moves to the tile before it.
 - Separate layout per screen and virtual desktop.
 - Resize by dragging the border between tiles; the width sticks until that desktop has no tiled windows.
+
+![Stacklet settings page in KDE System Settings: layout choice with preview, app list and gaps](store/screenshot-settings.png)
+
+## Shortcuts
 
 | Key | Action |
 | --- | --- |
