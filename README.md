@@ -1,6 +1,6 @@
 # Stacklet
 
-Tiny auto-tiling window manager script for KDE Plasma 6.8+ (a KWin script), built on Plasma's native tiles. Tile your terminals i3-style with master and stack, spiral and monocle layouts, on Wayland or X11.
+Tiny auto-tiling window manager script for KDE Plasma 6.8+ (a KWin script), built on Plasma's native tiles. Tile your terminals i3-style with master and stack, spiral and monocle layouts, on Wayland.
 
 ![Stacklet tiling terminal windows in a master and stack layout on KDE Plasma](store/screenshot-tiling.png)
 
@@ -74,3 +74,7 @@ The rest (shortcuts, the settings page) is checked by hand in a live Plasma sess
 - Settings apply when the script is loaded: turn Stacklet off and on in KWin Scripts after changing them.
 - Spiral looks the same as master and stack until the fourth window.
 - Stacklet replaces the Meta+T tile layout on every desktop where it tiles a window.
+
+## License
+
+GPL-3.0-or-later. See [LICENSE](LICENSE).
