@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question or idea
+    url: https://github.com/aic0d3r/stacklet/discussions
+    about: Ask how something works or suggest a feature

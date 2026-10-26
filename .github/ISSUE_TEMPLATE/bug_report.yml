@@ -1,0 +1,35 @@
+name: Bug report
+description: Something doesn't tile the way it should
+labels: [bug]
+body:
+  - type: input
+    id: plasma
+    attributes:
+      label: Plasma and KWin version
+      placeholder: "6.8.0 (run: plasmashell --version)"
+    validations:
+      required: true
+  - type: dropdown
+    id: session
+    attributes:
+      label: Session
+      options: [Wayland, X11]
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: App window class (Meta+Shift+A shows it)
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: Include your layout, screens and any other tiling script you run.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log (optional)
+      description: "`journalctl --user -b | grep -i stacklet`"
+      render: shell
