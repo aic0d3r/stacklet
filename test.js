@@ -1,6 +1,6 @@
 // node test.js — checks the layout math (the KWin part needs a live session)
 const assert = require("assert");
-const { slotRects, spiralRects, clampRatio, pickNeighbor } = require("./package/contents/code/main.js");
+const { slotRects, spiralRects, clampRatio, pickNeighbor, swapOrder, rotateOrder } = require("./package/contents/code/main.js");
 
 assert.deepStrictEqual(slotRects(1, 0.55), [{ x: 0, y: 0, width: 1, height: 1 }]);
 const two = slotRects(2, 0.55);
@@ -38,4 +38,12 @@ assert.strictEqual(pickNeighbor(r4, 2, "up"), 1);
 assert.strictEqual(pickNeighbor(r4, 2, "down"), 3);
 assert.strictEqual(pickNeighbor(r4, 3, "down"), -1);
 assert.strictEqual(pickNeighbor(r4, 3, "left"), 0);
+// order ops: rotate only moves the stack, in the slots it already holds; swap exchanges two entries
+const o = ["m", "x", "a", "y", "b", "c"]; // x, y belong to another desktop
+rotateOrder(o, ["a", "b", "c"], 1);
+assert.deepStrictEqual(o, ["m", "x", "b", "y", "c", "a"]);
+rotateOrder(o, ["b", "c", "a"], -1);
+assert.deepStrictEqual(o, ["m", "x", "a", "y", "b", "c"]);
+swapOrder(o, 0, 5);
+assert.deepStrictEqual(o, ["c", "x", "a", "y", "b", "m"]);
 console.log("ok");
