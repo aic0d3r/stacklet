@@ -28,28 +28,43 @@ Stacklet is a tiling window manager script for KDE Plasma 6 (a KWin script). It 
 Three layouts, with a preview when you pick one:
 
 • Master and stack: a main window, the rest stacked beside it. Good for 2 to 4 terminals.
+
 • Spiral: each new window takes half of the space left. Good for many terminals on a big screen.
+
 • Monocle: one window fills the area, cycle through the others. Good for small screens, or one job per desktop.
 
 More
 
 • Only the apps you list get tiled (terminals by default). Or tile everything and list the apps to leave alone.
+
 • Pin an app as "always main", so a browser or editor stays big with terminals beside it.
+
 • Portrait screens get the layout turned 90 degrees, and it re-tiles when you rotate.
+
 • Gaps, with no gap around a lone window. Drag the border between tiles to resize.
+
 • Per-screen and per-desktop layouts, and screens or desktops where tiling stays off.
 
 Shortcuts (all changeable in System Settings → Shortcuts → KWin)
 
 • Meta+Shift+Return: make the focused window main
+
 • Meta+F: float or re-tile the focused window
+
 • Meta+Shift+Space: switch layout
+
 • Meta+Shift+M: monocle on / off
+
 • Meta+Alt+. / Meta+Alt+,: focus next / previous window
+
 • Meta+Alt+Shift+arrows: swap with a neighbour
+
 • Meta+Alt+] / Meta+Alt+[: grow / shrink the main window
+
 • Meta+Alt+R: rotate the stack
+
 • Meta+Shift+A: tile or untile this app until restart, and show its window class
+
 • Drag onto another tile: swap the two
 
 Install, then enable Stacklet under System Settings → Window Management → KWin Scripts. Settings are behind the gear icon there; turn the script off and on to apply them.
