@@ -2,13 +2,19 @@
 
 # Stacklet: tiling window manager script for KDE Plasma 6
 
-A small auto-tiling script for KDE Plasma 6.8+ and Wayland. It tiles your terminals i3-style (master and stack, spiral or monocle) and leaves every other window alone.
+[![Release](https://img.shields.io/github/v/release/aic0d3r/stacklet?color=3daee9)](https://github.com/aic0d3r/stacklet/releases)
+[![KDE Plasma 6.8+](https://img.shields.io/badge/KDE%20Plasma-6.8%2B-1d99f3?logo=kde&logoColor=white)](https://kde.org/plasma-desktop/)
+[![Wayland](https://img.shields.io/badge/Wayland-supported-1abc9c)](#install)
+[![KDE Store](https://img.shields.io/badge/KDE%20Store-Stacklet-3daee9?logo=kde&logoColor=white)](https://store.kde.org/p/2380552/)
+[![License: GPL-3.0-or-later](https://img.shields.io/github/license/aic0d3r/stacklet?color=blue)](LICENSE)
+
+A small auto-tiling script made for KDE Plasma 6.8 and Wayland. It tiles your terminals i3-style (master and stack, spiral or monocle) and leaves every other window alone.
 
 [**Get it on the KDE Store**](https://store.kde.org/p/2380552/) · [Releases](https://github.com/aic0d3r/stacklet/releases)
 
 ## Why I made it
 
-I wanted tiling on Plasma without leaving Plasma. The existing scripts (Kröhnkite, Polonium and others) don't use Plasma's own tiles, and I found them confusing and fiddly to set up. So I wrote Stacklet. It drives Plasma's native tiles, so resizing, Meta+T layouts and per-desktop tile layouts keep working. Install it, tick it in KWin Scripts, done. The defaults tile terminals, and you add other apps from a normal settings page.
+I wanted tiling on Plasma without leaving Plasma. The existing scripts (Kröhnkite, Polonium and others) don't use Plasma's own tiles, and I found them confusing and fiddly to set up. So I wrote Stacklet, made for Plasma 6.8 and newer. It drives Plasma's native tiles, so resizing, Meta+T layouts and per-desktop tile layouts keep working. Install it, tick it in KWin Scripts, done. The defaults tile terminals, and you add other apps from a normal settings page.
 
 ![Stacklet tiling terminal windows in a master and stack layout on KDE Plasma](store/screenshot-tiling.png)
 
