@@ -4,6 +4,8 @@
 
 Tiny auto-tiling window manager script for KDE Plasma 6.8+ (a KWin script), built on Plasma's native tiles. Tile your terminals i3-style with master and stack, spiral and monocle layouts, on Wayland.
 
+[**Get it on the KDE Store**](https://store.kde.org/p/2380552/) · [Releases](https://github.com/aic0d3r/stacklet/releases)
+
 ![Stacklet tiling terminal windows in a master and stack layout on KDE Plasma](store/screenshot-tiling.png)
 
 - Only the apps you list get tiled (default: kitty, Konsole, Alacritty, Ghostty, foot, WezTerm). Everything else floats. Or tick "Tile every window" and the list becomes an exclude list.
