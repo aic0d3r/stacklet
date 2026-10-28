@@ -2,19 +2,28 @@
 
 # Stacklet: tiling window manager script for KDE Plasma 6
 
-Tiny auto-tiling window manager script for KDE Plasma 6.8+ (a KWin script), built on Plasma's native tiles. Tile your terminals i3-style with master and stack, spiral and monocle layouts, on Wayland.
+A small auto-tiling script for KDE Plasma 6.8+ and Wayland. It tiles your terminals i3-style (master and stack, spiral or monocle) and leaves every other window alone.
 
 [**Get it on the KDE Store**](https://store.kde.org/p/2380552/) · [Releases](https://github.com/aic0d3r/stacklet/releases)
 
+## Why I made it
+
+I wanted tiling on Plasma without leaving Plasma. The existing scripts (Kröhnkite, Polonium and others) don't use Plasma's own tiles, and I found them confusing and fiddly to set up. So I wrote Stacklet. It drives Plasma's native tiles, so resizing, Meta+T layouts and per-desktop tile layouts keep working. Install it, tick it in KWin Scripts, done. The defaults tile terminals, and you add other apps from a normal settings page.
+
 ![Stacklet tiling terminal windows in a master and stack layout on KDE Plasma](store/screenshot-tiling.png)
 
+## Features
+
 - Only the apps you list get tiled (default: kitty, Konsole, Alacritty, Ghostty, foot, WezTerm). Everything else floats. Or tick "Tile every window" and the list becomes an exclude list.
-- Three layouts, picked on the settings page with a preview: **master and stack** (first window on the left or right, the rest stacked beside it), **spiral** (each new window takes half of the space left) and **monocle** (one window fills the screen). Set a starting layout, or one per virtual desktop, and switch on the fly. One window always fills the screen.
-- Settings: main width, side, 1–2 main windows, where new windows land, gap, and screens/desktops where tiling is off.
+- Three layouts, each with a preview on the settings page:
+  - **Master and stack**: the first window on the left or right, the rest stacked beside it.
+  - **Spiral**: each new window takes half of the space left.
+  - **Monocle**: one window fills the screen.
+- Pick a starting layout, or one per screen and virtual desktop, and switch on the fly. A lone window always fills the screen.
+- Settings: main width, side, 1–2 main windows, where new windows land, gap, and screens or desktops where tiling is off.
 - Portrait screens get the layout turned 90°: main window on top, the rest side by side below. It re-tiles when you rotate a screen.
-- Pin apps as "always main" (e.g. keep a browser big, terminals beside it). After closing a window, focus moves to the tile before it.
-- Separate layout per screen and virtual desktop.
-- Resize by dragging the border between tiles; the width sticks until that desktop has no tiled windows.
+- Pin apps as "always main", for example a browser kept big with terminals beside it. After closing a window, focus moves to the tile before it.
+- Drag the border between tiles to resize. The width sticks until that desktop has no tiled windows.
 
 ![Stacklet settings page in KDE System Settings: layout choice with preview, app list and gaps](store/screenshot-settings.png)
 
@@ -38,6 +47,8 @@ Tiny auto-tiling window manager script for KDE Plasma 6.8+ (a KWin script), buil
 
 From the KDE Store: System Settings → Window Management → KWin Scripts → **Get New Scripts**, search for *Stacklet*, install, then tick it in the list.
 
+Or download `stacklet-<version>.kwinscript` from [Releases](https://github.com/aic0d3r/stacklet/releases) and run `kpackagetool6 -t KWin/Script -i stacklet-<version>.kwinscript`.
+
 From a checkout:
 
 ```sh
@@ -50,7 +61,12 @@ Then enable **Stacklet** in System Settings → Window Management → KWin Scrip
 
 Don't run it together with another tiling script (Kröhnkite, Polonium, …).
 
-## Test
+## Bugs and ideas
+
+Found a bug? [Open an issue](https://github.com/aic0d3r/stacklet/issues/new/choose). Questions and ideas go in [Discussions](https://github.com/aic0d3r/stacklet/discussions). This is a personal project, so replies may take a day or two.
+
+<details>
+<summary><h2>Tests</h2></summary>
 
 ```sh
 node test.js
@@ -71,6 +87,8 @@ tests/layouts/run.sh            # where do 2, 3, 4 and 6 windows end up in each 
 Same private virtual KWin. It prints every window's position and fails if a layout has the wrong shape (for example monocle not stacking windows). To reproduce a setup, pass your own kwinrc section: `KWINRC=$'[Script-stacklet]\nlayoutSpiral=true' tests/layouts/run.sh - 5`.
 
 The rest (shortcuts, the settings page) is checked by hand in a live Plasma session.
+
+</details>
 
 ## Known limits
 
