@@ -116,6 +116,12 @@ tests/dialogs/run.sh           # do dialogs, About boxes and tool windows stay f
 
 Same private virtual KWin, with the app list and with "Tile every window". It opens two normal windows plus dialogs (with and without a parent), an About box, a tool window and a fixed-size window, and fails if anything but the normal windows (and the parentless dialog, see Known limits) gets a tile.
 
+```sh
+tests/activities/run.sh        # does a window on another Activity leave a gap?
+```
+
+Same private virtual KWin, plus Plasma's activity service with a second Activity. It moves one of three windows there and checks that the stack closes up, that the window tiles alone on its Activity, and that switching back keeps the layout.
+
 The settings page is checked by hand in a live Plasma session.
 
 </details>

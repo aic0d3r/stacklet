@@ -168,8 +168,10 @@ if (typeof workspace !== "undefined") {
     const listed = c => overrides.has(c) ? overrides.get(c) : classes.includes(c) !== tileAll;
     const wanted = w => w.normalWindow && !w.specialWindow && !w.transient &&
         (!tileAll || w.resizeable) && listed(cls(w));
+    // a window on another Activity still sits on this screen and desktop: counting it leaves an empty tile
+    const onActivity = w => !w.activities.length || w.activities.includes(workspace.currentActivity);
     const tileable = w => !w.deleted && !floating.has(w) && !scratch.includes(w) && !w.minimized && !w.fullScreen &&
-        w.output && w.desktops.length === 1 &&
+        w.output && w.desktops.length === 1 && onActivity(w) &&
         !offScreens.includes(String(w.output.name).toLowerCase()) &&
         !offDesktops.includes(String(w.desktops[0].x11DesktopNumber));
     // windows of a screen + desktop in layout order; apps pinned as "always main" come first
@@ -289,7 +291,9 @@ if (typeof workspace !== "undefined") {
             for (const w of groupOf(next[k].output, next[k].desktop)) home.set(w, next[k]);
         }
         // groups that just lost their last window: nothing to lay out, forget the saved ratio
-        for (const k in groups) if (!next[k]) { delete ratios[k]; delete laid[k]; }
+        // (windows on other Activities keep it: visiting an empty Activity shouldn't reset a dragged width)
+        const held = new Set(order.filter(w => !w.deleted && w.output && w.desktops.length === 1).map(w => key(w.output, w.desktops[0])));
+        for (const k in groups) if (!next[k]) { delete laid[k]; if (!held.has(k)) delete ratios[k]; }
         groups = next;
         save();
     }
@@ -300,7 +304,7 @@ if (typeof workspace !== "undefined") {
         order.push(w);
         if (!hooked.has(w)) {
             hooked.add(w);
-            for (const sig of ["desktopsChanged", "outputChanged", "minimizedChanged", "fullScreenChanged"])
+            for (const sig of ["desktopsChanged", "outputChanged", "minimizedChanged", "fullScreenChanged", "activitiesChanged"])
                 w[sig].connect(() => retileAll(keysOf(w)));
             w.tileChanged.connect(() => {
                 // user dragged a tiled window out: let it float instead of snapping it back
@@ -343,6 +347,7 @@ if (typeof workspace !== "undefined") {
     }
 
     workspace.screensChanged.connect(retileAll);
+    workspace.currentActivityChanged.connect(() => retileAll());
     for (const o of workspace.screens) o.geometryChanged.connect(retileAll); // rotation
     workspace.windowAdded.connect(w => { if (track(w)) { place(w); retileAll(keysOf(w)); } });
     workspace.windowActivated.connect(a => {
