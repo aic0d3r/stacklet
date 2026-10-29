@@ -307,7 +307,7 @@
       <item row="5" column="0"><widget class="QLabel"><property name="text"><string>Grow or shrink the main window</string></property></widget></item>
       <item row="5" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+] / Meta+Alt+[</string></property></widget></item>
       <item row="6" column="0"><widget class="QLabel"><property name="text"><string>Rotate the stack (add Shift to go back)</string></property></widget></item>
-      <item row="6" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+R</string></property></widget></item>
+      <item row="6" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+T</string></property></widget></item>
       <item row="7" column="0"><widget class="QLabel"><property name="text"><string>Swap two windows with the mouse</string></property></widget></item>
       <item row="7" column="1"><widget class="QLabel"><property name="text"><string>Drag one onto the other</string></property></widget></item>
       <item row="8" column="0"><widget class="QLabel"><property name="text"><string>Monocle on / off (one window fills the screen)</string></property></widget></item>

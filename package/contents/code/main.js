@@ -330,7 +330,8 @@ if (typeof workspace !== "undefined") {
     });
 
     // Session-only (scripts can't write their own config): the OSD shows the class to paste into settings.
-    registerShortcut("StackletToggleApp", "Stacklet: Tile / untile this app (shows its window class)", "Meta+Alt+A", () => {
+    // New id (was StackletToggleApp): 1.0.0 saved Meta+Shift+A under the old one, which would hide the new default.
+    registerShortcut("StackletToggleAppClass", "Stacklet: Tile / untile this app (shows its window class)", "Meta+Alt+A", () => {
         const w = workspace.activeWindow;
         if (!w || !w.normalWindow || w.specialWindow) return;
         const c = cls(w), now = !listed(c);
@@ -392,8 +393,9 @@ if (typeof workspace !== "undefined") {
     }
 
     // rotate the stack (everything after the main windows) one step; Shift rotates back
-    for (const [name, keys, dir] of [["Next", "Meta+Alt+R", 1], ["Prev", "Meta+Alt+Shift+R", -1]]) {
-        registerShortcut("StackletRotate" + name, "Stacklet: Rotate stack " + name.toLowerCase(), keys, () => {
+    // New ids and keys: Meta+Alt+R (1.0.0) is Spectacle's Record Screen, and 1.0.0 saved it under StackletRotate*.
+    for (const [name, keys, dir] of [["Next", "Meta+Alt+T", 1], ["Prev", "Meta+Alt+Shift+T", -1]]) {
+        registerShortcut("StackletTurn" + name, "Stacklet: Rotate stack " + name.toLowerCase(), keys, () => {
             const w = tiledWindow();
             if (!w) return;
             const g = groupOf(w.output, w.desktops[0]);

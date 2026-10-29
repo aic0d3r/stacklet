@@ -61,7 +61,7 @@ Shortcuts (all changeable in System Settings → Shortcuts → KWin)
 
 • Meta+Alt+] / Meta+Alt+[: grow / shrink the main window
 
-• Meta+Alt+R: rotate the stack
+• Meta+Alt+T: rotate the stack
 
 • Meta+Alt+A: tile or untile this app until restart, and show its window class
 
@@ -80,7 +80,7 @@ tiling, tiling window manager, window management, kwin script, plasma 6, termina
 
 ## Changelog 1.0.1
 
-Fixed: the "tile / untile this app" shortcut clashed with Plasma's "previous activity" (Meta+Shift+A). It is now Meta+Alt+A.
+Fixed two shortcut clashes: "tile / untile this app" (was Meta+Shift+A, Plasma's "previous activity") is now Meta+Alt+A, and "rotate the stack" (was Meta+Alt+R, Spectacle's "Record Screen") is now Meta+Alt+T and Meta+Alt+Shift+T. Upgrading from 1.0.0 picks up the new keys; if you changed these two shortcuts yourself, set them again.
 
 ## Changelog 1.0.0
 

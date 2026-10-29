@@ -50,7 +50,7 @@ The defaults tile terminals, and you add other apps from a normal settings page.
 | Meta+Shift+Space | Switch layout (master and stack, spiral, monocle) for this screen and desktop, until restart |
 | Meta+Shift+M | Monocle on / off for this screen and desktop: every tiled window fills the area, the focused one on top |
 | Meta+Alt+. / Meta+Alt+, | Focus the next / previous tiled window (use this to cycle in monocle) |
-| Meta+Alt+R / Meta+Alt+Shift+R | Rotate the stack forwards / backwards |
+| Meta+Alt+T / Meta+Alt+Shift+T | Rotate the stack forwards / backwards |
 | Drag a window onto another tile | Swap the two |
 
 ## Install
@@ -96,7 +96,13 @@ tests/layouts/run.sh            # where do 2, 3, 4 and 6 windows end up in each 
 
 Same private virtual KWin. It prints every window's position and fails if a layout has the wrong shape (for example monocle not stacking windows). To reproduce a setup, pass your own kwinrc section: `KWINRC=$'[Script-stacklet]\nlayoutSpiral=true' tests/layouts/run.sh - 5`.
 
-The rest (shortcuts, the settings page) is checked by hand in a live Plasma session.
+```sh
+tests/shortcuts/run.sh         # fires every shortcut and checks what it did, and that its key is free
+```
+
+Same private virtual KWin, with four windows. It also starts from a 1.0.0-style saved config, to check that upgrading picks up the new keys. It can't see shortcuts that only exist in your own session (Spectacle, plasmashell, …), so check new keys against `kglobalshortcutsrc` too.
+
+The settings page is checked by hand in a live Plasma session.
 
 </details>
 
