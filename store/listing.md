@@ -4,7 +4,7 @@ Everything to paste into the store form, plus the files to upload.
 
 ## Files to upload
 
-- **File:** `build/stacklet-1.1.1.kwinscript` (build it with `./package.sh`)
+- **File:** `build/stacklet-1.1.2.kwinscript` (build it with `./package.sh`)
 - **Screenshots:** `store/screenshot-tiling.png`, `store/screenshot-settings.png`
 - **Icon / logo:** `store/logo-256.png` (source: `store/logo.svg`)
 - **GitHub social preview:** `store/social-preview.png` (Settings → Social preview)
@@ -89,6 +89,10 @@ Source and bug reports: https://github.com/aic0d3r/stacklet
 ## Tags
 
 tiling, tiling window manager, window management, kwin script, plasma 6, terminals, i3, productivity
+
+## Changelog 1.1.2
+
+Fixed an empty tile taken by an invisible helper window (such as Xwayland Video Bridge): windows hidden from both the taskbar and the task switcher are no longer tiled. New setting under Behaviour: turn off "Dragging a window out of its tile floats it" and a dragged window snaps back when you let go; dropping it on another tile still swaps them, and Meta+F still floats it.
 
 ## Changelog 1.1.1
 
