@@ -110,6 +110,12 @@ tests/shortcuts/run.sh         # fires every shortcut and checks what it did, an
 
 Same private virtual KWin, with four windows. It also starts from a 1.0.0-style saved config, to check that upgrading picks up the new keys. It sees a fresh Plasma's KWin and service shortcuts (Spectacle, screen reader, …) but not plasmashell's, so check new keys against `kglobalshortcutsrc` too.
 
+```sh
+tests/dialogs/run.sh           # do dialogs, About boxes and tool windows stay floating?
+```
+
+Same private virtual KWin, with the app list and with "Tile every window". It opens two normal windows plus dialogs (with and without a parent), an About box, a tool window and a fixed-size window, and fails if anything but the normal windows (and the parentless dialog, see Known limits) gets a tile.
+
 The settings page is checked by hand in a live Plasma session.
 
 </details>
@@ -117,6 +123,7 @@ The settings page is checked by hand in a live Plasma session.
 ## Known limits
 
 - Windows on all desktops, minimized or fullscreen are left alone.
+- Dialogs, About boxes and tool windows that belong to a parent window never tile, and neither do windows that can't be resized. A dialog an app opens without a parent looks like a normal window on Wayland, so it tiles: Meta+F floats it.
 - Settings apply when the script is loaded: turn Stacklet off and on in KWin Scripts after changing them.
 - Spiral looks the same as master and stack until the fourth window.
 - Stacklet replaces the Meta+T tile layout on every desktop where it tiles a window.
