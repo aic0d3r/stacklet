@@ -196,7 +196,7 @@
       <item row="2" column="0" colspan="2">
        <widget class="QLabel" name="classesHint">
         <property name="wordWrap"><bool>true</bool></property>
-        <property name="text"><string>Window classes, separated by commas. Listed apps are tiled; with the box above ticked they stay floating instead. Meta+Shift+A shows the class of the focused window.</string></property>
+        <property name="text"><string>Window classes, separated by commas. Listed apps are tiled; with the box above ticked they stay floating instead. Meta+Alt+A shows the class of the focused window.</string></property>
        </widget>
       </item>
       <item row="3" column="0">
@@ -299,7 +299,7 @@
       <item row="1" column="0"><widget class="QLabel"><property name="text"><string>Float or re-tile the focused window</string></property></widget></item>
       <item row="1" column="1"><widget class="QLabel"><property name="text"><string>Meta+F</string></property></widget></item>
       <item row="2" column="0"><widget class="QLabel"><property name="text"><string>Tile or untile this app until restart</string></property></widget></item>
-      <item row="2" column="1"><widget class="QLabel"><property name="text"><string>Meta+Shift+A</string></property></widget></item>
+      <item row="2" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+A</string></property></widget></item>
       <item row="3" column="0"><widget class="QLabel"><property name="text"><string>Move focus (built into KWin)</string></property></widget></item>
       <item row="3" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+arrows</string></property></widget></item>
       <item row="4" column="0"><widget class="QLabel"><property name="text"><string>Swap with the neighbouring window</string></property></widget></item>

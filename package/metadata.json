@@ -6,7 +6,7 @@
         "Description": "Tiling window manager for KDE Plasma 6: auto-tile terminals and other listed apps on Plasma's native tiles: master and stack, spiral or monocle. Everything else floats.",
         "Icon": "view-split-left-right",
         "Id": "stacklet",
-        "Version": "1.0.0",
+        "Version": "1.0.1",
         "License": "GPL-3.0-or-later",
         "Website": "https://github.com/aic0d3r/stacklet"
     },

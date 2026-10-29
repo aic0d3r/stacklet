@@ -330,7 +330,7 @@ if (typeof workspace !== "undefined") {
     });
 
     // Session-only (scripts can't write their own config): the OSD shows the class to paste into settings.
-    registerShortcut("StackletToggleApp", "Stacklet: Tile / untile this app (shows its window class)", "Meta+Shift+A", () => {
+    registerShortcut("StackletToggleApp", "Stacklet: Tile / untile this app (shows its window class)", "Meta+Alt+A", () => {
         const w = workspace.activeWindow;
         if (!w || !w.normalWindow || w.specialWindow) return;
         const c = cls(w), now = !listed(c);

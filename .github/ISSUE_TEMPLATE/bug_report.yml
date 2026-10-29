@@ -19,7 +19,7 @@ body:
   - type: input
     id: app
     attributes:
-      label: App window class (Meta+Shift+A shows it)
+      label: App window class (Meta+Alt+A shows it)
   - type: textarea
     id: what
     attributes:

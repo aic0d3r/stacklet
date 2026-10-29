@@ -4,7 +4,7 @@ Everything to paste into the store form, plus the files to upload.
 
 ## Files to upload
 
-- **File:** `build/stacklet-1.0.0.kwinscript` (build it with `./package.sh`)
+- **File:** `build/stacklet-1.0.1.kwinscript` (build it with `./package.sh`)
 - **Screenshots:** `store/screenshot-tiling.png`, `store/screenshot-settings.png`
 - **Icon / logo:** `store/logo-256.png` (source: `store/logo.svg`)
 - **GitHub social preview:** `store/social-preview.png` (Settings → Social preview)
@@ -63,7 +63,7 @@ Shortcuts (all changeable in System Settings → Shortcuts → KWin)
 
 • Meta+Alt+R: rotate the stack
 
-• Meta+Shift+A: tile or untile this app until restart, and show its window class
+• Meta+Alt+A: tile or untile this app until restart, and show its window class
 
 • Drag onto another tile: swap the two
 
@@ -77,6 +77,10 @@ Source and bug reports: https://github.com/aic0d3r/stacklet
 ## Tags
 
 tiling, tiling window manager, window management, kwin script, plasma 6, terminals, i3, productivity
+
+## Changelog 1.0.1
+
+Fixed: the "tile / untile this app" shortcut clashed with Plasma's "previous activity" (Meta+Shift+A). It is now Meta+Alt+A.
 
 ## Changelog 1.0.0
 
