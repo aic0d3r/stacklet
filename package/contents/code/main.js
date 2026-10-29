@@ -416,7 +416,7 @@ if (typeof workspace !== "undefined") {
     });
 
     // Meta+Alt+S is the screen reader toggle on a fresh Plasma. New id: 1.1.0 saved Meta+Alt+Shift+S under StackletToScratchpad.
-    registerShortcut("StackletSendToScratchpad", "Stacklet: Send focused window to the scratchpad (again: back to tiling)", "Meta+Ctrl+S", () => {
+    registerShortcut("StackletSendToScratchpad", "Stacklet: Send focused window to the scratchpad (on a shown one: put it back)", "Meta+Ctrl+S", () => {
         const w = workspace.activeWindow;
         if (!w || !w.normalWindow || w.specialWindow) return;
         if (scratch.includes(w)) {
@@ -435,8 +435,9 @@ if (typeof workspace !== "undefined") {
         osd("Stacklet: sent to the scratchpad. Meta+S shows it.");
     });
 
-    // Focus: the focused window in the centre, every other tiled window in the stash; again restores.
-    registerShortcut("StackletFocusMode", "Stacklet: Focus on / off (focused window centred, the rest in the stash)", "Meta+Alt+C", () => {
+    // Spotlight: the focused window in the centre, every other tiled window in the stash; again restores.
+    // Id says FocusMode (its name in the plan); the label avoids "focus", which means keyboard focus elsewhere.
+    registerShortcut("StackletFocusMode", "Stacklet: Spotlight on / off (focused window centred, the rest in the stash)", "Meta+Alt+C", () => {
         const w = tiledWindow();
         if (!w) { osd("Stacklet: focus a tiled window first"); return; }
         const d = w.desktops[0], k = key(w.output, d), st = modeOf(k, d);
@@ -444,13 +445,13 @@ if (typeof workspace !== "undefined") {
             setMode(k, d, st.prev);
             if (focusOrder.has(k)) placeInSlots(order, focusOrder.get(k));
             focusOrder.delete(k);
-            osd("Stacklet: focus off, back to " + LAYOUT_LABELS[st.prev.mode]);
+            osd("Stacklet: spotlight off, back to " + LAYOUT_LABELS[st.prev.mode]);
         } else {
             const g = groupOf(w.output, d);
             focusOrder.set(k, g);
             if (g[0] !== w) swapOrder(order, order.indexOf(w), order.indexOf(g[0]));
             setMode(k, d, { mode: CENTERED, stash: true, prev: { mode: st.mode, stash: st.stash } });
-            osd("Stacklet: focus on. Meta+Alt+C again goes back.");
+            osd("Stacklet: spotlight on. Meta+Alt+C again goes back.");
         }
         retileAll([k]);
     });

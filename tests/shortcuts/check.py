@@ -171,7 +171,7 @@ fire("StackletNextLayout")
 s, _ = state()
 check("Meta+Shift+Space wraps from centered to the first layout", rects(s) == before, f"{before} -> {rects(s)}")
 
-# Focus: centre + stash, then back
+# Spotlight: centre + stash, then back
 m = main_of(s)
 side = next(c for c in sorted(s) if c != m)
 focus(side)

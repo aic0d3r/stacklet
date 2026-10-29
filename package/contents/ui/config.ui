@@ -114,7 +114,7 @@
         <item row="1" column="0" colspan="2">
          <widget class="QLabel" name="styleHint">
           <property name="wordWrap"><bool>true</bool></property>
-          <property name="text"><string>Starting layout; desktops listed here use their own. Meta+Shift+Space switches the layout on the current screen and desktop. Stacklet keeps that choice after a restart, until you change the desktop&apos;s layout here.</string></property>
+          <property name="text"><string>Starting layout; desktops listed here use their own. Meta+Shift+Space switches the layout on the current screen and desktop. The choice is usually kept after a restart (it is saved through Plasma&apos;s shell), until you change the layout this page gives that desktop.</string></property>
          </widget>
         </item>
        </layout>
@@ -192,7 +192,7 @@
       </item>
       <item row="5" column="1">
        <widget class="QDoubleSpinBox" name="kcfg_centerRatio">
-        <property name="toolTip"><string>Centered layout: share of the screen for the main window (0.15 to 0.85).</string></property>
+        <property name="toolTip"><string>Centered layout: share of the screen for the main window (0.15 to 0.85); on a portrait screen, its height. Not used while the stash is on: then the main window takes what the stash columns leave.</string></property>
         <property name="minimum"><double>0.15</double></property>
         <property name="maximum"><double>0.85</double></property>
         <property name="singleStep"><double>0.05</double></property>
@@ -201,7 +201,7 @@
       <item row="6" column="1">
        <widget class="QCheckBox" name="kcfg_stash">
         <property name="text"><string>Centered: narrow side columns (stash)</string></property>
-        <property name="toolTip"><string>The other windows stay small and live at the screen edges; the main window takes the rest. Meta+Alt+C turns this on for one desktop.</string></property>
+        <property name="toolTip"><string>The other windows stay small and live at the screen edges; the main window takes the rest. Spotlight (Meta+Alt+C) turns it on for one screen and desktop.</string></property>
        </widget>
       </item>
       <item row="7" column="0">
@@ -251,7 +251,7 @@
       <item row="2" column="0" colspan="2">
        <widget class="QLabel" name="classesHint">
         <property name="wordWrap"><bool>true</bool></property>
-        <property name="text"><string>Window classes, separated by commas. Listed apps are tiled; with the box above ticked they stay floating instead. Meta+Alt+A shows the class of the focused window.</string></property>
+        <property name="text"><string>Window classes, separated by commas. Listed apps are tiled; with the box above ticked they stay floating instead. Meta+Alt+A tiles or untiles the focused window&apos;s app until restart and shows its class, so you can add it here.</string></property>
        </widget>
       </item>
       <item row="3" column="0">
@@ -337,7 +337,10 @@
       <item row="2" column="0" colspan="2">
        <widget class="QLabel" name="scratchHint">
         <property name="wordWrap"><bool>true</bool></property>
-        <property name="text"><string>Meta+Ctrl+S hides the focused window in the scratchpad. Meta+S shows it centred on the current desktop; with several, each press shows the next and the last press hides them.</string></property>
+        <property name="text"><string>1. Meta+Ctrl+S hides the focused window in the scratchpad.
+2. Meta+S shows it centred and on top, on whichever desktop you are on. With several windows, each press shows the next one; the press after the last one hides it. It only hides when you press the key.
+3. Meta+Ctrl+S on a shown window puts it back: tiled, or floating for apps Stacklet doesn&apos;t tile.
+Hidden windows stay in the taskbar; restoring one from there shows it.</string></property>
        </widget>
       </item>
      </layout>
@@ -413,11 +416,11 @@
       <item row="9" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+. / Meta+Alt+,</string></property></widget></item>
       <item row="10" column="0"><widget class="QLabel"><property name="text"><string>Switch layout on this screen and desktop</string></property></widget></item>
       <item row="10" column="1"><widget class="QLabel"><property name="text"><string>Meta+Shift+Space</string></property></widget></item>
-      <item row="11" column="0"><widget class="QLabel"><property name="text"><string>Focus on / off (this window centred, the rest in the stash)</string></property></widget></item>
+      <item row="11" column="0"><widget class="QLabel"><property name="text"><string>Spotlight on / off (this window centred, the rest in the stash)</string></property></widget></item>
       <item row="11" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+C</string></property></widget></item>
       <item row="12" column="0"><widget class="QLabel"><property name="text"><string>Show the next scratchpad window, or hide it</string></property></widget></item>
       <item row="12" column="1"><widget class="QLabel"><property name="text"><string>Meta+S</string></property></widget></item>
-      <item row="13" column="0"><widget class="QLabel"><property name="text"><string>Send to the scratchpad (again: back to tiling)</string></property></widget></item>
+      <item row="13" column="0"><widget class="QLabel"><property name="text"><string>Send to the scratchpad (on a shown one: put it back)</string></property></widget></item>
       <item row="13" column="1"><widget class="QLabel"><property name="text"><string>Meta+Ctrl+S</string></property></widget></item>
       <item row="14" column="0" colspan="2">
        <widget class="QLabel" name="keysHint">

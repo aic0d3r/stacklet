@@ -30,8 +30,8 @@ The defaults tile terminals, and you add other apps from a normal settings page.
   - **Spiral**: each new window takes half of the space left.
   - **Monocle**: one window fills the screen.
   - **Centered master**: the main window in the middle (its own width, default 50%), the others in columns on both sides. With two windows the main one stays centred. Optional **stash**: the side columns become narrow strips (default 15% each) of small, live windows.
-- Pick a starting layout, or one per screen and virtual desktop, and switch on the fly. A layout you switch to by shortcut, and widths you drag, are kept after a restart, until you change that desktop's layout on the settings page. A lone window always fills the screen.
-- **Focus** (Meta+Alt+C): the focused window goes to the centre, every other tiled window to the stash. Press again to get the previous layout back.
+- Pick a starting layout, or one per screen and virtual desktop, and switch on the fly. A layout you switch to by shortcut, and widths you drag, are usually kept after a restart (see Known limits), until you change the layout the settings page gives that desktop. A lone window always fills the screen.
+- **Spotlight** (Meta+Alt+C): the focused window goes to the centre, every other tiled window to the stash. Press again to get the previous layout back.
 - **Scratchpad**: hide windows and call them up centred over any desktop (default 60% × 60% of the screen), one at a time.
 - Settings: main width, side, 1–2 main windows, where new windows land, gap, and screens or desktops where tiling is off.
 - Portrait screens get the layout turned 90°: main window on top, the rest side by side below. It re-tiles when you rotate a screen.
@@ -56,9 +56,9 @@ Every shortcut can be changed in System Settings → Shortcuts → KWin (search 
 | Meta+Shift+M | Monocle on / off for this screen and desktop: every tiled window fills the area, the focused one on top |
 | Meta+Alt+. / Meta+Alt+, | Focus the next / previous tiled window (use this to cycle in monocle) |
 | Meta+Alt+T / Meta+Alt+Shift+T | Rotate the stack forwards / backwards |
-| Meta+Alt+C | Focus on / off: the focused window in the centre, the rest in the stash |
+| Meta+Alt+C | Spotlight on / off: the focused window in the centre, the rest in the stash |
 | Meta+S | Show the next scratchpad window; the press after the last one hides it |
-| Meta+Ctrl+S | Send the focused window to the scratchpad; on a shown scratchpad window, put it back in tiling |
+| Meta+Ctrl+S | Send the focused window to the scratchpad; on a shown scratchpad window, put it back (tiled, or floating for apps Stacklet doesn't tile) |
 | Drag a window onto another tile | Swap the two |
 
 ## Install
