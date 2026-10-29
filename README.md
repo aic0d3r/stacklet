@@ -123,6 +123,10 @@ The settings page is checked by hand in a live Plasma session.
 - Saved layouts and widths are written through Plasma's shell (KWin scripts can't write their config), so nothing is saved while plasmashell isn't running. A width still resets when its desktop has no tiled windows, which usually happens when you log out.
 - Scratchpad windows are minimized while hidden, so they stay in the taskbar; restoring one from there shows it.
 
+## Say thanks
+
+If Stacklet saves you some window shuffling, [star it on GitHub](https://github.com/aic0d3r/stacklet) or rate it on the [KDE Store](https://store.kde.org/p/2380552/). That helps other people find it. If you want to chip in, you can [sponsor me on GitHub](https://github.com/sponsors/aic0d3r).
+
 ## License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).
