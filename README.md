@@ -47,7 +47,7 @@ Every shortcut can be changed in System Settings → Shortcuts → KWin (search 
 | Key | Action |
 | --- | --- |
 | Meta+Shift+Return | Make the focused window the main one |
-| Meta+F | Float / re-tile the focused window (dragging a tile out also floats it) |
+| Meta+F | Float / re-tile the focused window (dragging a tile out also floats it, unless you turn that off under Behaviour) |
 | Meta+Alt+A | Tile / untile the focused window's app until restart; the on-screen note shows its window class for the settings list |
 | Meta+Alt+arrows | Focus the neighbouring tile (KWin's own shortcut) |
 | Meta+Alt+Shift+arrows | Swap with the neighbouring tile |
@@ -128,7 +128,7 @@ The settings page is checked by hand in a live Plasma session.
 
 ## Known limits
 
-- Windows on all desktops, minimized or fullscreen are left alone.
+- Windows on all desktops, minimized or fullscreen are left alone, and so are windows hidden from both the taskbar and the task switcher (helpers such as Xwayland Video Bridge).
 - Dialogs, About boxes and tool windows that belong to a parent window never tile, and neither do windows that can't be resized. A dialog an app opens without a parent looks like a normal window on Wayland, so it tiles: Meta+F floats it.
 - Settings apply when the script is loaded: turn Stacklet off and on in KWin Scripts after changing them.
 - Spiral looks the same as master and stack until the fourth window.

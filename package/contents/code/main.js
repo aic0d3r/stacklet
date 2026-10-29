@@ -100,6 +100,7 @@ if (typeof workspace !== "undefined") {
     const smartGaps = flag("smartGaps", true); // no gap around a lone window
     const mainClasses = list(readConfig("mainClasses", "")); // apps that always take the main slot
     const focusAfterClose = flag("focusAfterClose", true);
+    const dragFloats = flag("dragFloats", true);
     const offScreens = list(readConfig("disabledScreens", ""));
     const offDesktops = list(readConfig("disabledDesktops", ""));
     const TILE = 0, SPIRAL = 1, MONOCLE = 2, CENTERED = 3;
@@ -170,8 +171,10 @@ if (typeof workspace !== "undefined") {
         (!tileAll || w.resizeable) && listed(cls(w));
     // a window on another Activity still sits on this screen and desktop: counting it leaves an empty tile
     const onActivity = w => !w.activities.length || w.activities.includes(workspace.currentActivity);
+    // hidden from taskbar and switcher = not a window the user manages (e.g. Xwayland Video Bridge: invisible, type normal)
+    const helper = w => w.skipTaskbar && w.skipSwitcher;
     const tileable = w => !w.deleted && !floating.has(w) && !scratch.includes(w) && !w.minimized && !w.fullScreen &&
-        w.output && w.desktops.length === 1 && onActivity(w) &&
+        !helper(w) && w.output && w.desktops.length === 1 && onActivity(w) &&
         !offScreens.includes(String(w.output.name).toLowerCase()) &&
         !offDesktops.includes(String(w.desktops[0].x11DesktopNumber));
     // windows of a screen + desktop in layout order; apps pinned as "always main" come first
@@ -304,9 +307,14 @@ if (typeof workspace !== "undefined") {
         order.push(w);
         if (!hooked.has(w)) {
             hooked.add(w);
-            for (const sig of ["desktopsChanged", "outputChanged", "minimizedChanged", "fullScreenChanged", "activitiesChanged"])
+            for (const sig of ["desktopsChanged", "outputChanged", "minimizedChanged", "fullScreenChanged", "activitiesChanged", "skipTaskbarChanged", "skipSwitcherChanged"])
                 w[sig].connect(() => retileAll(keysOf(w)));
             w.tileChanged.connect(() => {
+                // KWin moves windows out of tiles we remove into another tile, later (Wayland is async):
+                // one we don't lay out (helper, other Activity, ...) would sit invisibly in someone else's tile
+                if (!busy && w.tile && order.includes(w) && !floating.has(w) && !tileable(w)) { release(w); return; }
+                // dragFloats off: leave its tile empty while dragging; on drop it swaps or snaps back
+                if (!dragFloats && !busy && moving.has(w) && order.includes(w) && !w.tile && tileable(w)) { draggedOut.add(w); return; }
                 // user dragged a tiled window out: let it float instead of snapping it back
                 if (!busy && order.includes(w) && !w.tile && tileable(w)) {
                     floating.add(w);
@@ -321,7 +329,7 @@ if (typeof workspace !== "undefined") {
                 // dropped onto another tile: take its place, it takes ours
                 const p = workspace.cursorPos;
                 const hit = order.find(x => x !== w && tileable(x) && x.output === w.output && x.desktops[0] === w.desktops[0] && (g => p.x >= g.x && p.x < g.x + g.width && p.y >= g.y && p.y < g.y + g.height)(x.frameGeometry));
-                if (!hit) return;
+                if (!hit) { if (!dragFloats) retileAll(keysOf(w)); return; }
                 floating.delete(w);
                 swapOrder(order, order.indexOf(w), order.indexOf(hit));
                 retileAll(keysOf(w));

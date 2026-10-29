@@ -30,6 +30,7 @@ steps = [
     lambda: win("dialog-parentless", QDialog()),                      # dialog with no parent
     lambda: win("fixed-parentless", QWidget()).setFixedSize(320, 180),  # plain window that can't be resized
     lambda: win("tool-child", QWidget(main, Qt.WindowType.Tool)),
+    lambda: win("ghost", QWidget()),  # run.sh hides it from taskbar + switcher, like Xwayland Video Bridge
 ]
 
 

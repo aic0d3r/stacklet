@@ -1,7 +1,7 @@
 #!/bin/bash
 # Dialog check. Runs Stacklet in a private, virtual KWin (own D-Bus session, config and script folder;
 # your real session is not touched), opens two normal windows plus dialogs, an About box, a tool window
-# and a fixed-size window from a tiled app, and checks that only the normal windows get a tile
+# a fixed-size window and an invisible helper window (hidden from taskbar and switcher) from a tiled app, and checks that only the normal windows get a tile
 # (plus a dialog without a parent: Wayland can't tell it from a normal window, see README Known limits).
 # Runs twice: default settings (app list) and "Tile every window".
 #
@@ -48,10 +48,16 @@ export QT_NO_XDG_DESKTOP_PORTAL=1 GTK_USE_PORTAL=0 QT_QPA_PLATFORM=wayland WAYLA
 python3 "$HERE/windows.py" "$APP" 20 > /dev/null 2>&1 &
 sleep 8
 
+# after it is tiled, like Video Bridge setting its state on an already mapped window
+printf '%s\n' 'const g = workspace.windowList().find(w => w.caption === "ghost"); g.skipTaskbar = true; g.skipSwitcher = true; g.opacity = 0;' > "$WORK/ghost.js"
+qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "$WORK/ghost.js" ghost > /dev/null
+qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start > /dev/null
+sleep 2
+
 cat > "$WORK/dump.js" <<'EOF'
 print("DUMP " + workspace.windowList().filter(w => w.caption).map(w =>
     [w.caption, w.tile ? "tiled" : "floating", "normal=" + w.normalWindow, "transient=" + w.transient,
-     "dialog=" + w.dialog, "resizeable=" + w.resizeable].join(" ")).join(" ; "));
+     "dialog=" + w.dialog, "resizeable=" + w.resizeable, "skip=" + (w.skipTaskbar && w.skipSwitcher)].join(" ")).join(" ; "));
 EOF
 qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "$WORK/dump.js" dump > /dev/null
 qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start > /dev/null
@@ -70,5 +76,5 @@ while read -r caption state rest; do
     case "$caption" in normal-*|dialog-parentless) want=tiled ;; *) want=floating ;; esac
     [ "$state" = "$want" ] || { echo "!! $caption should be $want"; fail=1; }
 done <<< "$(echo "$LINE" | tr ';' '\n' | sed 's/^ *//')"
-[ $seen -ge 8 ] || { echo "!! expected 8 windows, saw $seen"; fail=1; }
+[ $seen -ge 9 ] || { echo "!! expected 9 windows, saw $seen"; fail=1; }
 exit $fail

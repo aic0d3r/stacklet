@@ -92,6 +92,10 @@
       <label>After closing a tiled window, focus the tile before it</label>
       <default>true</default>
     </entry>
+    <entry name="dragFloats" type="Bool">
+      <label>Dragging a window out of its tile floats it (off: it snaps back unless dropped on another tile)</label>
+      <default>true</default>
+    </entry>
     <entry name="disabledScreens" type="String">
       <label>Screens where tiling is off (comma-separated names, e.g. HDMI-A-1)</label>
       <default></default>
