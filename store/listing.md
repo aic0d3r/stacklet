@@ -4,7 +4,7 @@ Everything to paste into the store form, plus the files to upload.
 
 ## Files to upload
 
-- **File:** `build/stacklet-1.0.1.kwinscript` (build it with `./package.sh`)
+- **File:** `build/stacklet-1.1.0.kwinscript` (build it with `./package.sh`)
 - **Screenshots:** `store/screenshot-tiling.png`, `store/screenshot-settings.png`
 - **Icon / logo:** `store/logo-256.png` (source: `store/logo.svg`)
 - **GitHub social preview:** `store/social-preview.png` (Settings → Social preview)
@@ -19,19 +19,21 @@ Stacklet
 
 ## Summary (one line)
 
-Tiling window manager for KDE Plasma 6: auto-tile your terminals on Plasma's own tiles with master and stack, spiral or monocle.
+Tiling window manager for KDE Plasma 6: auto-tile your terminals on Plasma's own tiles with master and stack, spiral, monocle or centered master, plus a scratchpad.
 
 ## Description (plain text only: the store mangles BBCode lists)
 
 Stacklet is a tiling window manager script for KDE Plasma 6 (a KWin script). It tiles the apps you choose into a main window plus a stack, and leaves everything else floating. It drives Plasma's native tiles, so resizing, Meta+T layouts and per-desktop tile layouts keep working.
 
-Three layouts, with a preview when you pick one:
+Four layouts, with a preview when you pick one:
 
 • Master and stack: a main window, the rest stacked beside it. Good for 2 to 4 terminals.
 
 • Spiral: each new window takes half of the space left. Good for many terminals on a big screen.
 
 • Monocle: one window fills the area, cycle through the others. Good for small screens, or one job per desktop.
+
+• Centered master: the main window in the middle, the others in columns on both sides. Good for wide screens. Optionally the side columns become a narrow stash of small, live windows.
 
 More
 
@@ -43,7 +45,11 @@ More
 
 • Gaps, with no gap around a lone window. Drag the border between tiles to resize.
 
-• Per-screen and per-desktop layouts, and screens or desktops where tiling stays off.
+• Per-screen and per-desktop layouts, and screens or desktops where tiling stays off. A layout switched by shortcut is usually kept after a restart.
+
+• Spotlight: the focused window in the centre, every other window in the stash. Press again to go back.
+
+• Scratchpad: hide windows and call them up centred over any desktop, one at a time.
 
 Shortcuts (all changeable in System Settings → Shortcuts → KWin)
 
@@ -63,6 +69,12 @@ Shortcuts (all changeable in System Settings → Shortcuts → KWin)
 
 • Meta+Alt+T: rotate the stack
 
+• Meta+Alt+C: spotlight on / off
+
+• Meta+S: show the next scratchpad window, or hide it
+
+• Meta+Ctrl+S: send to the scratchpad (on a shown one: put it back)
+
 • Meta+Alt+A: tile or untile this app until restart, and show its window class
 
 • Drag onto another tile: swap the two
@@ -77,6 +89,10 @@ Source and bug reports: https://github.com/aic0d3r/stacklet
 ## Tags
 
 tiling, tiling window manager, window management, kwin script, plasma 6, terminals, i3, productivity
+
+## Changelog 1.1.0
+
+New centered master layout (main window in the middle, optional narrow stash columns at the sides), in the layout cycle and per desktop as "centered". Spotlight (Meta+Alt+C): the focused window in the centre, the rest in the stash; press again to go back. Scratchpad: Meta+Ctrl+S hides a window, Meta+S shows the next one centred on top or hides it. Smart gaps also apply in monocle. Layouts switched by shortcut and dragged widths are usually kept after a restart. Settings page: bold section headings, smaller help text.
 
 ## Changelog 1.0.1
 
