@@ -14,7 +14,7 @@ A small auto-tiling script made for KDE Plasma 6.8 and Wayland. It tiles your te
 
 ## Why I made it
 
-I wanted tiling on Plasma without leaving Plasma. The existing scripts (Kröhnkite, Polonium and others) don't use Plasma's own tiles, and I found them confusing and fiddly to set up. 
+I wanted tiling on Plasma without leaving Plasma. Kröhnkite does its own tiling instead of using Plasma's tiles. Polonium does use them, but I found both confusing and fiddly to set up.
 
 So I wrote Stacklet, made for Plasma 6.8 and newer. It drives Plasma's native tiles, so resizing, Meta+T layouts and per-desktop tile layouts keep working. Install it, tick it in KWin Scripts, done. 
 
