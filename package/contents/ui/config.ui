@@ -11,8 +11,14 @@
       <layout class="QVBoxLayout" name="tabLayoutBox">
 
    <item>
-    <widget class="QGroupBox" name="styleGroup">
-     <property name="title"><string>Layout style</string></property>
+    <widget class="QLabel" name="styleGroupHeading">
+     <property name="textFormat"><enum>Qt::RichText</enum></property>
+     <property name="text"><string>&lt;b&gt;&lt;span style=&quot;font-size:large&quot;&gt;Layout style&lt;/span&gt;&lt;/b&gt;</string></property>
+     <property name="accessibleName"><string>Layout style</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="styleGroup">
      <layout class="QGridLayout" name="styleGrid">
       <item row="0" column="0">
        <widget class="QLabel" name="previewTile">
@@ -71,7 +77,8 @@
         <property name="alignment"><set>Qt::AlignHCenter|Qt::AlignTop</set></property>
         <property name="wordWrap"><bool>true</bool></property>
         <property name="minimumSize"><size><width>0</width><height>68</height></size></property>
-        <property name="text"><string>A main window and a stack. For 2 to 4 terminals.</string></property>
+        <property name="textFormat"><enum>Qt::RichText</enum></property>
+        <property name="text"><string>&lt;small&gt;A main window and a stack. For 2 to 4 terminals.&lt;/small&gt;</string></property>
        </widget>
       </item>
       <item row="2" column="1">
@@ -79,7 +86,8 @@
         <property name="alignment"><set>Qt::AlignHCenter|Qt::AlignTop</set></property>
         <property name="wordWrap"><bool>true</bool></property>
         <property name="minimumSize"><size><width>0</width><height>68</height></size></property>
-        <property name="text"><string>Many terminals on a big screen. Looks like master until 4 windows.</string></property>
+        <property name="textFormat"><enum>Qt::RichText</enum></property>
+        <property name="text"><string>&lt;small&gt;Many terminals on a big screen. Looks like master until 4 windows.&lt;/small&gt;</string></property>
        </widget>
       </item>
       <item row="2" column="2">
@@ -87,7 +95,8 @@
         <property name="alignment"><set>Qt::AlignHCenter|Qt::AlignTop</set></property>
         <property name="wordWrap"><bool>true</bool></property>
         <property name="minimumSize"><size><width>0</width><height>68</height></size></property>
-        <property name="text"><string>Small screens, or one job per desktop.</string></property>
+        <property name="textFormat"><enum>Qt::RichText</enum></property>
+        <property name="text"><string>&lt;small&gt;Small screens, or one job per desktop.&lt;/small&gt;</string></property>
        </widget>
       </item>
       <item row="2" column="3">
@@ -95,7 +104,8 @@
         <property name="alignment"><set>Qt::AlignHCenter|Qt::AlignTop</set></property>
         <property name="wordWrap"><bool>true</bool></property>
         <property name="minimumSize"><size><width>0</width><height>68</height></size></property>
-        <property name="text"><string>Wide screens: the window you work in stays in front of you.</string></property>
+        <property name="textFormat"><enum>Qt::RichText</enum></property>
+        <property name="text"><string>&lt;small&gt;Wide screens: the window you work in stays in front of you.&lt;/small&gt;</string></property>
        </widget>
       </item>
       <item row="3" column="0" colspan="4">
@@ -114,7 +124,8 @@
         <item row="1" column="0" colspan="2">
          <widget class="QLabel" name="styleHint">
           <property name="wordWrap"><bool>true</bool></property>
-          <property name="text"><string>Starting layout; desktops listed here use their own. Meta+Shift+Space switches the layout on the current screen and desktop. The choice is usually kept after a restart (it is saved through Plasma&apos;s shell), until you change the layout this page gives that desktop.</string></property>
+          <property name="textFormat"><enum>Qt::RichText</enum></property>
+          <property name="text"><string>&lt;small&gt;Starting layout; desktops listed here use their own. Meta+Shift+Space switches the layout on the current screen and desktop. The choice is usually kept after a restart (it is saved through Plasma&apos;s shell), until you change the layout this page gives that desktop.&lt;/small&gt;</string></property>
          </widget>
         </item>
        </layout>
@@ -123,9 +134,16 @@
     </widget>
    </item>
 
+   <item><spacer name="layoutGroupGap"><property name="orientation"><enum>Qt::Vertical</enum></property><property name="sizeType"><enum>QSizePolicy::Fixed</enum></property><property name="sizeHint" stdset="0"><size><width>0</width><height>14</height></size></property></spacer></item>
    <item>
-    <widget class="QGroupBox" name="layoutGroup">
-     <property name="title"><string>Sizes and gaps</string></property>
+    <widget class="QLabel" name="layoutGroupHeading">
+     <property name="textFormat"><enum>Qt::RichText</enum></property>
+     <property name="text"><string>&lt;b&gt;&lt;span style=&quot;font-size:large&quot;&gt;Sizes and gaps&lt;/span&gt;&lt;/b&gt;</string></property>
+     <property name="accessibleName"><string>Sizes and gaps</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="layoutGroup">
      <layout class="QFormLayout" name="layoutForm">
       <item row="0" column="0">
        <widget class="QLabel" name="sideLabel">
@@ -251,7 +269,8 @@
       <item row="2" column="0" colspan="2">
        <widget class="QLabel" name="classesHint">
         <property name="wordWrap"><bool>true</bool></property>
-        <property name="text"><string>Window classes, separated by commas. Listed apps are tiled; with the box above ticked they stay floating instead. Meta+Alt+A tiles or untiles the focused window&apos;s app until restart and shows its class, so you can add it here.</string></property>
+        <property name="textFormat"><enum>Qt::RichText</enum></property>
+        <property name="text"><string>&lt;small&gt;Window classes, separated by commas. Listed apps are tiled; with the box above ticked they stay floating instead. Meta+Alt+A tiles or untiles the focused window&apos;s app until restart and shows its class, so you can add it here.&lt;/small&gt;</string></property>
        </widget>
       </item>
       <item row="3" column="0">
@@ -277,8 +296,14 @@
       <attribute name="title"><string>Behaviour</string></attribute>
       <layout class="QVBoxLayout" name="tabBehaviourBox">
    <item>
-    <widget class="QGroupBox" name="windowsGroup">
-     <property name="title"><string>New and closed windows</string></property>
+    <widget class="QLabel" name="windowsGroupHeading">
+     <property name="textFormat"><enum>Qt::RichText</enum></property>
+     <property name="text"><string>&lt;b&gt;&lt;span style=&quot;font-size:large&quot;&gt;New and closed windows&lt;/span&gt;&lt;/b&gt;</string></property>
+     <property name="accessibleName"><string>New and closed windows</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="windowsGroup">
      <layout class="QFormLayout" name="windowsForm">
       <item row="0" column="0">
        <widget class="QLabel" name="newLabel">
@@ -302,9 +327,16 @@
     </widget>
    </item>
 
+   <item><spacer name="scratchGroupGap"><property name="orientation"><enum>Qt::Vertical</enum></property><property name="sizeType"><enum>QSizePolicy::Fixed</enum></property><property name="sizeHint" stdset="0"><size><width>0</width><height>14</height></size></property></spacer></item>
    <item>
-    <widget class="QGroupBox" name="scratchGroup">
-     <property name="title"><string>Scratchpad</string></property>
+    <widget class="QLabel" name="scratchGroupHeading">
+     <property name="textFormat"><enum>Qt::RichText</enum></property>
+     <property name="text"><string>&lt;b&gt;&lt;span style=&quot;font-size:large&quot;&gt;Scratchpad&lt;/span&gt;&lt;/b&gt;</string></property>
+     <property name="accessibleName"><string>Scratchpad</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="scratchGroup">
      <layout class="QFormLayout" name="scratchForm">
       <item row="0" column="0">
        <widget class="QLabel" name="scratchWidthLabel">
@@ -337,19 +369,24 @@
       <item row="2" column="0" colspan="2">
        <widget class="QLabel" name="scratchHint">
         <property name="wordWrap"><bool>true</bool></property>
-        <property name="text"><string>1. Meta+Ctrl+S hides the focused window in the scratchpad.
-2. Meta+S shows it centred and on top, on whichever desktop you are on. With several windows, each press shows the next one; the press after the last one hides it. It only hides when you press the key.
-3. Meta+Ctrl+S on a shown window puts it back: tiled, or floating for apps Stacklet doesn&apos;t tile.
-Hidden windows stay in the taskbar; restoring one from there shows it.</string></property>
+        <property name="textFormat"><enum>Qt::RichText</enum></property>
+        <property name="text"><string>&lt;small&gt;1. Meta+Ctrl+S hides the focused window in the scratchpad.&lt;br&gt;2. Meta+S shows it centred and on top, on whichever desktop you are on. With several windows, each press shows the next one; the press after the last one hides it. It only hides when you press the key.&lt;br&gt;3. Meta+Ctrl+S on a shown window puts it back: tiled, or floating for apps Stacklet doesn&apos;t tile.&lt;br&gt;Hidden windows stay in the taskbar; restoring one from there shows it.&lt;/small&gt;</string></property>
        </widget>
       </item>
      </layout>
     </widget>
    </item>
 
+   <item><spacer name="offGroupGap"><property name="orientation"><enum>Qt::Vertical</enum></property><property name="sizeType"><enum>QSizePolicy::Fixed</enum></property><property name="sizeHint" stdset="0"><size><width>0</width><height>14</height></size></property></spacer></item>
    <item>
-    <widget class="QGroupBox" name="offGroup">
-     <property name="title"><string>Turn tiling off</string></property>
+    <widget class="QLabel" name="offGroupHeading">
+     <property name="textFormat"><enum>Qt::RichText</enum></property>
+     <property name="text"><string>&lt;b&gt;&lt;span style=&quot;font-size:large&quot;&gt;Turn tiling off&lt;/span&gt;&lt;/b&gt;</string></property>
+     <property name="accessibleName"><string>Turn tiling off</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="offGroup">
      <layout class="QFormLayout" name="offForm">
       <item row="0" column="0">
        <widget class="QLabel" name="screensLabel">
@@ -376,7 +413,8 @@ Hidden windows stay in the taskbar; restoring one from there shows it.</string><
       <item row="2" column="0" colspan="2">
        <widget class="QLabel" name="offHint">
         <property name="wordWrap"><bool>true</bool></property>
-        <property name="text"><string>Screens by name (see System Settings → Display), desktops by number. Separate several with commas.</string></property>
+        <property name="textFormat"><enum>Qt::RichText</enum></property>
+        <property name="text"><string>&lt;small&gt;Screens by name (see System Settings → Display), desktops by number. Separate several with commas.&lt;/small&gt;</string></property>
        </widget>
       </item>
      </layout>
@@ -425,7 +463,8 @@ Hidden windows stay in the taskbar; restoring one from there shows it.</string><
       <item row="14" column="0" colspan="2">
        <widget class="QLabel" name="keysHint">
         <property name="wordWrap"><bool>true</bool></property>
-        <property name="text"><string>Change keys in System Settings → Shortcuts → KWin. You can also resize by dragging the border between tiles.</string></property>
+        <property name="textFormat"><enum>Qt::RichText</enum></property>
+        <property name="text"><string>&lt;small&gt;Change keys in System Settings → Shortcuts → KWin. You can also resize by dragging the border between tiles.&lt;/small&gt;</string></property>
        </widget>
       </item>
      </layout>
