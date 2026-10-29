@@ -16,7 +16,7 @@ A small auto-tiling script made for KDE Plasma 6.8 and Wayland. It tiles your te
 
 I wanted tiling on Plasma without leaving Plasma. Kröhnkite does its own tiling instead of using Plasma's tiles. Polonium does use them, but I found both confusing and fiddly to set up.
 
-So I wrote Stacklet, made for Plasma 6.8 and newer. It drives Plasma's native tiles, so resizing, Meta+T layouts and per-desktop tile layouts keep working. Install it, tick it in KWin Scripts, done. 
+So I wrote Stacklet, made for Plasma 6.8 and newer. It drives Plasma's native tiles, so resizing, Meta+T layouts and per-desktop tile layouts keep working. Install it, tick it in KWin Scripts, done.
 
 The defaults tile terminals, and you add other apps from a normal settings page.
 
@@ -33,7 +33,7 @@ The defaults tile terminals, and you add other apps from a normal settings page.
 - Pick a starting layout, or one per screen and virtual desktop, and switch on the fly. A layout you switch to by shortcut, and widths you drag, are usually kept after a restart (see Known limits), until you change the layout the settings page gives that desktop. A lone window always fills the screen.
 - **Spotlight** (Meta+Alt+C): the focused window goes to the centre, every other tiled window to the stash. Press again to get the previous layout back.
 - **Scratchpad**: hide windows and call them up centred over any desktop (default 60% × 60% of the screen), one at a time.
-- Settings: main width, side, 1–2 main windows, where new windows land, gap, and screens or desktops where tiling is off.
+- Settings: main width, side, 1–2 main windows, where new windows land, gap, whether dragging a window out of its tile floats it, and screens or desktops where tiling is off.
 - Portrait screens get the layout turned 90°: main window on top, the rest side by side below. It re-tiles when you rotate a screen.
 - Pin apps as "always main", for example a browser kept big with terminals beside it. After closing a window, focus moves to the tile before it.
 - Drag the border between tiles to resize. The width sticks until that desktop has no tiled windows.
@@ -90,7 +90,7 @@ Found a bug? [Open an issue](https://github.com/aic0d3r/stacklet/issues/new/choo
 node test.js
 ```
 
-Checks the layout math.
+Checks the layout maths.
 
 ```sh
 tests/stress/run.sh            # or: tests/stress/run.sh spiral
@@ -114,7 +114,7 @@ Same private virtual KWin, with four windows. It also starts from a 1.0.0-style 
 tests/dialogs/run.sh           # do dialogs, About boxes and tool windows stay floating?
 ```
 
-Same private virtual KWin, with the app list and with "Tile every window". It opens two normal windows plus dialogs (with and without a parent), an About box, a tool window and a fixed-size window, and fails if anything but the normal windows (and the parentless dialog, see Known limits) gets a tile.
+Same private virtual KWin, with the app list and with "Tile every window". It opens two normal windows plus dialogs (with and without a parent), an About box, a tool window, a fixed-size window and an invisible helper window (hidden from the taskbar and the task switcher, like Xwayland Video Bridge), and fails if anything but the normal windows (and the parentless dialog, see Known limits) gets a tile.
 
 ```sh
 tests/activities/run.sh        # does a window on another Activity leave a gap?

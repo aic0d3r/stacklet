@@ -43,7 +43,7 @@ More
 
 • Portrait screens get the layout turned 90 degrees, and it re-tiles when you rotate.
 
-• Gaps, with no gap around a lone window. Drag the border between tiles to resize.
+• Gaps, with no gap around a lone window. Drag the border between tiles to resize. Dragging a window out floats it, or snaps it back if you turn that off.
 
 • Per-screen and per-desktop layouts, and screens or desktops where tiling stays off. A layout switched by shortcut is usually kept after a restart.
 

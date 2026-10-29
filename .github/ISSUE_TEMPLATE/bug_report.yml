@@ -24,7 +24,7 @@ body:
     id: what
     attributes:
       label: What happened, and what did you expect?
-      description: Include your layout, screens and any other tiling script you run.
+      description: Include your layout, screens, whether you use Activities, and any other tiling script you run.
     validations:
       required: true
   - type: textarea

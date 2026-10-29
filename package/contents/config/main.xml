@@ -81,7 +81,7 @@
       <max>64</max>
     </entry>
     <entry name="smartGaps" type="Bool">
-      <label>No gap when only one window is tiled</label>
+      <label>No gap around a single window or in monocle</label>
       <default>true</default>
     </entry>
     <entry name="mainClasses" type="String">
