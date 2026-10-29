@@ -191,12 +191,12 @@ check("Meta+Alt+C again restores the previous layout", rects(s) == before, f"{be
 # Scratchpad
 x, y = sorted(s)[:2]
 focus(x)
-fire("StackletToScratchpad")
+fire("StackletSendToScratchpad")
 focus(y)
-fire("StackletToScratchpad")
+fire("StackletSendToScratchpad")
 s, _ = state()
 rest = [c for c in s if c not in (x, y)]
-check("Meta+Alt+Shift+S hides windows in the scratchpad", s[x][4:] == (0, 1) and s[y][4:] == (0, 1), f"{s[x]} {s[y]}")
+check("Meta+Ctrl+S hides windows in the scratchpad", s[x][4:] == (0, 1) and s[y][4:] == (0, 1), f"{s[x]} {s[y]}")
 check("the other windows re-tile without them", all(s[c][4] for c in rest) and len(set(rects({c: s[c] for c in rest}).values())) == 2, str(rects(s)))
 fire("StackletScratchpad")
 s, a = state()
@@ -210,13 +210,13 @@ check("Meta+S after the last one hides the scratchpad", s[x][5] == 1 and s[y][5]
 for c in (x, y):
     fire("StackletScratchpad")  # shows the first window still in the scratchpad
     focus(c)
-    fire("StackletToScratchpad")
+    fire("StackletSendToScratchpad")
 s, _ = state()
-check("Meta+Alt+Shift+S on a shown window puts it back in tiling", all(v[4] == 1 and v[5] == 0 for v in s.values()), str(s))
+check("Meta+Ctrl+S on a shown window puts it back in tiling", all(v[4] == 1 and v[5] == 0 for v in s.values()), str(s))
 
 # Real key bindings: every default key must reach exactly its Stacklet action, nothing else.
 # (invokeShortcut above skips the key, so this is what catches a clash like Meta+Shift+A.)
-META, SHIFT, ALT = 0x10000000, 0x02000000, 0x08000000
+META, SHIFT, ALT, CTRL = 0x10000000, 0x02000000, 0x08000000, 0x04000000
 K = {"Return": 0x01000004, "Space": 0x20, ".": 0x2E, ",": 0x2C, "[": 0x5B, "]": 0x5D,
      "Left": 0x01000012, "Up": 0x01000013, "Right": 0x01000014, "Down": 0x01000015}
 BINDINGS = {
@@ -225,7 +225,7 @@ BINDINGS = {
     "Meta+Alt+.": "StackletFocusNext", "Meta+Alt+,": "StackletFocusPrev",
     "Meta+Alt+]": "StackletGrowMain", "Meta+Alt+[": "StackletShrinkMain",
     "Meta+Alt+T": "StackletTurnNext", "Meta+Alt+Shift+T": "StackletTurnPrev",
-    "Meta+Alt+C": "StackletFocusMode", "Meta+S": "StackletScratchpad", "Meta+Alt+Shift+S": "StackletToScratchpad",
+    "Meta+Alt+C": "StackletFocusMode", "Meta+S": "StackletScratchpad", "Meta+Ctrl+S": "StackletSendToScratchpad",
     **{f"Meta+Alt+Shift+{d}": f"StackletSwap{d}" for d in ("Left", "Right", "Up", "Down")},
 }
 
@@ -233,7 +233,7 @@ BINDINGS = {
 def code(keys):
     c = 0
     for part in keys.split("+"):
-        c |= {"Meta": META, "Shift": SHIFT, "Alt": ALT}.get(part) or K.get(part) or ord(part.upper())
+        c |= {"Meta": META, "Shift": SHIFT, "Alt": ALT, "Ctrl": CTRL}.get(part) or K.get(part) or ord(part.upper())
     return c
 
 

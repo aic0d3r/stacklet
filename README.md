@@ -58,7 +58,7 @@ Every shortcut can be changed in System Settings → Shortcuts → KWin (search 
 | Meta+Alt+T / Meta+Alt+Shift+T | Rotate the stack forwards / backwards |
 | Meta+Alt+C | Focus on / off: the focused window in the centre, the rest in the stash |
 | Meta+S | Show the next scratchpad window; the press after the last one hides it |
-| Meta+Alt+Shift+S | Send the focused window to the scratchpad; on a shown scratchpad window, put it back in tiling |
+| Meta+Ctrl+S | Send the focused window to the scratchpad; on a shown scratchpad window, put it back in tiling |
 | Drag a window onto another tile | Swap the two |
 
 ## Install

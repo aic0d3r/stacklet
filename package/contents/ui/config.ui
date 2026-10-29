@@ -337,7 +337,7 @@
       <item row="2" column="0" colspan="2">
        <widget class="QLabel" name="scratchHint">
         <property name="wordWrap"><bool>true</bool></property>
-        <property name="text"><string>Meta+Alt+Shift+S hides the focused window in the scratchpad. Meta+S shows it centred on the current desktop; with several, each press shows the next and the last press hides them.</string></property>
+        <property name="text"><string>Meta+Ctrl+S hides the focused window in the scratchpad. Meta+S shows it centred on the current desktop; with several, each press shows the next and the last press hides them.</string></property>
        </widget>
       </item>
      </layout>
@@ -418,7 +418,7 @@
       <item row="12" column="0"><widget class="QLabel"><property name="text"><string>Show the next scratchpad window, or hide it</string></property></widget></item>
       <item row="12" column="1"><widget class="QLabel"><property name="text"><string>Meta+S</string></property></widget></item>
       <item row="13" column="0"><widget class="QLabel"><property name="text"><string>Send to the scratchpad (again: back to tiling)</string></property></widget></item>
-      <item row="13" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+Shift+S</string></property></widget></item>
+      <item row="13" column="1"><widget class="QLabel"><property name="text"><string>Meta+Ctrl+S</string></property></widget></item>
       <item row="14" column="0" colspan="2">
        <widget class="QLabel" name="keysHint">
         <property name="wordWrap"><bool>true</bool></property>

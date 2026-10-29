@@ -409,14 +409,14 @@ if (typeof workspace !== "undefined") {
 
     // Each press shows the next scratchpad window; the press after the last one hides it.
     registerShortcut("StackletScratchpad", "Stacklet: Show / hide the scratchpad (next window on each press)", "Meta+S", () => {
-        if (!scratch.length) { osd("Stacklet: the scratchpad is empty. Meta+Alt+Shift+S sends a window there."); return; }
+        if (!scratch.length) { osd("Stacklet: the scratchpad is empty. Meta+Ctrl+S sends a window there."); return; }
         const shown = scratch.filter(w => !w.minimized), last = shown.length ? scratch.indexOf(shown[shown.length - 1]) : -1;
         for (const w of shown) w.minimized = true;
         if (last + 1 < scratch.length) showScratch(scratch[last + 1]);
     });
 
-    // Meta+Alt+S is the screen reader toggle on a fresh Plasma, so sending uses Shift as well.
-    registerShortcut("StackletToScratchpad", "Stacklet: Send focused window to the scratchpad (again: back to tiling)", "Meta+Alt+Shift+S", () => {
+    // Meta+Alt+S is the screen reader toggle on a fresh Plasma. New id: 1.1.0 saved Meta+Alt+Shift+S under StackletToScratchpad.
+    registerShortcut("StackletSendToScratchpad", "Stacklet: Send focused window to the scratchpad (again: back to tiling)", "Meta+Ctrl+S", () => {
         const w = workspace.activeWindow;
         if (!w || !w.normalWindow || w.specialWindow) return;
         if (scratch.includes(w)) {

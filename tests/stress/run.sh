@@ -77,7 +77,7 @@ echo "phase 4: scratchpad while windows open and close (hidden windows get close
 python3 "$HERE/churn.py" org.kde.konsole "$TRACKED" 4 > /dev/null 2>&1 &
 CHURN=$!
 while kill -0 $CHURN 2>/dev/null; do
-    for s in StackletToScratchpad StackletScratchpad StackletScratchpad StackletFocusMode; do
+    for s in StackletSendToScratchpad StackletScratchpad StackletScratchpad StackletFocusMode; do
         qdbus6 org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component.invokeShortcut $s > /dev/null 2>&1
         sleep 0.1
     done

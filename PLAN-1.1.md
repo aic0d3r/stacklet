@@ -29,7 +29,7 @@ Everything new is off by default (opt-in on the settings page), except where not
 ## Decided while building
 
 - Saved state: KWin 6.8.2's script API has `readConfig` but no `writeConfig`. Stacklet writes `savedState` (JSON) into its own `[Script-stacklet]` group in kwinrc through plasmashell's `evaluateScript` + `ConfigFile`, and reads it back with `readConfig` at load. Each entry remembers the settings layout of its desktop and is ignored once that changes. Not in `main.xml`, so the settings page never overwrites it.
-- Keys: on a fresh Plasma, Meta+Alt+S is the screen reader toggle (`org.kde.screenreader`), so sending to the scratchpad is **Meta+Alt+Shift+S**. Meta+S and Meta+Alt+C are free. `tests/shortcuts/run.sh` checks all three.
+- Keys: on a fresh Plasma, Meta+Alt+S is the screen reader toggle (`org.kde.screenreader`), so sending to the scratchpad is **Meta+Ctrl+S** (Meta+Alt+Shift+S was too awkward for a key next to Meta+S). Meta+S, Meta+Ctrl+S and Meta+Alt+C are free. `tests/shortcuts/run.sh` checks all three.
 
 ## Tests to extend
 
