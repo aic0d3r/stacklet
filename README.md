@@ -39,6 +39,8 @@ The defaults tile terminals, and you add other apps from a normal settings page.
 
 ## Shortcuts
 
+Every shortcut can be changed in System Settings → Shortcuts → KWin (search for "Stacklet").
+
 | Key | Action |
 | --- | --- |
 | Meta+Shift+Return | Make the focused window the main one |
