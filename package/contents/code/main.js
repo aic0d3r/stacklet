@@ -39,9 +39,22 @@ function spiralRects(n, ratio, mirror = false, portrait = false) {
     return orient(out, mirror, portrait);
 }
 
-function clampRatio(r) {
+// Centered master: main window in the middle at width `centre`, the stack alternating right and left
+// (left first if mirrored), each side top to bottom. Portrait screens get master and stack turned 90°.
+function centeredRects(n, centre, mirror = false, portrait = false) {
+    if (portrait || n <= 1) return slotRects(n, centre, 1, mirror, portrait);
+    const s = (1 - centre) / 2, k = n - 1, kr = Math.ceil(k / 2), kl = k - kr;
+    const rects = [{ x: s, y: 0, width: centre, height: 1 }];
+    for (let j = 0; j < k; j++) {
+        const right = j % 2 === 0, count = right ? kr : kl;
+        rects.push({ x: right ? s + centre : 0, y: (j >> 1) / count, width: s, height: 1 / count });
+    }
+    return orient(rects, mirror, false);
+}
+
+function clampRatio(r, lo = 0.15, hi = 0.85, d = 0.55) {
     r = Number(r);
-    return r >= 0.15 && r <= 0.85 ? r : 0.55;
+    return r >= lo && r <= hi ? r : d;
 }
 
 // Index of the rect nearest to rects[i] in direction dir ("left"|"right"|"up"|"down"), or -1.
@@ -63,12 +76,16 @@ function pickNeighbor(rects, i, dir) {
 // Swap two entries of order; rotate the `stack` windows one step inside the slots they hold in order.
 function swapOrder(order, a, b) { [order[a], order[b]] = [order[b], order[a]]; }
 function rotateOrder(order, stack, dir) {
-    const rotated = dir > 0 ? [...stack.slice(1), stack[0]] : [stack[stack.length - 1], ...stack.slice(0, -1)];
-    const slots = stack.map(x => order.indexOf(x)).sort((a, b) => a - b);
-    rotated.forEach((x, i) => { order[slots[i]] = x; });
+    placeInSlots(order, dir > 0 ? [...stack.slice(1), stack[0]] : [stack[stack.length - 1], ...stack.slice(0, -1)]);
+}
+// Put `wins` (those still in order) into the slots they hold in order, in the sequence given.
+function placeInSlots(order, wins) {
+    const keep = wins.filter(x => order.includes(x));
+    const slots = keep.map(x => order.indexOf(x)).sort((a, b) => a - b);
+    keep.forEach((x, i) => { order[slots[i]] = x; });
 }
 
-if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, clampRatio, pickNeighbor, swapOrder, rotateOrder }; // node self-test
+if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots }; // node self-test
 
 if (typeof workspace !== "undefined") {
     const list = s => String(s).split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
@@ -85,18 +102,50 @@ if (typeof workspace !== "undefined") {
     const focusAfterClose = flag("focusAfterClose", true);
     const offScreens = list(readConfig("disabledScreens", ""));
     const offDesktops = list(readConfig("disabledDesktops", ""));
-    const TILE = 0, SPIRAL = 1, MONOCLE = 2;
-    const LAYOUT_LABELS = ["master and stack", "spiral", "monocle"];
-    const layoutDefault = flag("layoutMonocle") ? MONOCLE : flag("layoutSpiral") ? SPIRAL : TILE;
-    const layoutNames = { master: TILE, tile: TILE, spiral: SPIRAL, dwindle: SPIRAL, monocle: MONOCLE };
+    const TILE = 0, SPIRAL = 1, MONOCLE = 2, CENTERED = 3;
+    const LAYOUT_LABELS = ["master and stack", "spiral", "monocle", "centered master"];
+    const layoutDefault = flag("layoutCentered") ? CENTERED : flag("layoutMonocle") ? MONOCLE : flag("layoutSpiral") ? SPIRAL : TILE;
+    const layoutNames = { master: TILE, tile: TILE, spiral: SPIRAL, dwindle: SPIRAL, monocle: MONOCLE, centered: CENTERED, center: CENTERED, centre: CENTERED };
+    const stashDefault = flag("stash"); // centered master starts with narrow side columns
+    const stashSide = clampRatio(readConfig("stashWidth", 0.15), 0.05, 0.3, 0.15);
+    // main width per kind of layout: m = master/spiral, c = centered, s = centered with stash
+    const WIDTHS = {
+        m: [defaultRatio, 0.15, 0.85],
+        c: [clampRatio(readConfig("centerRatio", 0.5), 0.15, 0.85, 0.5), 0.15, 0.85],
+        s: [1 - 2 * stashSide, 0.4, 0.9],
+    };
+    const scratchSize = ["scratchWidth", "scratchHeight"].map(k => clampRatio(readConfig(k, 0.6), 0.2, 1, 0.6));
     const desktopLayouts = {}; // desktop number -> layout, from "2=monocle,3=spiral"
     String(readConfig("desktopLayouts", "")).split(",").forEach(s => {
         const [d, n] = s.split("=").map(x => x.trim().toLowerCase());
         if (d && n in layoutNames) desktopLayouts[d] = layoutNames[n];
     });
-    const modes = new Map();     // group key -> layout picked with the shortcuts; lasts until restart
     const baseOf = desktop => String(desktop.x11DesktopNumber) in desktopLayouts ? desktopLayouts[String(desktop.x11DesktopNumber)] : layoutDefault;
-    const modeOf = (k, desktop) => modes.has(k) ? modes.get(k) : baseOf(desktop);
+    // group key -> {mode, stash, base, prev?} picked with the shortcuts, kept across restarts in `savedState`.
+    // `base` is the settings layout at the time: once the settings page changes it, the entry is ignored.
+    let modes = {}, ratios = {}; // ratios: group key -> {m, c, s} main widths the user dragged or set
+    let savedJson = String(readConfig("savedState", ""));
+    try {
+        const s = JSON.parse(savedJson || "{}");
+        if (s && typeof s.modes === "object" && typeof s.ratios === "object") ({ modes, ratios } = s);
+    } catch (e) { /* unreadable: start fresh */ }
+    const modeOf = (k, desktop) => {
+        const m = modes[k];
+        return m && m.base === baseOf(desktop) && LAYOUT_LABELS[m.mode] ? m : { mode: baseOf(desktop), stash: stashDefault };
+    };
+    const setMode = (k, desktop, m) => { modes[k] = Object.assign({}, m, { base: baseOf(desktop) }); };
+    const kindOf = m => m.mode !== CENTERED ? "m" : m.stash ? "s" : "c";
+    const widthOf = (k, kind) => clampRatio((ratios[k] || {})[kind], WIDTHS[kind][1], WIDTHS[kind][2], WIDTHS[kind][0]);
+    const setWidth = (k, kind, v) => { (ratios[k] = ratios[k] || {})[kind] = Math.min(WIDTHS[kind][2], Math.max(WIDTHS[kind][1], Number(v) || WIDTHS[kind][0])); };
+    // KWin 6.8 scripts can read their config but have no writeConfig; Plasma's desktop scripting can write it.
+    // shortcut: needs plasmashell running when the state changes; nothing is saved without it.
+    function save() {
+        const json = JSON.stringify({ modes, ratios });
+        if (json === savedJson) return;
+        savedJson = json;
+        callDBus("org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell", "evaluateScript",
+            "ConfigFile('kwinrc', 'Script-stacklet').writeEntry('savedState', " + JSON.stringify(json) + ");");
+    }
     const overrides = new Map(); // class -> tile it? Set by the per-app toggle shortcut, lasts until restart.
 
     let order = [];             // tracked windows, oldest first; index 0 of a group = master
@@ -108,16 +157,18 @@ if (typeof workspace !== "undefined") {
     const draggedOut = new Set(); // tiled windows the current drag pulled out of the layout
     const home = new Map();       // window -> {output, desktop} it was last laid out in
     let active = null, closedActive = null, pendingFocus = null;
-    const ratios = {};          // group key -> master width, kept when the user resizes it
+    let scratch = [];           // windows in the scratchpad, in the order they were sent
+    const focusOrder = new Map(); // group key -> its windows in layout order before the focus shortcut
+    const laid = {};            // group key -> width kind of the tiles we built last, to read drags from
     let groups = {};            // group key -> {output, desktop} that we laid out last time
     let busy = false;           // ignore tile changes we cause ourselves
 
-    const key = (o, d) => o.name + "|" + d.id;
+    const key = (o, d) => o.name + "|" + d.x11DesktopNumber; // saved across restarts, so no desktop uuid
     const cls = w => String(w.resourceClass).toLowerCase();
     const listed = c => overrides.has(c) ? overrides.get(c) : classes.includes(c) !== tileAll;
     const wanted = w => w.normalWindow && !w.specialWindow && !w.transient &&
         (!tileAll || w.resizeable) && listed(cls(w));
-    const tileable = w => !w.deleted && !floating.has(w) && !w.minimized && !w.fullScreen &&
+    const tileable = w => !w.deleted && !floating.has(w) && !scratch.includes(w) && !w.minimized && !w.fullScreen &&
         w.output && w.desktops.length === 1 &&
         !offScreens.includes(String(w.output.name).toLowerCase()) &&
         !offDesktops.includes(String(w.desktops[0].x11DesktopNumber));
@@ -132,7 +183,9 @@ if (typeof workspace !== "undefined") {
 
     const isPortrait = o => o.geometry.height > o.geometry.width;
     // main size as currently laid out in root's tiles, or undefined if the layout isn't ours
-    function draggedRatio(root, portrait) {
+    function draggedRatio(root, portrait, kind = "m") {
+        if (kind !== "m" && !portrait) // centered: three columns, main in the middle
+            return root.tiles.length === 3 && root.layoutDirection === HORIZONTAL ? root.tiles[1].relativeGeometry.width : undefined;
         if (root.tiles.length !== 2 || root.layoutDirection !== (portrait ? VERTICAL : HORIZONTAL)) return undefined;
         const g = root.tiles[mirror ? 1 : 0].relativeGeometry;
         return clampRatio(portrait ? g.height : g.width);
@@ -154,19 +207,20 @@ if (typeof workspace !== "undefined") {
         if (!root) return false;
         const portrait = isPortrait(output);
         const [outer, inner] = portrait ? [VERTICAL, HORIZONTAL] : [HORIZONTAL, VERTICAL];
-        // keep a main size the user dragged, if the layout is still ours
-        const dragged = groups[k] && draggedRatio(root, portrait);
-        if (dragged) ratios[k] = dragged;
-        const ratio = ratios[k] || defaultRatio;
+        const st = modeOf(k, desktop), mode = st.mode, kind = kindOf(st);
+        // keep a main size the user dragged, if the tiles are still the ones we built for this kind
+        const dragged = groups[k] && laid[k] === kind && draggedRatio(root, portrait, kind);
+        if (dragged) setWidth(k, kind, dragged);
+        const ratio = widthOf(k, kind);
+        laid[k] = kind;
 
         busy = true;
         try {
             for (const t of root.tiles.slice()) t.remove();
-            root.padding = smartGaps && wins.length === 1 ? 0 : gap; // KWin spreads it: full at screen edges, half between tiles
+            const one = mode === MONOCLE;
+            root.padding = smartGaps && (wins.length === 1 || one) ? 0 : gap; // KWin spreads it: full at screen edges, half between tiles
             root.minimumSize = { width: 0.05, height: 0.05 }; // default 0.15 breaks stacks of 7+ windows; children inherit
-            let slots = [root];
-            const mode = modeOf(k, desktop);
-            const one = mode === MONOCLE; // monocle: every window shares the root tile, the focused one is on top
+            let slots = [root]; // monocle: every window shares the root tile, the focused one is on top
             if (wins.length > 1 && mode === SPIRAL) {
                 const rects = spiralRects(wins.length, ratio, mirror, portrait);
                 slots = [];
@@ -183,9 +237,23 @@ if (typeof workspace !== "undefined") {
                 }
                 slots.push(cur);
                 for (let pass = 0; pass < 2; pass++) slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
+            } else if (wins.length > 1 && mode === CENTERED && !portrait) {
+                // left | main | right columns; with 2 windows one side stays empty so the main stays centred
+                const rects = centeredRects(wins.length, ratio, mirror), k1 = wins.length - 1, s = (1 - ratio) / 2;
+                const cols = column(root, 3, HORIZONTAL);
+                const first = column(cols[mirror ? 0 : 2], Math.ceil(k1 / 2), VERTICAL);
+                const second = k1 > 1 ? column(cols[mirror ? 2 : 0], Math.floor(k1 / 2), VERTICAL) : [];
+                slots = [cols[1]];
+                for (let j = 0; j < k1; j++) slots.push((j % 2 ? second : first)[j >> 1]);
+                const colRects = [0, s, s + ratio].map((x, i) => ({ x, y: 0, width: i === 1 ? ratio : s, height: 1 }));
+                for (let pass = 0; pass < 2; pass++) {
+                    cols.forEach((t, i) => { t.relativeGeometry = colRects[i]; });
+                    slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
+                }
             } else if (wins.length > 1 && !one) {
-                const rects = slotRects(wins.length, ratio, mainCount, mirror, portrait);
-                const m = Math.min(mainCount, wins.length - 1);
+                const main = mode === CENTERED ? 1 : mainCount; // centered on a portrait screen: one main row on top
+                const rects = slotRects(wins.length, ratio, main, mirror, portrait);
+                const m = Math.min(main, wins.length - 1);
                 const cols = root.split(outer);
                 slots = [...column(cols[mirror ? 1 : 0], m, inner), ...column(cols[mirror ? 0 : 1], wins.length - m, inner)];
                 // KWin shifts neighbours when one tile is resized, so a second pass settles longer stacks
@@ -221,8 +289,9 @@ if (typeof workspace !== "undefined") {
             for (const w of groupOf(next[k].output, next[k].desktop)) home.set(w, next[k]);
         }
         // groups that just lost their last window: nothing to lay out, forget the saved ratio
-        for (const k in groups) if (!next[k]) delete ratios[k];
+        for (const k in groups) if (!next[k]) { delete ratios[k]; delete laid[k]; }
         groups = next;
+        save();
     }
 
     // true if w was newly tracked
@@ -293,6 +362,8 @@ if (typeof workspace !== "undefined") {
             next = g.filter(x => order.indexOf(x) < pos).pop() || g[0] || null;
         }
         order = order.filter(x => x !== w);
+        scratch = scratch.filter(x => x !== w);
+        for (const [k, g] of focusOrder) focusOrder.set(k, g.filter(x => x !== w));
         floating.delete(w);
         moving.delete(w);
         draggedOut.delete(w);
@@ -314,8 +385,74 @@ if (typeof workspace !== "undefined") {
         const w = tracked();
         if (!w) return;
         floating.delete(w);
-        order = [w, ...order.filter(x => x !== w)];
+        const g = tileable(w) ? groupOf(w.output, w.desktops[0]) : [];
+        // centered: swap with the main window, so the stash keeps its places
+        if (g[0] && g[0] !== w && modeOf(key(w.output, w.desktops[0]), w.desktops[0]).mode === CENTERED)
+            swapOrder(order, order.indexOf(w), order.indexOf(g[0]));
+        else order = [w, ...order.filter(x => x !== w)];
         retileAll(keysOf(w));
+    });
+
+    // Scratchpad: hidden windows (minimized, so still in the taskbar if the script stops), shown one at a
+    // time centred over the current screen and desktop.
+    function showScratch(w) {
+        const o = workspace.activeScreen, d = workspace.currentDesktop;
+        if (w.output !== o) workspace.sendClientToScreen(w, o);
+        w.onAllDesktops = true; // follows you to other desktops while shown
+        w.keepAbove = true;     // floats over the tiles
+        w.minimized = false;
+        const a = workspace.clientArea(KWin.MaximizeArea, o, d);
+        const width = Math.round(a.width * scratchSize[0]), height = Math.round(a.height * scratchSize[1]);
+        w.frameGeometry = { x: Math.round(a.x + (a.width - width) / 2), y: Math.round(a.y + (a.height - height) / 2), width, height };
+        workspace.activeWindow = w;
+    }
+
+    // Each press shows the next scratchpad window; the press after the last one hides it.
+    registerShortcut("StackletScratchpad", "Stacklet: Show / hide the scratchpad (next window on each press)", "Meta+S", () => {
+        if (!scratch.length) { osd("Stacklet: the scratchpad is empty. Meta+Alt+Shift+S sends a window there."); return; }
+        const shown = scratch.filter(w => !w.minimized), last = shown.length ? scratch.indexOf(shown[shown.length - 1]) : -1;
+        for (const w of shown) w.minimized = true;
+        if (last + 1 < scratch.length) showScratch(scratch[last + 1]);
+    });
+
+    // Meta+Alt+S is the screen reader toggle on a fresh Plasma, so sending uses Shift as well.
+    registerShortcut("StackletToScratchpad", "Stacklet: Send focused window to the scratchpad (again: back to tiling)", "Meta+Alt+Shift+S", () => {
+        const w = workspace.activeWindow;
+        if (!w || !w.normalWindow || w.specialWindow) return;
+        if (scratch.includes(w)) {
+            scratch = scratch.filter(x => x !== w);
+            w.keepAbove = false;
+            w.onAllDesktops = false; // KWin puts it on the current desktop
+            floating.delete(w);
+            retileAll(keysOf(w));
+            return;
+        }
+        const ks = keysOf(w);
+        scratch.push(w);
+        if (w.tile) release(w);
+        w.minimized = true;
+        retileAll(ks);
+        osd("Stacklet: sent to the scratchpad. Meta+S shows it.");
+    });
+
+    // Focus: the focused window in the centre, every other tiled window in the stash; again restores.
+    registerShortcut("StackletFocusMode", "Stacklet: Focus on / off (focused window centred, the rest in the stash)", "Meta+Alt+C", () => {
+        const w = tiledWindow();
+        if (!w) { osd("Stacklet: focus a tiled window first"); return; }
+        const d = w.desktops[0], k = key(w.output, d), st = modeOf(k, d);
+        if (st.prev) {
+            setMode(k, d, st.prev);
+            if (focusOrder.has(k)) placeInSlots(order, focusOrder.get(k));
+            focusOrder.delete(k);
+            osd("Stacklet: focus off, back to " + LAYOUT_LABELS[st.prev.mode]);
+        } else {
+            const g = groupOf(w.output, d);
+            focusOrder.set(k, g);
+            if (g[0] !== w) swapOrder(order, order.indexOf(w), order.indexOf(g[0]));
+            setMode(k, d, { mode: CENTERED, stash: true, prev: { mode: st.mode, stash: st.stash } });
+            osd("Stacklet: focus on. Meta+Alt+C again goes back.");
+        }
+        retileAll([k]);
     });
 
     registerShortcut("StackletToggleFloat", "Stacklet: Float / tile focused window", "Meta+F", () => {
@@ -367,8 +504,9 @@ if (typeof workspace !== "undefined") {
         const n = groupOf(output, desktop).length;
         if (!n) { osd("Stacklet: no tiled windows on this screen and desktop"); return; }
         const k = key(output, desktop);
-        const now = pick(modeOf(k, desktop), baseOf(desktop));
-        modes.set(k, now);
+        const now = pick(modeOf(k, desktop).mode, baseOf(desktop));
+        setMode(k, desktop, { mode: now, stash: stashDefault }); // also ends focus
+        focusOrder.delete(k);
         retileAll([k]);
         // spiral and master and stack only differ from the fourth window on
         osd("Stacklet: " + LAYOUT_LABELS[now] + (now === SPIRAL && n < 4 ? " (same as master and stack until 4 windows)" : ""));
@@ -377,8 +515,8 @@ if (typeof workspace !== "undefined") {
     registerShortcut("StackletMonocle", "Stacklet: Monocle on / off (focused window fills the screen)", "Meta+Shift+M", () =>
         switchLayout((cur, base) => cur === MONOCLE ? (base === MONOCLE ? TILE : base) : MONOCLE));
 
-    registerShortcut("StackletNextLayout", "Stacklet: Switch layout (master and stack / spiral / monocle)", "Meta+Shift+Space", () =>
-        switchLayout(cur => (cur + 1) % 3));
+    registerShortcut("StackletNextLayout", "Stacklet: Switch layout (master and stack / spiral / monocle / centered)", "Meta+Shift+Space", () =>
+        switchLayout(cur => (cur + 1) % LAYOUT_LABELS.length));
 
     // focus the next / previous tile in layout order (cycles windows in monocle, where directions don't apply)
     for (const [name, keys, dir] of [["Next", "Meta+Alt+.", 1], ["Prev", "Meta+Alt+,", -1]]) {
@@ -388,7 +526,7 @@ if (typeof workspace !== "undefined") {
             const g = groupOf(w.output, w.desktops[0]);
             const t = g[(g.indexOf(w) + dir + g.length) % g.length];
             workspace.activeWindow = t;
-            if (modeOf(key(w.output, w.desktops[0]), w.desktops[0]) === MONOCLE) osd("Stacklet: " + (g.indexOf(t) + 1) + " of " + g.length);
+            if (modeOf(key(w.output, w.desktops[0]), w.desktops[0]).mode === MONOCLE) osd("Stacklet: " + (g.indexOf(t) + 1) + " of " + g.length);
         });
     }
 
@@ -399,7 +537,8 @@ if (typeof workspace !== "undefined") {
             const w = tiledWindow();
             if (!w) return;
             const g = groupOf(w.output, w.desktops[0]);
-            const stack = g.slice(Math.min(mainCount, g.length - 1));
+            const main = modeOf(key(w.output, w.desktops[0]), w.desktops[0]).mode === CENTERED ? 1 : mainCount;
+            const stack = g.slice(Math.min(main, g.length - 1));
             if (stack.length < 2) return;
             rotateOrder(order, stack, dir);
             retileAll(keysOf(w));
@@ -412,9 +551,10 @@ if (typeof workspace !== "undefined") {
             const w = tiledWindow();
             if (!w) return;
             const o = w.output, d = w.desktops[0], k = key(o, d), root = workspace.rootTile(o, d);
-            const cur = (root && draggedRatio(root, isPortrait(o))) || ratios[k] || defaultRatio;
-            ratios[k] = Math.min(0.85, Math.max(0.15, cur + delta));
-            delete groups[k]; // so layOut uses this value instead of re-reading the old tiles
+            const kind = kindOf(modeOf(k, d));
+            const cur = (root && laid[k] === kind && draggedRatio(root, isPortrait(o), kind)) || widthOf(k, kind);
+            setWidth(k, kind, cur + delta);
+            delete laid[k]; // so layOut uses this value instead of re-reading the old tiles
             retileAll([k]);
         });
     }

@@ -16,8 +16,32 @@
       <label>Layout: monocle</label>
       <default>false</default>
     </entry>
+    <entry name="layoutCentered" type="Bool">
+      <label>Layout: centered master</label>
+      <default>false</default>
+    </entry>
+    <entry name="centerRatio" type="Double">
+      <label>Width of the centred main window (0.15 to 0.85)</label>
+      <default>0.5</default>
+    </entry>
+    <entry name="stash" type="Bool">
+      <label>Centered master: narrow side columns (stash)</label>
+      <default>false</default>
+    </entry>
+    <entry name="stashWidth" type="Double">
+      <label>Width of each stash column (0.05 to 0.3)</label>
+      <default>0.15</default>
+    </entry>
+    <entry name="scratchWidth" type="Double">
+      <label>Scratchpad window width (0.2 to 1)</label>
+      <default>0.6</default>
+    </entry>
+    <entry name="scratchHeight" type="Double">
+      <label>Scratchpad window height (0.2 to 1)</label>
+      <default>0.6</default>
+    </entry>
     <entry name="desktopLayouts" type="String">
-      <label>Layout per virtual desktop, e.g. 2=monocle,3=spiral</label>
+      <label>Layout per virtual desktop, e.g. 2=monocle,3=centered</label>
       <default></default>
     </entry>
     <entry name="tileClasses" type="String">

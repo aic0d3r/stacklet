@@ -8,7 +8,7 @@
 [![KDE Store](https://img.shields.io/badge/KDE%20Store-Stacklet-3daee9?logo=kde&logoColor=white)](https://store.kde.org/p/2380552/)
 [![License: GPL-3.0-or-later](https://img.shields.io/github/license/aic0d3r/stacklet?color=blue)](LICENSE)
 
-A small auto-tiling script made for KDE Plasma 6.8 and Wayland. It tiles your terminals i3-style (master and stack, spiral or monocle) and leaves every other window alone.
+A small auto-tiling script made for KDE Plasma 6.8 and Wayland. It tiles your terminals i3-style (master and stack, spiral, monocle or centered master) and leaves every other window alone.
 
 [**Get it on the KDE Store**](https://store.kde.org/p/2380552/) · [Releases](https://github.com/aic0d3r/stacklet/releases)
 
@@ -25,11 +25,14 @@ The defaults tile terminals, and you add other apps from a normal settings page.
 ## Features
 
 - Only the apps you list get tiled (default: kitty, Konsole, Alacritty, Ghostty, foot, WezTerm). Everything else floats. Or tick "Tile every window" and the list becomes an exclude list.
-- Three layouts, each with a preview on the settings page:
+- Four layouts, each with a preview on the settings page:
   - **Master and stack**: the first window on the left or right, the rest stacked beside it.
   - **Spiral**: each new window takes half of the space left.
   - **Monocle**: one window fills the screen.
-- Pick a starting layout, or one per screen and virtual desktop, and switch on the fly. A lone window always fills the screen.
+  - **Centered master**: the main window in the middle (its own width, default 50%), the others in columns on both sides. With two windows the main one stays centred. Optional **stash**: the side columns become narrow strips (default 15% each) of small, live windows.
+- Pick a starting layout, or one per screen and virtual desktop, and switch on the fly. A layout you switch to by shortcut, and widths you drag, are kept after a restart, until you change that desktop's layout on the settings page. A lone window always fills the screen.
+- **Focus** (Meta+Alt+C): the focused window goes to the centre, every other tiled window to the stash. Press again to get the previous layout back.
+- **Scratchpad**: hide windows and call them up centred over any desktop (default 60% × 60% of the screen), one at a time.
 - Settings: main width, side, 1–2 main windows, where new windows land, gap, and screens or desktops where tiling is off.
 - Portrait screens get the layout turned 90°: main window on top, the rest side by side below. It re-tiles when you rotate a screen.
 - Pin apps as "always main", for example a browser kept big with terminals beside it. After closing a window, focus moves to the tile before it.
@@ -49,10 +52,13 @@ Every shortcut can be changed in System Settings → Shortcuts → KWin (search 
 | Meta+Alt+arrows | Focus the neighbouring tile (KWin's own shortcut) |
 | Meta+Alt+Shift+arrows | Swap with the neighbouring tile |
 | Meta+Alt+] / Meta+Alt+[ | Grow / shrink the main window by 5% |
-| Meta+Shift+Space | Switch layout (master and stack, spiral, monocle) for this screen and desktop, until restart |
+| Meta+Shift+Space | Switch layout (master and stack, spiral, monocle, centered) for this screen and desktop; kept after a restart |
 | Meta+Shift+M | Monocle on / off for this screen and desktop: every tiled window fills the area, the focused one on top |
 | Meta+Alt+. / Meta+Alt+, | Focus the next / previous tiled window (use this to cycle in monocle) |
 | Meta+Alt+T / Meta+Alt+Shift+T | Rotate the stack forwards / backwards |
+| Meta+Alt+C | Focus on / off: the focused window in the centre, the rest in the stash |
+| Meta+S | Show the next scratchpad window; the press after the last one hides it |
+| Meta+Alt+Shift+S | Send the focused window to the scratchpad; on a shown scratchpad window, put it back in tiling |
 | Drag a window onto another tile | Swap the two |
 
 ## Install
@@ -102,7 +108,7 @@ Same private virtual KWin. It prints every window's position and fails if a layo
 tests/shortcuts/run.sh         # fires every shortcut and checks what it did, and that its key is free
 ```
 
-Same private virtual KWin, with four windows. It also starts from a 1.0.0-style saved config, to check that upgrading picks up the new keys. It can't see shortcuts that only exist in your own session (Spectacle, plasmashell, …), so check new keys against `kglobalshortcutsrc` too.
+Same private virtual KWin, with four windows. It also starts from a 1.0.0-style saved config, to check that upgrading picks up the new keys. It sees a fresh Plasma's KWin and service shortcuts (Spectacle, screen reader, …) but not plasmashell's, so check new keys against `kglobalshortcutsrc` too.
 
 The settings page is checked by hand in a live Plasma session.
 
@@ -114,6 +120,8 @@ The settings page is checked by hand in a live Plasma session.
 - Settings apply when the script is loaded: turn Stacklet off and on in KWin Scripts after changing them.
 - Spiral looks the same as master and stack until the fourth window.
 - Stacklet replaces the Meta+T tile layout on every desktop where it tiles a window.
+- Saved layouts and widths are written through Plasma's shell (KWin scripts can't write their config), so nothing is saved while plasmashell isn't running. A width still resets when its desktop has no tiled windows, which usually happens when you log out.
+- Scratchpad windows are minimized while hidden, so they stay in the taskbar; restoring one from there shows it.
 
 ## License
 

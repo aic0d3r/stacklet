@@ -1,6 +1,6 @@
 // node test.js — checks the layout math (the KWin part needs a live session)
 const assert = require("assert");
-const { slotRects, spiralRects, clampRatio, pickNeighbor, swapOrder, rotateOrder } = require("./package/contents/code/main.js");
+const { slotRects, spiralRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots } = require("./package/contents/code/main.js");
 
 assert.deepStrictEqual(slotRects(1, 0.55), [{ x: 0, y: 0, width: 1, height: 1 }]);
 const two = slotRects(2, 0.55);
@@ -46,4 +46,23 @@ rotateOrder(o, ["b", "c", "a"], -1);
 assert.deepStrictEqual(o, ["m", "x", "a", "y", "b", "c"]);
 swapOrder(o, 0, 5);
 assert.deepStrictEqual(o, ["c", "x", "a", "y", "b", "m"]);
+// placeInSlots: restores a saved sequence in the same slots; windows gone since are skipped
+placeInSlots(o, ["m", "gone", "a", "b", "c"]);
+assert.deepStrictEqual(o, ["m", "x", "a", "y", "b", "c"]);
+// centered master: main in the middle, stack alternating right, left, top to bottom
+const rr = (rs) => rs.map(r => [r.x, r.y, r.width, r.height].map(v => Math.round(v * 1000) / 1000));
+assert.deepStrictEqual(rr(centeredRects(1, 0.5)), [[0, 0, 1, 1]]);
+assert.deepStrictEqual(rr(centeredRects(2, 0.5)), [[0.25, 0, 0.5, 1], [0.75, 0, 0.25, 1]]); // left stays empty
+assert.deepStrictEqual(rr(centeredRects(3, 0.5)), [[0.25, 0, 0.5, 1], [0.75, 0, 0.25, 1], [0, 0, 0.25, 1]]);
+assert.deepStrictEqual(rr(centeredRects(4, 0.5)), [[0.25, 0, 0.5, 1], [0.75, 0, 0.25, 0.5], [0, 0, 0.25, 1], [0.75, 0.5, 0.25, 0.5]]);
+const c6 = centeredRects(6, 0.6);
+near(c6.reduce((s, r) => s + r.width * r.height, 0), 1); // no gaps or overlaps once both sides are used
+assert.strictEqual(c6.filter(r => r.x > 0.5).length, 3);
+assert.strictEqual(centeredRects(2, 0.5, true)[1].x, 0); // mirrored: the first stack window goes left
+// stash: 15% sides leave 70% for the main window
+assert.deepStrictEqual(rr(centeredRects(3, 1 - 2 * 0.15)), [[0.15, 0, 0.7, 1], [0.85, 0, 0.15, 1], [0, 0, 0.15, 1]]);
+// portrait: same rotation as master and stack, one main row on top
+assert.deepStrictEqual(centeredRects(3, 0.6, false, true), slotRects(3, 0.6, 1, false, true));
+assert.strictEqual(clampRatio(0.2, 0.05, 0.3, 0.15), 0.2);
+assert.strictEqual(clampRatio(0.4, 0.05, 0.3, 0.15), 0.15);
 console.log("ok");

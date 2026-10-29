@@ -25,16 +25,16 @@ def js(code):
 
 
 def state():
-    """caption -> (x, y, w, h, tiled), plus the active caption."""
+    """caption -> (x, y, w, h, tiled, minimized), plus the active caption."""
     raw = js("""print("DUMP%d " + workspace.windowList().filter(w => w.normalWindow).map(w => {
       const g = w.frameGeometry; return [w.caption, Math.round(g.x), Math.round(g.y), Math.round(g.width), Math.round(g.height),
-      w.tile ? 1 : 0, workspace.activeWindow === w ? 1 : 0].join(",") }).join(";"));""" % (n + 1))
+      w.tile ? 1 : 0, workspace.activeWindow === w ? 1 : 0, w.minimized ? 1 : 0].join(",") }).join(";"));""" % (n + 1))
     s, active = {}, None
     for item in raw.split(";"):
         if not item:
             continue
-        c, x, y, w, h, t, a = item.split(",")
-        s[c] = (int(x), int(y), int(w), int(h), int(t))
+        c, x, y, w, h, t, a, mn = item.split(",")
+        s[c] = (int(x), int(y), int(w), int(h), int(t), int(mn))
         if a == "1":
             active = c
     return s, active
@@ -165,7 +165,54 @@ check("Meta+Shift+Space switches the layout", rects(s) != before, str(rects(s)))
 fire("StackletNextLayout")
 fire("StackletNextLayout")
 s, _ = state()
-check("Meta+Shift+Space cycles back to the first layout", rects(s) == before, f"{before} -> {rects(s)}")
+m = main_of(s)
+check("Meta+Shift+Space reaches centered master (main window in the middle)", s[m][0] + s[m][2] // 2 == 800, str(s[m]))
+fire("StackletNextLayout")
+s, _ = state()
+check("Meta+Shift+Space wraps from centered to the first layout", rects(s) == before, f"{before} -> {rects(s)}")
+
+# Focus: centre + stash, then back
+m = main_of(s)
+side = next(c for c in sorted(s) if c != m)
+focus(side)
+fire("StackletFocusMode")
+s, _ = state()
+stash = [c for c in s if c != side]
+check("Meta+Alt+C centres the focused window at 70%", s[side][:4] == (240, 0, 1120, 900), str(s[side]))
+check("Meta+Alt+C puts the others in 15% stash columns", all(s[c][2] == 240 for c in stash), str(rects(s)))
+focus(stash[0])
+fire("StackletSetMaster")
+s2, _ = state()
+check("Meta+Shift+Return swaps a stashed window into the centre", s2[stash[0]][:4] == s[side][:4] and s2[side][:4] == s[stash[0]][:4], str(rects(s2)))
+fire("StackletFocusMode")
+s, _ = state()
+check("Meta+Alt+C again restores the previous layout", rects(s) == before, f"{before} -> {rects(s)}")
+
+# Scratchpad
+x, y = sorted(s)[:2]
+focus(x)
+fire("StackletToScratchpad")
+focus(y)
+fire("StackletToScratchpad")
+s, _ = state()
+rest = [c for c in s if c not in (x, y)]
+check("Meta+Alt+Shift+S hides windows in the scratchpad", s[x][4:] == (0, 1) and s[y][4:] == (0, 1), f"{s[x]} {s[y]}")
+check("the other windows re-tile without them", all(s[c][4] for c in rest) and len(set(rects({c: s[c] for c in rest}).values())) == 2, str(rects(s)))
+fire("StackletScratchpad")
+s, a = state()
+check("Meta+S shows the first one centred at 60% x 60%", s[x][:4] == (320, 180, 960, 540) and s[x][5] == 0 and s[y][5] == 1 and a == x, f"{s[x]} {s[y]} active={a}")
+fire("StackletScratchpad")
+s, _ = state()
+check("Meta+S again shows the next one", s[x][5] == 1 and s[y][5] == 0 and s[y][:4] == (320, 180, 960, 540), f"{s[x]} {s[y]}")
+fire("StackletScratchpad")
+s, _ = state()
+check("Meta+S after the last one hides the scratchpad", s[x][5] == 1 and s[y][5] == 1, f"{s[x]} {s[y]}")
+for c in (x, y):
+    fire("StackletScratchpad")  # shows the first window still in the scratchpad
+    focus(c)
+    fire("StackletToScratchpad")
+s, _ = state()
+check("Meta+Alt+Shift+S on a shown window puts it back in tiling", all(v[4] == 1 and v[5] == 0 for v in s.values()), str(s))
 
 # Real key bindings: every default key must reach exactly its Stacklet action, nothing else.
 # (invokeShortcut above skips the key, so this is what catches a clash like Meta+Shift+A.)
@@ -178,6 +225,7 @@ BINDINGS = {
     "Meta+Alt+.": "StackletFocusNext", "Meta+Alt+,": "StackletFocusPrev",
     "Meta+Alt+]": "StackletGrowMain", "Meta+Alt+[": "StackletShrinkMain",
     "Meta+Alt+T": "StackletTurnNext", "Meta+Alt+Shift+T": "StackletTurnPrev",
+    "Meta+Alt+C": "StackletFocusMode", "Meta+S": "StackletScratchpad", "Meta+Alt+Shift+S": "StackletToScratchpad",
     **{f"Meta+Alt+Shift+{d}": f"StackletSwap{d}" for d in ("Left", "Right", "Up", "Down")},
 }
 

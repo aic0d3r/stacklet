@@ -15,7 +15,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 PKG=${PKG:-$HERE/../../package}
 
 if [ "${STACKLET_LAYOUT_INNER:-}" != 1 ]; then
-    layouts=("${1:-tile spiral monocle}"); counts=("${2:-2 3 4 6}")
+    layouts=("${1:-tile spiral monocle centered}"); counts=("${2:-2 3 4 6}")
     bad=0
     for l in ${layouts[@]}; do for n in ${counts[@]}; do
         STACKLET_LAYOUT_INNER=1 timeout 120 dbus-run-session -- "$0" "$l" "$n" || bad=1
@@ -34,8 +34,8 @@ if [ "$LAYOUT" = "-" ]; then
     printf '[Plugins]\nstackletEnabled=true\n%s\n' "${KWINRC:-}" > "$XDG_CONFIG_HOME/kwinrc"
 else
     on() { [ "$LAYOUT" = "$1" ] && echo true || echo false; }
-    printf '[Plugins]\nstackletEnabled=true\n[Script-stacklet]\nlayoutTile=%s\nlayoutSpiral=%s\nlayoutMonocle=%s\n' \
-        "$(on tile)" "$(on spiral)" "$(on monocle)" > "$XDG_CONFIG_HOME/kwinrc"
+    printf '[Plugins]\nstackletEnabled=true\n[Script-stacklet]\nlayoutTile=%s\nlayoutSpiral=%s\nlayoutMonocle=%s\nlayoutCentered=%s\n' \
+        "$(on tile)" "$(on spiral)" "$(on monocle)" "$(on centered)" > "$XDG_CONFIG_HOME/kwinrc"
 fi
 
 trap 'kill $(jobs -p) 2>/dev/null; rm -rf "$WORK"' EXIT
@@ -66,6 +66,11 @@ printf '%-8s n=%-2s: %s\n' "$LAYOUT" "$N" "$LINE"
 distinct=$(echo "$LINE" | tr ';' '\n' | sed 's/^ *//; s/ *$//' | sort -u | wc -l)
 case "$LAYOUT" in
     monocle) [ "$N" -gt 1 ] && [ "$distinct" -ne 1 ] && { echo "!! monocle should give every window the same rectangle, got $distinct"; exit 1; } ;;
-    tile|spiral) [ "$distinct" -ne "$N" ] && { echo "!! $LAYOUT should give $N different rectangles, got $distinct"; exit 1; } ;;
+    tile|spiral|centered) [ "$distinct" -ne "$N" ] && { echo "!! $LAYOUT should give $N different rectangles, got $distinct"; exit 1; } ;;
 esac
+# centered: the first window opened (the main one) sits in the middle of the 1600px screen
+if [ "$LAYOUT" = centered ] && [ "$N" -gt 1 ]; then
+    read -r x _ w _ <<< "$(echo "$LINE" | cut -d';' -f1 | tr ',x' '  ')"
+    [ $((x + w / 2)) -eq 800 ] || { echo "!! centered main window is not in the middle: x=$x width=$w"; exit 1; }
+fi
 exit 0

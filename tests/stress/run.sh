@@ -3,8 +3,8 @@
 # script folder, so your real session is never touched), opens and closes lots of windows and fails
 # if KWin dies.
 #
-#   tests/stress/run.sh              # master and stack, spiral and monocle
-#   tests/stress/run.sh spiral       # one layout (tile | spiral | monocle)
+#   tests/stress/run.sh              # master and stack, spiral, monocle and centered
+#   tests/stress/run.sh spiral       # one layout (tile | spiral | monocle | centered)
 #   TRACKED=200 UNTRACKED=100 tests/stress/run.sh
 #
 # Needs kwin_wayland, dbus-run-session, qdbus6 and python3 with PyQt6.
@@ -24,7 +24,7 @@ UNTRACKED=${UNTRACKED:-60}
 # Outer part: one private D-Bus session per layout.
 if [ "${STACKLET_STRESS_INNER:-}" != 1 ]; then
     layouts=("$@")
-    [ ${#layouts[@]} -eq 0 ] && layouts=(tile spiral monocle)
+    [ ${#layouts[@]} -eq 0 ] && layouts=(tile spiral monocle centered)
     rc=0
     for l in "${layouts[@]}"; do
         STACKLET_STRESS_INNER=1 timeout 300 dbus-run-session -- "$0" "$l" || rc=1
@@ -47,10 +47,11 @@ stackletEnabled=true
 layoutTile=$(on tile)
 layoutSpiral=$(on spiral)
 layoutMonocle=$(on monocle)
+layoutCentered=$(on centered)
 EOF
 
 trap 'kill $(jobs -p) 2>/dev/null; rm -rf "$WORK"' EXIT
-kwin_wayland --virtual --width 1600 --height 900 --socket "kwtest-$$" --no-lockscreen --no-global-shortcuts \
+kwin_wayland --virtual --width 1600 --height 900 --socket "kwtest-$$" --no-lockscreen \
     > "$WORK/kwin.log" 2>&1 &
 KWIN=$!
 sleep 5
@@ -72,6 +73,16 @@ echo "phase 2: $UNTRACKED floating windows"
 python3 "$HERE/churn.py" org.test.untracked "$UNTRACKED" 3 > /dev/null 2>&1; alive "phase 2"
 echo "phase 3: another round of tiled windows, 4 open at a time"
 python3 "$HERE/churn.py" org.kde.konsole "$TRACKED" 4 > /dev/null 2>&1; alive "phase 3"
+echo "phase 4: scratchpad while windows open and close (hidden windows get closed too)"
+python3 "$HERE/churn.py" org.kde.konsole "$TRACKED" 4 > /dev/null 2>&1 &
+CHURN=$!
+while kill -0 $CHURN 2>/dev/null; do
+    for s in StackletToScratchpad StackletScratchpad StackletScratchpad StackletFocusMode; do
+        qdbus6 org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component.invokeShortcut $s > /dev/null 2>&1
+        sleep 0.1
+    done
+done
+alive "phase 4"
 
 [ "$(qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded stacklet)" = true ] ||
     fail "Stacklet was unloaded during the run"

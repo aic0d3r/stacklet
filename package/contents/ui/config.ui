@@ -35,6 +35,13 @@
         <property name="text"><string>&lt;img src=&quot;data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTYwIDEwMCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjE1NiIgaGVpZ2h0PSI5NiIgcng9IjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzg4OCIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48ZyBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMS41IiBmaWxsPSIjM2I4MmY2Ij48cmVjdCB4PSIxNyIgeT0iNyIgd2lkdGg9IjEzNiIgaGVpZ2h0PSI4MCIgcng9IjMiIGZpbGwtb3BhY2l0eT0iLjEiLz48cmVjdCB4PSIxMiIgeT0iMTAiIHdpZHRoPSIxMzYiIGhlaWdodD0iODAiIHJ4PSIzIiBmaWxsLW9wYWNpdHk9Ii4xNiIvPjxyZWN0IHg9IjciIHk9IjEzIiB3aWR0aD0iMTM2IiBoZWlnaHQ9IjgwIiByeD0iMyIgZmlsbC1vcGFjaXR5PSIuNTUiLz48L2c+PC9zdmc+Cg==&quot; width=&quot;128&quot; height=&quot;80&quot;&gt;</string></property>
        </widget>
       </item>
+      <item row="0" column="3">
+       <widget class="QLabel" name="previewCentered">
+        <property name="alignment"><set>Qt::AlignCenter</set></property>
+        <property name="accessibleDescription"><string>Preview: one large window in the middle, the others in narrow columns on both sides</string></property>
+        <property name="text"><string>&lt;img src=&quot;data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTYwIDEwMCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjE1NiIgaGVpZ2h0PSI5NiIgcng9IjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzg4OCIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48ZyBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMS41IiBmaWxsPSIjM2I4MmY2Ij48cmVjdCB4PSI0NSIgeT0iNyIgd2lkdGg9IjcwIiBoZWlnaHQ9Ijg2IiByeD0iMyIgZmlsbC1vcGFjaXR5PSIuNTUiLz48cmVjdCB4PSIxMTkiIHk9IjciIHdpZHRoPSIzNCIgaGVpZ2h0PSI0MSIgcng9IjMiIGZpbGwtb3BhY2l0eT0iLjIyIi8+PHJlY3QgeD0iNyIgeT0iNyIgd2lkdGg9IjM0IiBoZWlnaHQ9Ijg2IiByeD0iMyIgZmlsbC1vcGFjaXR5PSIuMjIiLz48cmVjdCB4PSIxMTkiIHk9IjUyIiB3aWR0aD0iMzQiIGhlaWdodD0iNDEiIHJ4PSIzIiBmaWxsLW9wYWNpdHk9Ii4yMiIvPjwvZz48L3N2Zz4K&quot; width=&quot;128&quot; height=&quot;80&quot;&gt;</string></property>
+       </widget>
+      </item>
       <item row="1" column="0" alignment="Qt::AlignHCenter">
        <widget class="QRadioButton" name="kcfg_layoutTile">
         <property name="text"><string>Master and stack</string></property>
@@ -51,6 +58,12 @@
        <widget class="QRadioButton" name="kcfg_layoutMonocle">
         <property name="text"><string>Monocle</string></property>
         <property name="toolTip"><string>One window fills the screen; cycle through the others.</string></property>
+       </widget>
+      </item>
+      <item row="1" column="3" alignment="Qt::AlignHCenter">
+       <widget class="QRadioButton" name="kcfg_layoutCentered">
+        <property name="text"><string>Centered</string></property>
+        <property name="toolTip"><string>The main window in the middle, the others in columns on both sides.</string></property>
        </widget>
       </item>
       <item row="2" column="0">
@@ -77,7 +90,15 @@
         <property name="text"><string>Small screens, or one job per desktop.</string></property>
        </widget>
       </item>
-      <item row="3" column="0" colspan="3">
+      <item row="2" column="3">
+       <widget class="QLabel" name="hintCentered">
+        <property name="alignment"><set>Qt::AlignHCenter|Qt::AlignTop</set></property>
+        <property name="wordWrap"><bool>true</bool></property>
+        <property name="minimumSize"><size><width>0</width><height>68</height></size></property>
+        <property name="text"><string>Wide screens: the window you work in stays in front of you.</string></property>
+       </widget>
+      </item>
+      <item row="3" column="0" colspan="4">
        <layout class="QFormLayout" name="styleForm">
         <item row="0" column="0">
          <widget class="QLabel" name="desktopLayoutsLabel">
@@ -87,13 +108,13 @@
         </item>
         <item row="0" column="1">
          <widget class="QLineEdit" name="kcfg_desktopLayouts">
-          <property name="placeholderText"><string>e.g. 1=master,2=monocle</string></property>
+          <property name="placeholderText"><string>e.g. 1=master,2=monocle,3=centered</string></property>
          </widget>
         </item>
         <item row="1" column="0" colspan="2">
          <widget class="QLabel" name="styleHint">
           <property name="wordWrap"><bool>true</bool></property>
-          <property name="text"><string>Starting layout; desktops listed here use their own. Meta+Shift+Space switches the layout on the current screen and desktop until restart.</string></property>
+          <property name="text"><string>Starting layout; desktops listed here use their own. Meta+Shift+Space switches the layout on the current screen and desktop. Stacklet keeps that choice after a restart, until you change the desktop&apos;s layout here.</string></property>
          </widget>
         </item>
        </layout>
@@ -160,7 +181,41 @@
       </item>
       <item row="4" column="1">
        <widget class="QCheckBox" name="kcfg_smartGaps">
-        <property name="text"><string>No gap around a single window</string></property>
+        <property name="text"><string>No gap around a single window or in monocle</string></property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="centerRatioLabel">
+        <property name="text"><string>Ce&amp;ntred window width:</string></property>
+        <property name="buddy"><cstring>kcfg_centerRatio</cstring></property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QDoubleSpinBox" name="kcfg_centerRatio">
+        <property name="toolTip"><string>Centered layout: share of the screen for the main window (0.15 to 0.85).</string></property>
+        <property name="minimum"><double>0.15</double></property>
+        <property name="maximum"><double>0.85</double></property>
+        <property name="singleStep"><double>0.05</double></property>
+       </widget>
+      </item>
+      <item row="6" column="1">
+       <widget class="QCheckBox" name="kcfg_stash">
+        <property name="text"><string>Centered: narrow side columns (stash)</string></property>
+        <property name="toolTip"><string>The other windows stay small and live at the screen edges; the main window takes the rest. Meta+Alt+C turns this on for one desktop.</string></property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="stashWidthLabel">
+        <property name="text"><string>S&amp;tash column width:</string></property>
+        <property name="buddy"><cstring>kcfg_stashWidth</cstring></property>
+       </widget>
+      </item>
+      <item row="7" column="1">
+       <widget class="QDoubleSpinBox" name="kcfg_stashWidth">
+        <property name="toolTip"><string>Share of the screen for each side column (0.05 to 0.3).</string></property>
+        <property name="minimum"><double>0.05</double></property>
+        <property name="maximum"><double>0.30</double></property>
+        <property name="singleStep"><double>0.05</double></property>
        </widget>
       </item>
      </layout>
@@ -248,6 +303,48 @@
    </item>
 
    <item>
+    <widget class="QGroupBox" name="scratchGroup">
+     <property name="title"><string>Scratchpad</string></property>
+     <layout class="QFormLayout" name="scratchForm">
+      <item row="0" column="0">
+       <widget class="QLabel" name="scratchWidthLabel">
+        <property name="text"><string>Window &amp;width:</string></property>
+        <property name="buddy"><cstring>kcfg_scratchWidth</cstring></property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QDoubleSpinBox" name="kcfg_scratchWidth">
+        <property name="toolTip"><string>Share of the screen width (0.2 to 1).</string></property>
+        <property name="minimum"><double>0.20</double></property>
+        <property name="maximum"><double>1.00</double></property>
+        <property name="singleStep"><double>0.05</double></property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="scratchHeightLabel">
+        <property name="text"><string>Window h&amp;eight:</string></property>
+        <property name="buddy"><cstring>kcfg_scratchHeight</cstring></property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="kcfg_scratchHeight">
+        <property name="toolTip"><string>Share of the screen height (0.2 to 1).</string></property>
+        <property name="minimum"><double>0.20</double></property>
+        <property name="maximum"><double>1.00</double></property>
+        <property name="singleStep"><double>0.05</double></property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QLabel" name="scratchHint">
+        <property name="wordWrap"><bool>true</bool></property>
+        <property name="text"><string>Meta+Alt+Shift+S hides the focused window in the scratchpad. Meta+S shows it centred on the current desktop; with several, each press shows the next and the last press hides them.</string></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <item>
     <widget class="QGroupBox" name="offGroup">
      <property name="title"><string>Turn tiling off</string></property>
      <layout class="QFormLayout" name="offForm">
@@ -316,7 +413,13 @@
       <item row="9" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+. / Meta+Alt+,</string></property></widget></item>
       <item row="10" column="0"><widget class="QLabel"><property name="text"><string>Switch layout on this screen and desktop</string></property></widget></item>
       <item row="10" column="1"><widget class="QLabel"><property name="text"><string>Meta+Shift+Space</string></property></widget></item>
-      <item row="11" column="0" colspan="2">
+      <item row="11" column="0"><widget class="QLabel"><property name="text"><string>Focus on / off (this window centred, the rest in the stash)</string></property></widget></item>
+      <item row="11" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+C</string></property></widget></item>
+      <item row="12" column="0"><widget class="QLabel"><property name="text"><string>Show the next scratchpad window, or hide it</string></property></widget></item>
+      <item row="12" column="1"><widget class="QLabel"><property name="text"><string>Meta+S</string></property></widget></item>
+      <item row="13" column="0"><widget class="QLabel"><property name="text"><string>Send to the scratchpad (again: back to tiling)</string></property></widget></item>
+      <item row="13" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+Shift+S</string></property></widget></item>
+      <item row="14" column="0" colspan="2">
        <widget class="QLabel" name="keysHint">
         <property name="wordWrap"><bool>true</bool></property>
         <property name="text"><string>Change keys in System Settings → Shortcuts → KWin. You can also resize by dragging the border between tiles.</string></property>
