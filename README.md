@@ -10,7 +10,7 @@
 
 A small auto-tiling script made for KDE Plasma 6.8 and Wayland. It tiles your terminals i3-style (master and stack, spiral, dwindle, monocle or centered master) and leaves every other window alone.
 
-[**Get it on the KDE Store**](https://store.kde.org/p/2380552/) · [Releases](https://github.com/aic0d3r/stacklet/releases)
+[**Get it on the KDE Store**](https://store.kde.org/p/2380552/) · [Releases](https://github.com/aic0d3r/stacklet/releases) · [Changelog](CHANGELOG.md)
 
 ## Why I made it
 
@@ -140,23 +140,6 @@ Same private virtual KWin. It floats a window, has KWin re-read its config with 
 The settings page is checked by hand in a live Plasma session.
 
 </details>
-
-## What's new in 1.3
-
-- New fifth layout, **dwindle** (as in Hyprland): a new window splits the focused window's tile, and a closed window's neighbour takes its space. Pick it on the settings page or with Meta+Shift+Space.
-- Split keys for dwindle: Meta+Alt+H / Meta+Alt+V open the next window beside / below the focused one, and Meta+Alt+E flips its split. Borders you drag between dwindle windows stay put.
-- Modal dialogs and windows that can't be resized now float in every mode, also when the app opens them without a parent.
-- "Tile all apps" floats KeePassXC, Bitwarden and 1Password too. Steam, game launchers, Windows (.exe) apps and media players moved to their own checkbox, "Float games and media players" (on by default), so you can tile them and keep system apps floating.
-- Fixed: after a window closed, the next window you focused could get focus pulled back to another one.
-
-## What's new in 1.2
-
-- The Apps tab has two lists: "Tile these apps" and "Never tile". The one "Tile all apps" doesn't use is greyed out. Before, one list meant opposite things depending on the checkbox, so ticking it made your terminals float.
-- "Tile all apps" now floats system apps and utilities by default: System Settings, file pickers, prompts, games, viewers, media players and "Configure …" dialogs. Untick "Float system apps and utilities" for the old behaviour.
-- Meta+Alt+A saves its change instead of lasting until restart.
-- No more turning Stacklet off and on: settings apply when you close or leave System Settings.
-- The first start shows a short note on what gets tiled. The Shortcuts tab starts with the five keys to learn first, and the Apps tab explains why a window might not tile.
-- Upgrading with "Tile every window" on: your old exclude list moves to "Never tile" on the first start (with plasmashell running).
 
 ## Known limits
 
