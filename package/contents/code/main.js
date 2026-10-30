@@ -39,6 +39,45 @@ function spiralRects(n, ratio, mirror = false, portrait = false) {
     return orient(out, mirror, portrait);
 }
 
+// Dwindle (as in Hyprland and bspwm): the windows are leaves of a binary tree; a node is a window or {kids: [a, b]}.
+// A new window splits the tile of the window before it in `wins` (the focused one when it opened, see place);
+// a closed window's sibling takes its space. Leaves get relabelled with `wins` in order, so swaps still work.
+function dwindleSync(tree, wins) {
+    const prune = n => !n ? null : !n.kids ? (wins.includes(n) ? n : null) :
+        (([a, b]) => a && b ? { kids: [a, b] } : a || b)(n.kids.map(prune));
+    const leaves = n => !n ? [] : n.kids ? [...leaves(n.kids[0]), ...leaves(n.kids[1])] : [n];
+    const put = (n, at, r) => n === at ? r : n.kids ? { kids: n.kids.map(x => put(x, at, r)) } : n;
+    tree = prune(tree);
+    wins.forEach((w, i) => {
+        const have = leaves(tree);
+        if (have.includes(w)) return;
+        const before = wins.slice(0, i).reverse().find(x => have.includes(x));
+        const after = wins.slice(i + 1).find(x => have.includes(x));
+        tree = before ? put(tree, before, { kids: [before, w] }) : after ? put(tree, after, { kids: [w, after] }) : w;
+    });
+    let i = 0;
+    const relabel = n => !n ? null : n.kids ? { kids: n.kids.map(relabel) } : wins[i++];
+    return relabel(tree);
+}
+
+// Leaf rects in leaf order, plus the direction of each split in depth-first order. Each split goes side by side
+// when its tile is wider than tall (`aspect` = screen width / height), else top and bottom. The root split takes
+// `ratio`, the rest halves. `mirror` flips along the root split, so the first window's side moves.
+function dwindleRects(tree, ratio, aspect, mirror = false) {
+    const rects = [], splits = [];
+    (function walk(n, r, f) {
+        if (!n.kids) { rects.push(r); return; }
+        const side = r.width * aspect >= r.height;
+        splits.push(side ? HORIZONTAL : VERTICAL);
+        walk(n.kids[0], side ? { x: r.x, y: r.y, width: r.width * f, height: r.height } : { x: r.x, y: r.y, width: r.width, height: r.height * f }, 0.5);
+        walk(n.kids[1], side ? { x: r.x + r.width * f, y: r.y, width: r.width * (1 - f), height: r.height }
+            : { x: r.x, y: r.y + r.height * f, width: r.width, height: r.height * (1 - f) }, 0.5);
+    })(tree, { x: 0, y: 0, width: 1, height: 1 }, ratio);
+    if (!mirror || !splits.length) return { rects, splits };
+    const flip = splits[0] === HORIZONTAL ? r => Object.assign({}, r, { x: 1 - r.x - r.width }) : r => Object.assign({}, r, { y: 1 - r.y - r.height });
+    return { rects: rects.map(flip), splits };
+}
+
 // Centered master: main window in the middle at width `centre`, the stack alternating right and left
 // (left first if mirrored), each side top to bottom. Portrait screens get master and stack turned 90°.
 function centeredRects(n, centre, mirror = false, portrait = false) {
@@ -126,7 +165,7 @@ function migrateApps(done, tileAll, tileRaw, floatRaw = "") {
     return out;
 }
 
-if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, list, TERMINALS }; // node self-test
+if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, list, TERMINALS }; // node self-test
 
 const kwinRead = typeof readConfig !== "undefined" ? readConfig : null;
 if (typeof workspace !== "undefined") {
@@ -162,10 +201,10 @@ if (typeof workspace !== "undefined") {
     const dragFloats = flag("dragFloats", true);
     const offScreens = list(readConfig("disabledScreens", ""));
     const offDesktops = list(readConfig("disabledDesktops", ""));
-    const TILE = 0, SPIRAL = 1, MONOCLE = 2, CENTERED = 3;
-    const LAYOUT_LABELS = ["master and stack", "spiral", "monocle", "centered master"];
+    const TILE = 0, SPIRAL = 1, MONOCLE = 2, CENTERED = 3, DWINDLE = 4; // saved by number: append only
+    const LAYOUT_LABELS = ["master and stack", "spiral", "monocle", "centered master", "dwindle"];
     const layoutDefault = flag("layoutCentered") ? CENTERED : flag("layoutMonocle") ? MONOCLE : flag("layoutSpiral") ? SPIRAL : TILE;
-    const layoutNames = { master: TILE, tile: TILE, spiral: SPIRAL, dwindle: SPIRAL, monocle: MONOCLE, centered: CENTERED, center: CENTERED, centre: CENTERED };
+    const layoutNames = { master: TILE, tile: TILE, spiral: SPIRAL, dwindle: DWINDLE, monocle: MONOCLE, centered: CENTERED, center: CENTERED, centre: CENTERED };
     const stashDefault = flag("stash"); // centered master starts with narrow side columns
     const stashSide = clampRatio(readConfig("stashWidth", 0.15), 0.05, 0.3, 0.15);
     // main width per kind of layout: m = master/spiral, c = centered, s = centered with stash
@@ -212,7 +251,8 @@ if (typeof workspace !== "undefined") {
     const moving = new Set();     // windows being dragged right now
     const draggedOut = new Set(); // tiled windows the current drag pulled out of the layout
     const home = new Map();       // window -> {output, desktop} it was last laid out in
-    let active = null, closedActive = null, pendingFocus = null;
+    let active = null, prevActive = null, closedActive = null, pendingFocus = null;
+    const trees = {};           // group key -> dwindle tree (not saved: rebuilt in layout order after a restart)
     let scratch = [];           // windows in the scratchpad, in the order they were sent
     const focusOrder = new Map(); // group key -> its windows in layout order before the focus shortcut
     const laid = {};            // group key -> width kind of the tiles we built last, to read drags from
@@ -280,7 +320,20 @@ if (typeof workspace !== "undefined") {
             root.padding = smartGaps && (wins.length === 1 || one) ? 0 : gap; // KWin spreads it: full at screen edges, half between tiles
             root.minimumSize = { width: 0.05, height: 0.05 }; // default 0.15 breaks stacks of 7+ windows; children inherit
             let slots = [root]; // monocle: every window shares the root tile, the focused one is on top
-            if (wins.length > 1 && mode === SPIRAL) {
+            if (mode === DWINDLE) trees[k] = dwindleSync(trees[k], wins); else delete trees[k];
+            if (wins.length > 1 && mode === DWINDLE) {
+                const { rects, splits } = dwindleRects(trees[k], ratio, output.geometry.width / output.geometry.height, mirror);
+                slots = [];
+                let s = 0;
+                const build = (n, tile) => {
+                    if (!n.kids) { slots.push(tile); return; }
+                    const dir = splits[s++], halves = tile.split(dir), swap = mirror && dir === splits[0];
+                    build(n.kids[0], halves[swap ? 1 : 0]);
+                    build(n.kids[1], halves[swap ? 0 : 1]);
+                };
+                build(trees[k], root);
+                for (let pass = 0; pass < 2; pass++) slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
+            } else if (wins.length > 1 && mode === SPIRAL) {
                 const rects = spiralRects(wins.length, ratio, mirror, portrait);
                 slots = [];
                 let cur = root;
@@ -350,7 +403,7 @@ if (typeof workspace !== "undefined") {
         // groups that just lost their last window: nothing to lay out, forget the saved ratio
         // (windows on other Activities keep it: visiting an empty Activity shouldn't reset a dragged width)
         const held = new Set(order.filter(w => !w.deleted && w.output && w.desktops.length === 1).map(w => key(w.output, w.desktops[0])));
-        for (const k in groups) if (!next[k]) { delete laid[k]; if (!held.has(k)) delete ratios[k]; }
+        for (const k in groups) if (!next[k]) { delete laid[k]; delete trees[k]; if (!held.has(k)) delete ratios[k]; }
         groups = next;
         save();
     }
@@ -395,8 +448,16 @@ if (typeof workspace !== "undefined") {
 
     // move a freshly added window to where the "new windows go" setting wants it
     function place(w) {
-        if (newWindow !== 1 && newWindow !== 2) return;
         if (!w.output || w.desktops.length !== 1) return;
+        if (modeOf(key(w.output, w.desktops[0]), w.desktops[0]).mode === DWINDLE) {
+            // dwindle: right after the window that had focus, so it splits that one (KWin focuses w before windowAdded)
+            const f = active === w ? prevActive : active;
+            if (!f || f === w || !groupOf(w.output, w.desktops[0]).includes(f)) return;
+            order = order.filter(x => x !== w);
+            order.splice(order.indexOf(f) + 1, 0, w);
+            return;
+        }
+        if (newWindow !== 1 && newWindow !== 2) return;
         const target = groupOf(w.output, w.desktops[0]).filter(x => x !== w)[newWindow === 2 ? 0 : mainCount];
         if (!target) return;
         order = order.filter(x => x !== w);
@@ -428,6 +489,7 @@ if (typeof workspace !== "undefined") {
         if (settingsApp(active) && !settingsApp(a)) reconfigure();
         // KWin may move focus before windowRemoved fires: remember if the old active window just died
         if (active && active !== a && active.deleted) closedActive = active;
+        if (a && a !== active) prevActive = active;
         if (a) active = a;
         const t = pendingFocus;
         pendingFocus = null;
@@ -452,6 +514,7 @@ if (typeof workspace !== "undefined") {
         home.delete(w);
         if (active === w) active = null;
         if (closedActive === w) closedActive = null;
+        if (prevActive === w) prevActive = null;
         if (pendingFocus === w) pendingFocus = null;
         retileAll(ks);
         if (next) { pendingFocus = next; workspace.activeWindow = next; }
@@ -604,7 +667,7 @@ if (typeof workspace !== "undefined") {
     registerShortcut("StackletMonocle", "Stacklet: Monocle on / off (focused window fills the screen)", "Meta+Shift+M", () =>
         switchLayout((cur, base) => cur === MONOCLE ? (base === MONOCLE ? TILE : base) : MONOCLE));
 
-    registerShortcut("StackletNextLayout", "Stacklet: Switch layout (master and stack / spiral / monocle / centered)", "Meta+Shift+Space", () =>
+    registerShortcut("StackletNextLayout", "Stacklet: Switch layout (master and stack / spiral / monocle / centered / dwindle)", "Meta+Shift+Space", () =>
         switchLayout(cur => (cur + 1) % LAYOUT_LABELS.length));
 
     // focus the next / previous tile in layout order (cycles windows in monocle, where directions don't apply)

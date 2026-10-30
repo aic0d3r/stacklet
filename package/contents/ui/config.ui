@@ -125,7 +125,7 @@
          <widget class="QLabel" name="styleHint">
           <property name="wordWrap"><bool>true</bool></property>
           <property name="textFormat"><enum>Qt::RichText</enum></property>
-          <property name="text"><string>&lt;small&gt;Starting layout. To give a virtual desktop its own, write its number, = and a layout name (master, spiral, monocle or centered), separated by commas. Meta+Shift+Space switches the layout on the current screen and desktop. The choice is usually kept after a restart (it is saved through Plasma&apos;s shell), until you change the layout this page gives that desktop.&lt;/small&gt;</string></property>
+          <property name="text"><string>&lt;small&gt;Starting layout. To give a virtual desktop its own, write its number, = and a layout name (master, spiral, monocle, centered or dwindle), separated by commas. Meta+Shift+Space switches the layout on the current screen and desktop. The choice is usually kept after a restart (it is saved through Plasma&apos;s shell), until you change the layout this page gives that desktop.&lt;/small&gt;</string></property>
          </widget>
         </item>
        </layout>

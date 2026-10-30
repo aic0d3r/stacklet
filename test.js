@@ -1,6 +1,6 @@
 // node test.js — checks the layout math (the KWin part needs a live session)
 const assert = require("assert");
-const { slotRects, spiralRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, TERMINALS } = require("./package/contents/code/main.js");
+const { slotRects, spiralRects, dwindleSync, dwindleRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, TERMINALS } = require("./package/contents/code/main.js");
 
 assert.deepStrictEqual(slotRects(1, 0.55), [{ x: 0, y: 0, width: 1, height: 1 }]);
 const two = slotRects(2, 0.55);
@@ -89,4 +89,17 @@ assert.deepStrictEqual(migrateApps(false, false, "gimp"), { appListsV2: "true" }
 assert.deepStrictEqual(migrateApps(false, true, TERMINALS), { appListsV2: "true" });
 assert.deepStrictEqual(migrateApps(false, true, " GIMP, steam "), { appListsV2: "true", floatClasses: "gimp,steam", tileClasses: TERMINALS });
 assert.deepStrictEqual(migrateApps(false, true, "gimp", "mpv"), { appListsV2: "true" }); // never-tile already edited
+// dwindle: c opens with a focused (order a, c, b) and splits a's tile; closing a gives its space to c
+let tr = dwindleSync(null, ["a", "b"]);
+assert.deepStrictEqual(tr, { kids: ["a", "b"] });
+tr = dwindleSync(tr, ["a", "c", "b"]);
+assert.deepStrictEqual(tr, { kids: [{ kids: ["a", "c"] }, "b"] });
+const dw = dwindleRects(tr, 0.5, 16 / 9).rects; // left half is taller than wide: a over c
+assert.deepStrictEqual(dw.map(r => [r.x, r.y, r.width, r.height]), [[0, 0, 0.5, 0.5], [0, 0.5, 0.5, 0.5], [0.5, 0, 0.5, 1]]);
+assert.deepStrictEqual(dwindleSync(tr, ["c", "b"]), { kids: ["c", "b"] });
+assert.deepStrictEqual(dwindleSync(tr, ["b", "c", "a"]), { kids: [{ kids: ["b", "c"] }, "a"] }); // swaps move windows, not tiles
+assert.strictEqual(dwindleSync(tr, []), null);
+const dm = dwindleRects(tr, 0.6, 16 / 9, true).rects;
+near(dm[2].x, 0); near(dm[1].x, 0.4); near(dm[0].x, 0.7); // mirrored; a 0.6-wide half is wider than tall, so a|c
+near(dwindleRects(dwindleSync(null, [1, 2, 3, 4, 5, 6]), 0.55, 9 / 16).rects.reduce((s, r) => s + r.width * r.height, 0), 1);
 console.log("ok");

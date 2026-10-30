@@ -8,7 +8,7 @@
 [![KDE Store](https://img.shields.io/badge/KDE%20Store-Stacklet-3daee9?logo=kde&logoColor=white)](https://store.kde.org/p/2380552/)
 [![License: GPL-3.0-or-later](https://img.shields.io/github/license/aic0d3r/stacklet?color=blue)](LICENSE)
 
-A small auto-tiling script made for KDE Plasma 6.8 and Wayland. It tiles your terminals i3-style (master and stack, spiral, monocle or centered master) and leaves every other window alone.
+A small auto-tiling script made for KDE Plasma 6.8 and Wayland. It tiles your terminals i3-style (master and stack, spiral, dwindle, monocle or centered master) and leaves every other window alone.
 
 [**Get it on the KDE Store**](https://store.kde.org/p/2380552/) · [Releases](https://github.com/aic0d3r/stacklet/releases)
 
@@ -25,11 +25,12 @@ The defaults tile terminals, and you add other apps from a normal settings page.
 ## Features
 
 - Only the apps you list get tiled (default: kitty, Konsole, Alacritty, Ghostty, foot, WezTerm). Everything else floats. Or tick "Tile all apps": then your work apps tile, while "Float system apps and utilities" (on by default) keeps System Settings, file pickers, password prompts, Steam and games, calculators, screenshot tools, image viewers, video and music players and "Configure …" dialogs floating. Add your own apps under "Never tile". Meta+Alt+A adds or removes the focused window's app, so you never have to look up a window class.
-- Four layouts, each with a preview on the settings page:
+- Five layouts (the first four with a preview on the settings page):
   - **Master and stack**: the first window on the left or right, the rest stacked beside it.
   - **Spiral**: each new window takes half of the space left.
   - **Monocle**: one window fills the screen.
   - **Centered master**: the main window in the middle (its own width, default 50%), the others in columns on both sides. With two windows the main one stays centred. Optional **stash**: the side columns become narrow strips (default 15% each) of small, live windows.
+  - **Dwindle**, as in Hyprland: a new window splits the focused window's tile, side by side if that tile is wider than tall, else top and bottom. When a window closes, its neighbour in that split takes the space. Switch to it with Meta+Shift+Space or per desktop (`2=dwindle`); it has no button on the settings page yet.
 - Pick a starting layout, or one per screen and virtual desktop, and switch on the fly. A layout you switch to by shortcut, and widths you drag, are usually kept after a restart (see Known limits), until you change the layout the settings page gives that desktop. A lone window always fills the screen.
 - **Spotlight** (Meta+Alt+C): the focused window goes to the centre, every other tiled window to the stash. Press again to get the previous layout back.
 - **Scratchpad**: hide windows and call them up centred over any desktop (default 60% × 60% of the screen), one at a time.
@@ -52,7 +53,7 @@ Every shortcut can be changed in System Settings → Shortcuts → KWin (search 
 | Meta+Alt+arrows | Focus the neighbouring tile (KWin's own shortcut) |
 | Meta+Alt+Shift+arrows | Swap with the neighbouring tile |
 | Meta+Alt+] / Meta+Alt+[ | Grow / shrink the main window by 5% |
-| Meta+Shift+Space | Switch layout (master and stack, spiral, monocle, centered) for this screen and desktop; kept after a restart |
+| Meta+Shift+Space | Switch layout (master and stack, spiral, monocle, centered, dwindle) for this screen and desktop; kept after a restart |
 | Meta+Shift+M | Monocle on / off for this screen and desktop: every tiled window fills the area, the focused one on top |
 | Meta+Alt+. / Meta+Alt+, | Focus the next / previous tiled window (use this to cycle in monocle) |
 | Meta+Alt+T / Meta+Alt+Shift+T | Rotate the stack forwards / backwards |
@@ -105,6 +106,12 @@ tests/layouts/run.sh            # where do 2, 3, 4 and 6 windows end up in each 
 Same private virtual KWin. It prints every window's position and fails if a layout has the wrong shape (for example monocle not stacking windows). To reproduce a setup, pass your own kwinrc section: `KWINRC=$'[Script-stacklet]\nlayoutSpiral=true' tests/layouts/run.sh - 5`.
 
 ```sh
+tests/dwindle/run.sh
+```
+
+Same private virtual KWin. It opens three windows, focuses the first, opens a fourth and closes the third, and fails unless the fourth splits the focused window's tile and the closed window's neighbour takes its space.
+
+```sh
 tests/shortcuts/run.sh         # fires every shortcut and checks what it did, and that its key is free
 ```
 
@@ -147,6 +154,7 @@ The settings page is checked by hand in a live Plasma session.
 - Dialogs, About boxes and tool windows that belong to a parent window never tile, and neither do windows that can't be resized. A dialog an app opens without a parent looks like a normal window on Wayland, so it tiles: Meta+F floats it.
 - Settings apply when you close or leave System Settings: Stacklet then restarts if one of its settings changed. Like turning it off and on, that tiles windows floated with Meta+F again and brings back hidden scratchpad windows.
 - Spiral looks the same as master and stack until the fourth window.
+- Dwindle remembers which window split which only until Stacklet restarts; after that it rebuilds the splits in layout order, each window splitting the one before it.
 - Stacklet replaces the Meta+T tile layout on every desktop where it tiles a window.
 - Saved layouts, widths and Meta+Alt+A app changes are written through Plasma's shell (KWin scripts can't write their config), so nothing is saved while plasmashell isn't running. If the settings page is open, close it before using Meta+Alt+A or Apply will overwrite the change. A width still resets when its desktop has no tiled windows, which usually happens when you log out.
 - Scratchpad windows are minimized while hidden, so they stay in the taskbar; restoring one from there shows it.
