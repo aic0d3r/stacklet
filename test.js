@@ -71,6 +71,7 @@ const apps = (o = {}) => Object.assign({ tileAll: true, system: true, media: tru
 assert.ok(appTiles("a", "", apps({ tileAll: false })) && !appTiles("b", "", apps({ tileAll: false })));
 assert.ok(appTiles("org.kde.dolphin", "build — Dolphin", apps()));
 assert.ok(!appTiles("systemsettings", "KWin Scripts — System Settings", apps()));
+assert.ok(!appTiles("kcm_kwin4_genericscripted", "kcmshell6", apps())); // kcmshell6 window of a script's settings page
 assert.ok(!appTiles("steam_app_570", "", apps()) && !appTiles("setup.exe", "", apps()) && !appTiles("pinentry-qt", "", apps()));
 assert.ok(!appTiles("org.kde.dolphin", "Configure — Dolphin", apps())); // parentless config dialog
 assert.ok(appTiles("systemsettings", "", apps({ system: false })));

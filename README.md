@@ -141,6 +141,14 @@ The settings page is checked by hand in a live Plasma session.
 
 </details>
 
+## What's new in 1.3
+
+- New fifth layout, **dwindle** (as in Hyprland): a new window splits the focused window's tile, and a closed window's neighbour takes its space. Pick it on the settings page or with Meta+Shift+Space.
+- Split keys for dwindle: Meta+Alt+H / Meta+Alt+V open the next window beside / below the focused one, and Meta+Alt+E flips its split. Borders you drag between dwindle windows stay put.
+- Modal dialogs and windows that can't be resized now float in every mode, also when the app opens them without a parent.
+- "Tile all apps" floats KeePassXC, Bitwarden and 1Password too. Steam, game launchers, Windows (.exe) apps and media players moved to their own checkbox, "Float games and media players" (on by default), so you can tile them and keep system apps floating.
+- Fixed: after a window closed, the next window you focused could get focus pulled back to another one.
+
 ## What's new in 1.2
 
 - The Apps tab has two lists: "Tile these apps" and "Never tile". The one "Tile all apps" doesn't use is greyed out. Before, one list meant opposite things depending on the checkbox, so ticking it made your terminals float.

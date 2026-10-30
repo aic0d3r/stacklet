@@ -160,7 +160,7 @@ const TERMINALS = "kitty,org.kde.konsole,Alacritty,com.mitchellh.ghostty,foot,or
 const list = s => String(s).split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
 // "Float system apps and utilities" in tile-all mode. `x*` matches a prefix, `*x` a suffix.
 const SYSTEM_FLOAT = list(
-    "systemsettings,kcmshell6,org.kde.kcmshell6,org.kde.kinfocenter,org.kde.partitionmanager,org.kde.discover,org.kde.kwalletmanager," +
+    "systemsettings,kcmshell6,org.kde.kcmshell6,kcm_*,org.kde.kinfocenter,org.kde.partitionmanager,org.kde.discover,org.kde.kwalletmanager," +
     "org.kde.kmenuedit,pavucontrol,org.pulseaudio.pavucontrol,nm-connection-editor,blueman-manager," + // settings & system
     "xdg-desktop-portal-kde,org.freedesktop.impl.portal.desktop.kde,xdg-desktop-portal-gtk,xdg-desktop-portal-gnome," +
     "org.kde.polkit-kde-authentication-agent-1,polkit-kde-authentication-agent-1,pinentry*,gcr-prompter," +
@@ -434,6 +434,10 @@ if (typeof workspace !== "undefined") {
         if (!w.deleted && w.output && w.desktops.length === 1) ks.push(key(w.output, w.desktops[0]));
         return ks;
     }
+    const tracked = () => {
+        const w = workspace.activeWindow;
+        return w && order.includes(w) ? w : null;
+    };
     const tiledWindow = () => { const w = tracked(); return w && tileable(w) ? w : null; };
     function release(w) { busy = true; w.tile.unmanage(w); busy = false; }
 
@@ -523,7 +527,8 @@ if (typeof workspace !== "undefined") {
     workspace.windowAdded.connect(w => { if (track(w)) { place(w); retileAll(keysOf(w)); } });
     // Apply on the settings page only writes kwinrc: KWin neither re-reads it nor restarts scripts. So when the
     // user leaves or closes System Settings, have KWin re-read it, and restart Stacklet if its settings changed.
-    const settingsApp = w => w && ["systemsettings", "kcmshell6", "org.kde.kcmshell6"].includes(cls(w));
+    // kcmshell6 <module> windows take the module's id as class, e.g. kcm_kwin4_genericscripted for our own page
+    const settingsApp = w => w && (["systemsettings", "kcmshell6", "org.kde.kcmshell6"].includes(cls(w)) || cls(w).startsWith("kcm_"));
     const reconfigure = () => callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure");
     options.configChanged.connect(() => {
         if (!Object.keys(seen).some(k => k !== "savedState" && !seen[k].slice(1).includes(String(kwinRead(k, seen[k][0]))))) return;
@@ -568,11 +573,6 @@ if (typeof workspace !== "undefined") {
         // already focused (KWin picked it too): no activation follows, and a pending one would steal the next focus change
         if (next && workspace.activeWindow !== next) { pendingFocus = next; workspace.activeWindow = next; }
     });
-
-    const tracked = () => {
-        const w = workspace.activeWindow;
-        return w && order.includes(w) ? w : null;
-    };
 
     registerShortcut("StackletSetMaster", "Stacklet: Make focused window the main one", "Meta+Shift+Return", () => {
         const w = tracked();

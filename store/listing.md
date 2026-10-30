@@ -4,7 +4,7 @@ Everything to paste into the store form, plus the files to upload.
 
 ## Files to upload
 
-- **File:** `build/stacklet-1.1.2.kwinscript` (build it with `./package.sh`)
+- **File:** `build/stacklet-1.3.0.kwinscript` (build it with `./package.sh`)
 - **Screenshots:** `store/screenshot-tiling.png`, `store/screenshot-settings.png`
 - **Icon / logo:** `store/logo-256.png` (source: `store/logo.svg`)
 - **GitHub social preview:** `store/social-preview.png` (Settings → Social preview)
@@ -19,13 +19,13 @@ Stacklet
 
 ## Summary (one line)
 
-Tiling window manager for KDE Plasma 6: auto-tile your terminals on Plasma's own tiles with master and stack, spiral, monocle or centered master, plus a scratchpad.
+Tiling window manager for KDE Plasma 6: auto-tile your terminals on Plasma's own tiles with master and stack, spiral, dwindle, monocle or centered master, plus a scratchpad.
 
 ## Description (plain text only: the store mangles BBCode lists)
 
 Stacklet is a tiling window manager script for KDE Plasma 6 (a KWin script). It tiles the apps you choose into a main window plus a stack, and leaves everything else floating. It drives Plasma's native tiles, so resizing, Meta+T layouts and per-desktop tile layouts keep working.
 
-Four layouts, with a preview when you pick one:
+Five layouts, with a preview when you pick one:
 
 • Master and stack: a main window, the rest stacked beside it. Good for 2 to 4 terminals.
 
@@ -35,9 +35,13 @@ Four layouts, with a preview when you pick one:
 
 • Centered master: the main window in the middle, the others in columns on both sides. Good for wide screens. Optionally the side columns become a narrow stash of small, live windows.
 
+• Dwindle, as in Hyprland: a new window splits the focused window's tile, side by side or top and bottom by the tile's shape. Meta+Alt+H / Meta+Alt+V pick the direction for the next window, Meta+Alt+E flips a split, and borders you drag stay put.
+
 More
 
-• Only the apps you list get tiled (terminals by default). Or tile everything and list the apps to leave alone.
+• Only the apps you list get tiled (terminals by default). Or tile all apps: system apps, password managers, file pickers and "Configure" dialogs stay floating, and so do games and media players (each its own checkbox). Add your own apps to "Never tile".
+
+• Dialogs, modal windows and windows that can't be resized always float.
 
 • Pin an app as "always main", so a browser or editor stays big with terminals beside it.
 
@@ -59,6 +63,10 @@ Shortcuts (all changeable in System Settings → Shortcuts → KWin)
 
 • Meta+Shift+Space: switch layout
 
+• Meta+Alt+H / Meta+Alt+V: dwindle, next window opens beside / below the focused one
+
+• Meta+Alt+E: dwindle, flip the focused window's split
+
 • Meta+Shift+M: monocle on / off
 
 • Meta+Alt+. / Meta+Alt+,: focus next / previous window
@@ -75,11 +83,11 @@ Shortcuts (all changeable in System Settings → Shortcuts → KWin)
 
 • Meta+Ctrl+S: send to the scratchpad (on a shown one: put it back)
 
-• Meta+Alt+A: tile or untile this app until restart, and show its window class
+• Meta+Alt+A: tile or untile this app (saved), and show its window class
 
 • Drag onto another tile: swap the two
 
-Install, then enable Stacklet under System Settings → Window Management → KWin Scripts. Settings are behind the gear icon there; turn the script off and on to apply them.
+Install, then enable Stacklet under System Settings → Window Management → KWin Scripts. Settings are behind the gear icon there; they apply when you close or leave System Settings.
 
 Do not run it together with another tiling script (Kröhnkite, Polonium, ...).
 
@@ -89,6 +97,14 @@ Source and bug reports: https://github.com/aic0d3r/stacklet
 ## Tags
 
 tiling, tiling window manager, window management, kwin script, plasma 6, terminals, i3, productivity
+
+## Changelog 1.3.0
+
+New dwindle layout (as in Hyprland): a new window splits the focused window's tile, and a closed window's neighbour takes its space. Meta+Alt+H / Meta+Alt+V pick whether the next window opens beside or below the focused one, Meta+Alt+E flips a split, and dragged borders stay put. Modal dialogs and windows that can't be resized now float in every mode. "Tile all apps" also floats KeePassXC, Bitwarden and 1Password; games, launchers and media players have their own checkbox, "Float games and media players". Fixed focus being pulled back to another window after a window closed.
+
+## Changelog 1.2.0
+
+The Apps tab has two lists, "Tile these apps" and "Never tile". "Tile all apps" floats system apps and utilities by default. Meta+Alt+A saves its change. Settings apply when you close or leave System Settings, no more turning Stacklet off and on. A short note on first start, and the Shortcuts tab starts with the five keys to learn first.
 
 ## Changelog 1.1.2
 
