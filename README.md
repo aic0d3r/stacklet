@@ -24,7 +24,7 @@ The defaults tile terminals, and you add other apps from a normal settings page.
 
 ## Features
 
-- Only the apps you list get tiled (default: kitty, Konsole, Alacritty, Ghostty, foot, WezTerm). Everything else floats. Or tick "Tile every window" and the list becomes an exclude list.
+- Only the apps you list get tiled (default: kitty, Konsole, Alacritty, Ghostty, foot, WezTerm). Everything else floats. Or tick "Tile all apps": then your work apps tile, while "Float system apps and utilities" (on by default) keeps System Settings, file pickers, password prompts, Steam and games, calculators, screenshot tools, image viewers, video and music players and "Configure …" dialogs floating. Add your own apps under "Never tile". Meta+Alt+A adds or removes the focused window's app, so you never have to look up a window class.
 - Four layouts, each with a preview on the settings page:
   - **Master and stack**: the first window on the left or right, the rest stacked beside it.
   - **Spiral**: each new window takes half of the space left.
@@ -48,7 +48,7 @@ Every shortcut can be changed in System Settings → Shortcuts → KWin (search 
 | --- | --- |
 | Meta+Shift+Return | Make the focused window the main one |
 | Meta+F | Float / re-tile the focused window (dragging a tile out also floats it, unless you turn that off under Behaviour) |
-| Meta+Alt+A | Tile / untile the focused window's app until restart; the on-screen note shows its window class for the settings list |
+| Meta+Alt+A | Tile / untile the focused window's app and save it to the settings ("Tile these apps", or "Never tile" with "Tile all apps" on; works on the built-in floating apps too) |
 | Meta+Alt+arrows | Focus the neighbouring tile (KWin's own shortcut) |
 | Meta+Alt+Shift+arrows | Swap with the neighbouring tile |
 | Meta+Alt+] / Meta+Alt+[ | Grow / shrink the main window by 5% |
@@ -114,7 +114,7 @@ Same private virtual KWin, with four windows. It also starts from a 1.0.0-style 
 tests/dialogs/run.sh           # do dialogs, About boxes and tool windows stay floating?
 ```
 
-Same private virtual KWin, with the app list and with "Tile every window". It opens two normal windows plus dialogs (with and without a parent), an About box, a tool window, a fixed-size window and an invisible helper window (hidden from the taskbar and the task switcher, like Xwayland Video Bridge), and fails if anything but the normal windows (and the parentless dialog, see Known limits) gets a tile.
+Same private virtual KWin, with the app list and with "Tile all apps". It opens two normal windows plus dialogs (with and without a parent), an About box, a tool window, a fixed-size window and an invisible helper window (hidden from the taskbar and the task switcher, like Xwayland Video Bridge), and fails if anything but the normal windows (and the parentless dialog, see Known limits) gets a tile.
 
 ```sh
 tests/activities/run.sh        # does a window on another Activity leave a gap?
@@ -126,6 +126,13 @@ The settings page is checked by hand in a live Plasma session.
 
 </details>
 
+## What's new in 1.2
+
+- The Apps tab has two lists: "Tile these apps" and "Never tile". The one "Tile all apps" doesn't use is greyed out. Before, one list meant opposite things depending on the checkbox, so ticking it made your terminals float.
+- "Tile all apps" now floats system apps and utilities by default: System Settings, file pickers, prompts, games, viewers, media players and "Configure …" dialogs. Untick "Float system apps and utilities" for the old behaviour.
+- Meta+Alt+A saves its change instead of lasting until restart.
+- Upgrading with "Tile every window" on: your old exclude list moves to "Never tile" on the first start (with plasmashell running).
+
 ## Known limits
 
 - Windows on all desktops, minimized or fullscreen are left alone, and so are windows hidden from both the taskbar and the task switcher (helpers such as Xwayland Video Bridge).
@@ -133,7 +140,7 @@ The settings page is checked by hand in a live Plasma session.
 - Settings apply when the script is loaded: turn Stacklet off and on in KWin Scripts after changing them.
 - Spiral looks the same as master and stack until the fourth window.
 - Stacklet replaces the Meta+T tile layout on every desktop where it tiles a window.
-- Saved layouts and widths are written through Plasma's shell (KWin scripts can't write their config), so nothing is saved while plasmashell isn't running. A width still resets when its desktop has no tiled windows, which usually happens when you log out.
+- Saved layouts, widths and Meta+Alt+A app changes are written through Plasma's shell (KWin scripts can't write their config), so nothing is saved while plasmashell isn't running. If the settings page is open, close it before using Meta+Alt+A or Apply will overwrite the change. A width still resets when its desktop has no tiled windows, which usually happens when you log out.
 - Scratchpad windows are minimized while hidden, so they stay in the taskbar; restoring one from there shows it.
 
 ## Say thanks

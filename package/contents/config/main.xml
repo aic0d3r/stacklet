@@ -45,11 +45,19 @@
       <default></default>
     </entry>
     <entry name="tileClasses" type="String">
-      <label>Window classes (comma-separated): tiled, or excluded when "Tile every window" is on</label>
+      <label>Window classes (comma-separated) to tile when "Tile all apps" is off</label>
       <default>kitty,org.kde.konsole,Alacritty,com.mitchellh.ghostty,foot,org.wezfurlong.wezterm</default>
     </entry>
+    <entry name="floatClasses" type="String">
+      <label>Window classes (comma-separated) never tiled when "Tile all apps" is on</label>
+      <default></default>
+    </entry>
+    <entry name="floatSystem" type="Bool">
+      <label>With "Tile all apps": float system settings, prompts, games, viewers, media players and "Configure" dialogs</label>
+      <default>true</default>
+    </entry>
     <entry name="tileAll" type="Bool">
-      <label>Tile every normal window except the listed apps</label>
+      <label>Tile every normal window except the never-tile apps</label>
       <default>false</default>
     </entry>
     <entry name="masterRatio" type="Double">

@@ -85,13 +85,64 @@ function placeInSlots(order, wins) {
     keep.forEach((x, i) => { order[slots[i]] = x; });
 }
 
-if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots }; // node self-test
+const TERMINALS = "kitty,org.kde.konsole,Alacritty,com.mitchellh.ghostty,foot,org.wezfurlong.wezterm";
+const list = s => String(s).split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
+// "Float system apps and utilities" in tile-all mode. `x*` matches a prefix, `*x` a suffix.
+const SYSTEM_FLOAT = list(
+    "systemsettings,kcmshell6,org.kde.kcmshell6,org.kde.kinfocenter,org.kde.partitionmanager,org.kde.discover,org.kde.kwalletmanager," +
+    "org.kde.kmenuedit,pavucontrol,org.pulseaudio.pavucontrol,nm-connection-editor,blueman-manager," + // settings & system
+    "xdg-desktop-portal-kde,org.freedesktop.impl.portal.desktop.kde,xdg-desktop-portal-gtk,xdg-desktop-portal-gnome," +
+    "org.kde.polkit-kde-authentication-agent-1,polkit-kde-authentication-agent-1,pinentry*,gcr-prompter," +
+    "org.kde.ksecretd,kwalletd6,kwalletd5," + // portals & prompts
+    "steam,steam_app_*,steamwebhelper,net.lutris.lutris,lutris,heroic,com.heroicgameslauncher.hgl,com.usebottles.bottles," +
+    "*.exe,wine," + // games & launchers
+    "org.kde.kcalc,org.kde.kalk,org.kde.spectacle,org.kde.kcolorchooser,org.kde.kruler,org.kde.kcharselect,org.kde.kdeconnect.*," +
+    "org.kde.ark,org.kde.gwenview,org.gnome.loupe,eog,qimgv,feh,imv," + // viewers & small tools
+    "mpv,vlc,org.kde.haruna,io.github.celluloid_player.celluloid,spotify,org.kde.elisa,strawberry"); // media
+const SYSTEM_TITLE = /^(configure\b|settings$|preferences$)/i; // parentless "Configure — App" dialogs
+const matches = (l, c) => l.some(p => p.endsWith("*") ? c.startsWith(p.slice(0, -1)) : p.startsWith("*") ? c.endsWith(p.slice(1)) : p === c);
+// Should a window of class `c` titled `title` tile? o: {tileAll, system, tileClasses, floatClasses, tileAnyway}
+function appTiles(c, title, o) {
+    if (!o.tileAll) return matches(o.tileClasses, c);
+    if (matches(o.floatClasses, c)) return false;
+    if (o.tileAnyway.includes(c)) return true; // Meta+Alt+A over the built-in list
+    return !(o.system && (matches(SYSTEM_FLOAT, c) || SYSTEM_TITLE.test(title)));
+}
+// Meta+Alt+A: flip `c` and return the list entries that change. Tile-all edits floatClasses and the
+// hidden tileAnyway list (to beat the built-in list), otherwise tileClasses.
+function toggleApp(c, title, o) {
+    const tiled = !appTiles(c, title, o), drop = l => l.filter(x => x !== c);
+    if (!o.tileAll) return { tiled, lists: { tileClasses: tiled ? [...o.tileClasses, c] : drop(o.tileClasses) } };
+    const n = { floatClasses: drop(o.floatClasses), tileAnyway: drop(o.tileAnyway) };
+    if (tiled !== appTiles(c, title, Object.assign({}, o, n))) (tiled ? n.tileAnyway : n.floatClasses).push(c);
+    return { tiled, lists: n };
+}
+// Up to 1.1.x one list was the exclude list in tile-all mode. Move it to floatClasses once (`done` marks it).
+// Skipped once floatClasses was edited: at login plasmashell may not be up yet, so this can run again.
+function migrateApps(done, tileAll, tileRaw, floatRaw = "") {
+    if (done) return null;
+    const out = { appListsV2: "true" };
+    if (tileAll && list(tileRaw).join() !== list(TERMINALS).join() && !list(floatRaw).length) Object.assign(out, { floatClasses: list(tileRaw).join(","), tileClasses: TERMINALS });
+    return out;
+}
+
+if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, list, TERMINALS }; // node self-test
 
 if (typeof workspace !== "undefined") {
-    const list = s => String(s).split(",").map(x => x.trim().toLowerCase()).filter(Boolean);
-    const classes = list(readConfig("tileClasses", "kitty,org.kde.konsole,Alacritty,com.mitchellh.ghostty,foot,org.wezfurlong.wezterm"));
     const flag = (k, d = false) => String(readConfig(k, d)) === "true";
-    const tileAll = flag("tileAll"); // then `classes` is an exclude list
+    const tileAll = flag("tileAll");
+    // KWin 6.8 scripts can read their config but have no writeConfig; Plasma's desktop scripting can write it.
+    // shortcut: needs plasmashell running; nothing is saved without it.
+    const writeConfig = entries => callDBus("org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell", "evaluateScript",
+        "const c = ConfigFile('kwinrc', 'Script-stacklet');" +
+        Object.keys(entries).map(k => "c.writeEntry(" + JSON.stringify(k) + ", " + JSON.stringify(entries[k]) + ");").join(""));
+    const apps = { tileAll, system: flag("floatSystem", true), tileClasses: list(readConfig("tileClasses", TERMINALS)),
+        floatClasses: list(readConfig("floatClasses", "")), tileAnyway: list(readConfig("tileAnyway", "")) };
+    const migrated = migrateApps(flag("appListsV2"), tileAll, readConfig("tileClasses", TERMINALS), readConfig("floatClasses", ""));
+    if (migrated) {
+        for (const k of ["tileClasses", "floatClasses"]) if (k in migrated) apps[k] = list(migrated[k]);
+        writeConfig(migrated);
+    }
     const defaultRatio = clampRatio(readConfig("masterRatio", 0.55));
     const mirror = Number(readConfig("mainSide", 0)) === 1;
     const mainCount = Math.max(1, Math.min(2, Number(readConfig("maxMain", 1)) || 1));
@@ -138,16 +189,12 @@ if (typeof workspace !== "undefined") {
     const kindOf = m => m.mode !== CENTERED ? "m" : m.stash ? "s" : "c";
     const widthOf = (k, kind) => clampRatio((ratios[k] || {})[kind], WIDTHS[kind][1], WIDTHS[kind][2], WIDTHS[kind][0]);
     const setWidth = (k, kind, v) => { (ratios[k] = ratios[k] || {})[kind] = Math.min(WIDTHS[kind][2], Math.max(WIDTHS[kind][1], Number(v) || WIDTHS[kind][0])); };
-    // KWin 6.8 scripts can read their config but have no writeConfig; Plasma's desktop scripting can write it.
-    // shortcut: needs plasmashell running when the state changes; nothing is saved without it.
     function save() {
         const json = JSON.stringify({ modes, ratios });
         if (json === savedJson) return;
         savedJson = json;
-        callDBus("org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell", "evaluateScript",
-            "ConfigFile('kwinrc', 'Script-stacklet').writeEntry('savedState', " + JSON.stringify(json) + ");");
+        writeConfig({ savedState: json });
     }
-    const overrides = new Map(); // class -> tile it? Set by the per-app toggle shortcut, lasts until restart.
 
     let order = [];             // tracked windows, oldest first; index 0 of a group = master
     const floating = new Set(); // windows the user took out of the layout
@@ -166,9 +213,8 @@ if (typeof workspace !== "undefined") {
 
     const key = (o, d) => o.name + "|" + d.x11DesktopNumber; // saved across restarts, so no desktop uuid
     const cls = w => String(w.resourceClass).toLowerCase();
-    const listed = c => overrides.has(c) ? overrides.get(c) : classes.includes(c) !== tileAll;
     const wanted = w => w.normalWindow && !w.specialWindow && !w.transient &&
-        (!tileAll || w.resizeable) && listed(cls(w));
+        (!tileAll || w.resizeable) && appTiles(cls(w), String(w.caption), apps);
     // a window on another Activity still sits on this screen and desktop: counting it leaves an empty tile
     const onActivity = w => !w.activities.length || w.activities.includes(workspace.currentActivity);
     // hidden from taskbar and switcher = not a window the user manages (e.g. Xwayland Video Bridge: invisible, type normal)
@@ -480,19 +526,22 @@ if (typeof workspace !== "undefined") {
         retileAll(keysOf(w));
     });
 
-    // Session-only (scripts can't write their own config): the OSD shows the class to paste into settings.
+    // Saved to the list the settings page shows for the current mode.
     // New id (was StackletToggleApp): 1.0.0 saved Meta+Shift+A under the old one, which would hide the new default.
     registerShortcut("StackletToggleAppClass", "Stacklet: Tile / untile this app (shows its window class)", "Meta+Alt+A", () => {
         const w = workspace.activeWindow;
         if (!w || !w.normalWindow || w.specialWindow) return;
-        const c = cls(w), now = !listed(c);
-        overrides.set(c, now);
+        const c = cls(w), t = toggleApp(c, String(w.caption), apps), now = t.tiled;
+        Object.assign(apps, t.lists);
+        const out = {};
+        for (const k in t.lists) out[k] = t.lists[k].join(",");
+        writeConfig(out);
         for (const x of workspace.windowList()) {
             if (cls(x) !== c) continue;
             if (now) track(x); else untile(x);
         }
         retileAll();
-        osd("Stacklet: " + (now ? "tiling " : "not tiling ") + c + " until restart. Add it in settings to keep.");
+        osd("Stacklet: " + (now ? "tiling " : "not tiling ") + c + " (saved)");
     });
 
     // Focus by direction is KWin's own Meta+Alt+arrows, so only swapping lives here.

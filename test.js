@@ -1,6 +1,6 @@
 // node test.js — checks the layout math (the KWin part needs a live session)
 const assert = require("assert");
-const { slotRects, spiralRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots } = require("./package/contents/code/main.js");
+const { slotRects, spiralRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, TERMINALS } = require("./package/contents/code/main.js");
 
 assert.deepStrictEqual(slotRects(1, 0.55), [{ x: 0, y: 0, width: 1, height: 1 }]);
 const two = slotRects(2, 0.55);
@@ -65,4 +65,28 @@ assert.deepStrictEqual(rr(centeredRects(3, 1 - 2 * 0.15)), [[0.15, 0, 0.7, 1], [
 assert.deepStrictEqual(centeredRects(3, 0.6, false, true), slotRects(3, 0.6, 1, false, true));
 assert.strictEqual(clampRatio(0.2, 0.05, 0.3, 0.15), 0.2);
 assert.strictEqual(clampRatio(0.4, 0.05, 0.3, 0.15), 0.15);
+// Meta+Alt+A edits the list of the current mode
+const apps = (o = {}) => Object.assign({ tileAll: true, system: true, tileClasses: ["a"], floatClasses: [], tileAnyway: [] }, o);
+// which apps tile
+assert.ok(appTiles("a", "", apps({ tileAll: false })) && !appTiles("b", "", apps({ tileAll: false })));
+assert.ok(appTiles("org.kde.dolphin", "build — Dolphin", apps()));
+assert.ok(!appTiles("systemsettings", "KWin Scripts — System Settings", apps()));
+assert.ok(!appTiles("steam_app_570", "", apps()) && !appTiles("setup.exe", "", apps()) && !appTiles("pinentry-qt", "", apps()));
+assert.ok(!appTiles("org.kde.dolphin", "Configure — Dolphin", apps())); // parentless config dialog
+assert.ok(appTiles("systemsettings", "", apps({ system: false })));
+assert.ok(appTiles("systemsettings", "", apps({ tileAnyway: ["systemsettings"] })));
+assert.ok(!appTiles("systemsettings", "", apps({ tileAnyway: ["systemsettings"], floatClasses: ["systemsettings"] })));
+// Meta+Alt+A edits the lists of the current mode
+assert.deepStrictEqual(toggleApp("a", "", apps({ tileAll: false, tileClasses: ["a", "b"] })), { tiled: false, lists: { tileClasses: ["b"] } });
+assert.deepStrictEqual(toggleApp("c", "", apps({ tileAll: false })), { tiled: true, lists: { tileClasses: ["a", "c"] } });
+assert.deepStrictEqual(toggleApp("gimp", "", apps()), { tiled: false, lists: { floatClasses: ["gimp"], tileAnyway: [] } });
+assert.deepStrictEqual(toggleApp("gimp", "", apps({ floatClasses: ["gimp"] })), { tiled: true, lists: { floatClasses: [], tileAnyway: [] } });
+assert.deepStrictEqual(toggleApp("systemsettings", "", apps()), { tiled: true, lists: { floatClasses: [], tileAnyway: ["systemsettings"] } });
+assert.deepStrictEqual(toggleApp("systemsettings", "", apps({ tileAnyway: ["systemsettings"] })), { tiled: false, lists: { floatClasses: [], tileAnyway: [] } });
+// 1.1.x tile-all exclusions move to the never-tile list once
+assert.strictEqual(migrateApps(true, true, "gimp"), null);
+assert.deepStrictEqual(migrateApps(false, false, "gimp"), { appListsV2: "true" });
+assert.deepStrictEqual(migrateApps(false, true, TERMINALS), { appListsV2: "true" });
+assert.deepStrictEqual(migrateApps(false, true, " GIMP, steam "), { appListsV2: "true", floatClasses: "gimp,steam", tileClasses: TERMINALS });
+assert.deepStrictEqual(migrateApps(false, true, "gimp", "mpv"), { appListsV2: "true" }); // never-tile already edited
 console.log("ok");

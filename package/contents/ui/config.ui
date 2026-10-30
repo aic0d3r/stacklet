@@ -252,37 +252,59 @@
      <layout class="QFormLayout" name="appsForm">
       <item row="0" column="0" colspan="2">
        <widget class="QCheckBox" name="kcfg_tileAll">
-        <property name="text"><string>Tile all windows, except the apps listed below</string></property>
+        <property name="text"><string>Tile all apps</string></property>
        </widget>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="classesLabel">
-        <property name="text"><string>App &amp;list:</string></property>
+        <property name="text"><string>&amp;Tile these apps:</string></property>
         <property name="buddy"><cstring>kcfg_tileClasses</cstring></property>
        </widget>
       </item>
       <item row="1" column="1">
        <widget class="QLineEdit" name="kcfg_tileClasses">
         <property name="placeholderText"><string>e.g. kitty,org.kde.konsole</string></property>
+        <property name="toolTip"><string>Only these apps are tiled; everything else floats. Not used while "Tile all apps" is ticked.</string></property>
        </widget>
       </item>
-      <item row="2" column="0" colspan="2">
-       <widget class="QLabel" name="classesHint">
-        <property name="wordWrap"><bool>true</bool></property>
-        <property name="textFormat"><enum>Qt::RichText</enum></property>
-        <property name="text"><string>&lt;small&gt;Window classes, separated by commas. Listed apps are tiled; with the box above ticked they stay floating instead. Meta+Alt+A tiles or untiles the focused window&apos;s app until restart and shows its class, so you can add it here.&lt;/small&gt;</string></property>
+      <item row="2" column="1">
+       <widget class="QCheckBox" name="kcfg_floatSystem">
+        <property name="enabled"><bool>false</bool></property>
+        <property name="text"><string>Float system apps and utilities</string></property>
+        <property name="toolTip"><string>System Settings, file pickers and password prompts, Steam and games, calculators and screenshot tools, image viewers, video and music players, and "Configure" dialogs stay floating. Meta+Alt+A tiles one of them anyway.</string></property>
        </widget>
       </item>
       <item row="3" column="0">
+       <widget class="QLabel" name="floatClassesLabel">
+        <property name="enabled"><bool>false</bool></property>
+        <property name="text"><string>&amp;Never tile:</string></property>
+        <property name="buddy"><cstring>kcfg_floatClasses</cstring></property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLineEdit" name="kcfg_floatClasses">
+        <property name="enabled"><bool>false</bool></property>
+        <property name="placeholderText"><string>e.g. org.gimp.gimp,obs</string></property>
+        <property name="toolTip"><string>With "Tile all apps" ticked, these apps stay floating. Dialogs and fixed-size windows always float.</string></property>
+       </widget>
+      </item>
+      <item row="4" column="0">
        <widget class="QLabel" name="mainClassesLabel">
         <property name="text"><string>Always &amp;main:</string></property>
         <property name="buddy"><cstring>kcfg_mainClasses</cstring></property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="4" column="1">
        <widget class="QLineEdit" name="kcfg_mainClasses">
         <property name="placeholderText"><string>e.g. firefox,code</string></property>
         <property name="toolTip"><string>These apps always take the main slot; other windows stack beside them.</string></property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QLabel" name="classesHint">
+        <property name="wordWrap"><bool>true</bool></property>
+        <property name="textFormat"><enum>Qt::RichText</enum></property>
+        <property name="text"><string>&lt;small&gt;Window classes, separated by commas. Press Meta+Alt+A on a window to add or remove its app.&lt;/small&gt;</string></property>
        </widget>
       </item>
      </layout>
@@ -493,5 +515,12 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <!-- grey out the app list that the "Tile all apps" box makes unused -->
+ <connections>
+  <connection><sender>kcfg_tileAll</sender><signal>toggled(bool)</signal><receiver>kcfg_tileClasses</receiver><slot>setDisabled(bool)</slot></connection>
+  <connection><sender>kcfg_tileAll</sender><signal>toggled(bool)</signal><receiver>classesLabel</receiver><slot>setDisabled(bool)</slot></connection>
+  <connection><sender>kcfg_tileAll</sender><signal>toggled(bool)</signal><receiver>kcfg_floatClasses</receiver><slot>setEnabled(bool)</slot></connection>
+  <connection><sender>kcfg_tileAll</sender><signal>toggled(bool)</signal><receiver>kcfg_floatSystem</receiver><slot>setEnabled(bool)</slot></connection>
+  <connection><sender>kcfg_tileAll</sender><signal>toggled(bool)</signal><receiver>floatClassesLabel</receiver><slot>setEnabled(bool)</slot></connection>
+ </connections>
 </ui>
