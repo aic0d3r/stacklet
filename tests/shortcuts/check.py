@@ -174,7 +174,56 @@ m = main_of(s)
 check("Meta+Shift+Space reaches centered master (main window in the middle)", s[m][0] + s[m][2] // 2 == 800, str(s[m]))
 fire("StackletNextLayout")
 s, _ = state()
-check("Meta+Shift+Space wraps from centered to the first layout", rects(s) == before, f"{before} -> {rects(s)}")
+at = {v[:4]: c for c, v in s.items()}
+check("Meta+Shift+Space reaches dwindle (each window splits the one before it)",
+      set(at) == {(0, 0, 880, 900), (880, 0, 720, 450), (880, 450, 360, 450), (1240, 450, 360, 450)}, str(rects(s)))
+
+# Dwindle split keys
+if set(at) == {(0, 0, 880, 900), (880, 0, 720, 450), (880, 450, 360, 450), (1240, 450, 360, 450)}:
+    main, top, third, fourth = (at[r] for r in [(0, 0, 880, 900), (880, 0, 720, 450), (880, 450, 360, 450), (1240, 450, 360, 450)])
+    dw = rects(s)
+    focus(third)
+    fire("StackletFlipSplit")
+    s, _ = state()
+    check("Meta+Alt+E flips the focused window's split to top and bottom",
+          s[third][:4] == (880, 450, 720, 225) and s[fourth][:4] == (880, 675, 720, 225), str(rects(s)))
+    fire("StackletFlipSplit")
+    s, _ = state()
+    check("Meta+Alt+E again flips it back", rects(s) == dw, f"{dw} -> {rects(s)}")
+
+    def opened(title, keys, target, expect, label):
+        """Focus target, fire keys, open a window titled title, check target and it, then close it again."""
+        focus(target)
+        for k in keys:
+            fire(k)
+        _, a = state()
+        check(f"  {target} keeps the focus it was given", a == target, f"active is {a}")
+        p = subprocess.Popen(["python3", "-c", "import sys\nfrom PyQt6.QtWidgets import QApplication, QWidget\n"
+                              "a = QApplication(sys.argv); a.setDesktopFileName('org.kde.konsole'); w = QWidget(); "
+                              f"w.setWindowTitle('{title}'); w.resize(300, 200); w.show(); a.exec()"],
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        time.sleep(2)
+        s, _ = state()
+        got = (s.get(target, ())[:4], s.get(title, ())[:4])
+        check(label, got == expect, str(rects(s)))
+        p.kill()
+        p.wait()
+        time.sleep(1.5)
+        s, _ = state()
+        check(f"  closing {title} gives {target} its tile back", rects(s) == dw, f"{dw} -> {rects(s)}")
+
+    # main's tile is taller than wide: automatic would put the new window below it
+    opened("w5", ["StackletSplitBeside"], main, ((0, 0, 440, 900), (440, 0, 440, 900)),
+           "Meta+Alt+H: the next window opens beside the focused one")
+    # top's tile is wider than tall: automatic would put it beside
+    opened("w6", ["StackletSplitBelow"], top, ((880, 0, 720, 225), (880, 225, 720, 225)),
+           "Meta+Alt+V: the next window opens below the focused one")
+    opened("w7", ["StackletSplitBeside", "StackletSplitBeside"], main, ((0, 0, 880, 450), (0, 450, 880, 450)),
+           "Meta+Alt+H twice: back to automatic")
+
+fire("StackletNextLayout")
+s, _ = state()
+check("Meta+Shift+Space wraps from dwindle to the first layout", rects(s) == before, f"{before} -> {rects(s)}")
 
 # Spotlight: centre + stash, then back
 m = main_of(s)
@@ -230,7 +279,8 @@ BINDINGS = {
     "Meta+Alt+.": "StackletFocusNext", "Meta+Alt+,": "StackletFocusPrev",
     "Meta+Alt+]": "StackletGrowMain", "Meta+Alt+[": "StackletShrinkMain",
     "Meta+Alt+T": "StackletTurnNext", "Meta+Alt+Shift+T": "StackletTurnPrev",
-    "Meta+Alt+C": "StackletFocusMode", "Meta+S": "StackletScratchpad", "Meta+Ctrl+S": "StackletSendToScratchpad",
+    "Meta+Alt+C": "StackletFocusMode", "Meta+Alt+H": "StackletSplitBeside", "Meta+Alt+V": "StackletSplitBelow",
+    "Meta+Alt+E": "StackletFlipSplit", "Meta+S": "StackletScratchpad", "Meta+Ctrl+S": "StackletSendToScratchpad",
     **{f"Meta+Alt+Shift+{d}": f"StackletSwap{d}" for d in ("Left", "Right", "Up", "Down")},
 }
 

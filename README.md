@@ -111,7 +111,7 @@ Same private virtual KWin. It prints every window's position and fails if a layo
 tests/dwindle/run.sh
 ```
 
-Same private virtual KWin. It opens three windows, focuses the first, opens a fourth and closes the third, and fails unless the fourth splits the focused window's tile and the closed window's neighbour takes its space.
+Same private virtual KWin. It opens three windows, focuses the first, opens a fourth and closes the third, and fails unless the fourth splits the focused window's tile and the closed window's neighbour takes its space. Then it drags an inner border and checks it stays put when the next window opens, and checks Meta+Alt+H, Meta+Alt+V and Meta+Alt+E.
 
 ```sh
 tests/shortcuts/run.sh         # fires every shortcut and checks what it did, and that its key is free
@@ -123,7 +123,7 @@ Same private virtual KWin, with four windows. It also starts from a 1.0.0-style 
 tests/dialogs/run.sh           # do dialogs, About boxes and tool windows stay floating?
 ```
 
-Same private virtual KWin, with the app list and with "Tile all apps". It opens two normal windows plus dialogs (with and without a parent), an About box, a tool window, a fixed-size window and an invisible helper window (hidden from the taskbar and the task switcher, like Xwayland Video Bridge), and fails if anything but the normal windows (and the parentless dialog, see Known limits) gets a tile.
+Same private virtual KWin, with the app list and with "Tile all apps". It opens two normal windows plus dialogs (with and without a parent, modal or not), an About box, a tool window, a fixed-size window and an invisible helper window (hidden from the taskbar and the task switcher, like Xwayland Video Bridge), and fails if anything but the normal windows (and the non-modal parentless dialog, see Known limits) gets a tile. Two more runs use an mpv window with "Tile all apps": it must tile with "Float games and media players" off and float with it on.
 
 ```sh
 tests/activities/run.sh        # does a window on another Activity leave a gap?

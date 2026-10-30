@@ -565,7 +565,8 @@ if (typeof workspace !== "undefined") {
         newSplit.delete(w);
         if (pendingFocus === w) pendingFocus = null;
         retileAll(ks);
-        if (next) { pendingFocus = next; workspace.activeWindow = next; }
+        // already focused (KWin picked it too): no activation follows, and a pending one would steal the next focus change
+        if (next && workspace.activeWindow !== next) { pendingFocus = next; workspace.activeWindow = next; }
     });
 
     const tracked = () => {

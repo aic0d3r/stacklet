@@ -3,8 +3,8 @@
 # script folder, so your real session is never touched), opens and closes lots of windows and fails
 # if KWin dies.
 #
-#   tests/stress/run.sh              # master and stack, spiral, monocle and centered
-#   tests/stress/run.sh spiral       # one layout (tile | spiral | monocle | centered)
+#   tests/stress/run.sh              # master and stack, spiral, monocle, centered and dwindle
+#   tests/stress/run.sh spiral       # one layout (tile | spiral | monocle | centered | dwindle)
 #   TRACKED=200 UNTRACKED=100 tests/stress/run.sh
 #
 # Needs kwin_wayland, dbus-run-session, qdbus6 and python3 with PyQt6.
@@ -24,7 +24,7 @@ UNTRACKED=${UNTRACKED:-60}
 # Outer part: one private D-Bus session per layout.
 if [ "${STACKLET_STRESS_INNER:-}" != 1 ]; then
     layouts=("$@")
-    [ ${#layouts[@]} -eq 0 ] && layouts=(tile spiral monocle centered)
+    [ ${#layouts[@]} -eq 0 ] && layouts=(tile spiral monocle centered dwindle)
     rc=0
     for l in "${layouts[@]}"; do
         STACKLET_STRESS_INNER=1 timeout 300 dbus-run-session -- "$0" "$l" || rc=1
@@ -48,6 +48,7 @@ layoutTile=$(on tile)
 layoutSpiral=$(on spiral)
 layoutMonocle=$(on monocle)
 layoutCentered=$(on centered)
+layoutDwindle=$(on dwindle)
 EOF
 
 trap 'kill $(jobs -p) 2>/dev/null; rm -rf "$WORK"' EXIT
@@ -77,7 +78,8 @@ echo "phase 4: scratchpad while windows open and close (hidden windows get close
 python3 "$HERE/churn.py" org.kde.konsole "$TRACKED" 4 > /dev/null 2>&1 &
 CHURN=$!
 while kill -0 $CHURN 2>/dev/null; do
-    for s in StackletSendToScratchpad StackletScratchpad StackletScratchpad StackletFocusMode; do
+    for s in StackletSendToScratchpad StackletScratchpad StackletScratchpad StackletFocusMode \
+             StackletSplitBeside StackletFlipSplit StackletSplitBelow; do
         qdbus6 org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component.invokeShortcut $s > /dev/null 2>&1
         sleep 0.1
     done

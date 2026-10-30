@@ -3,7 +3,9 @@
 # your real session is not touched), opens two normal windows plus dialogs, an About box, a tool window
 # a fixed-size window and an invisible helper window (hidden from taskbar and switcher) from a tiled app, and checks that only the normal windows get a tile
 # (plus a dialog without a parent: Wayland can't tell it from a normal window, see README Known limits).
-# Runs twice: default settings (app list) and "Tile every window".
+# Modal dialogs and fixed-size windows float in every mode, also without a parent.
+# Runs four times: default settings (app list), "Tile all apps", and "Tile all apps" with an mpv window
+# and "Float games and media players" off (mpv tiles) and on (mpv floats).
 #
 #   tests/dialogs/run.sh
 #
@@ -16,7 +18,7 @@ PKG=${PKG:-$HERE/../../package}
 
 if [ "${STACKLET_DIALOG_INNER:-}" != 1 ]; then
     bad=0
-    for mode in list all; do
+    for mode in list all media-off media-on; do
         STACKLET_DIALOG_INNER=1 timeout 120 dbus-run-session -- "$0" "$mode" || bad=1
     done
     [ $bad -eq 0 ] && echo "PASS" || echo "FAIL"
@@ -29,9 +31,14 @@ export XDG_CONFIG_HOME=$WORK/config XDG_DATA_HOME=$WORK/data XDG_CACHE_HOME=$WOR
 unset DISPLAY WAYLAND_DISPLAY
 mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME/kwin/scripts" "$XDG_CACHE_HOME"
 cp -r "$PKG" "$XDG_DATA_HOME/kwin/scripts/stacklet"
+NORMAL=tiled # what the normal windows (and the parentless non-modal dialog) should be
 if [ "$MODE" = all ]; then
-    APP=org.example.anyapp  # not in the list, so only "Tile every window" tiles it
+    APP=org.example.anyapp  # not in the list, so only "Tile all apps" tiles it
     printf '[Plugins]\nstackletEnabled=true\n[Script-stacklet]\ntileAll=true\n' > "$XDG_CONFIG_HOME/kwinrc"
+elif [ "${MODE#media-}" != "$MODE" ]; then
+    APP=mpv                 # on the games and media list
+    [ "$MODE" = media-on ] && MEDIA=true NORMAL=floating || MEDIA=false
+    printf '[Plugins]\nstackletEnabled=true\n[Script-stacklet]\ntileAll=true\nfloatMedia=%s\n' "$MEDIA" > "$XDG_CONFIG_HOME/kwinrc"
 else
     APP=org.kde.konsole     # in the default list
     printf '[Plugins]\nstackletEnabled=true\n' > "$XDG_CONFIG_HOME/kwinrc"
@@ -57,7 +64,7 @@ sleep 2
 cat > "$WORK/dump.js" <<'EOF'
 print("DUMP " + workspace.windowList().filter(w => w.caption).map(w =>
     [w.caption, w.tile ? "tiled" : "floating", "normal=" + w.normalWindow, "transient=" + w.transient,
-     "dialog=" + w.dialog, "resizeable=" + w.resizeable, "skip=" + (w.skipTaskbar && w.skipSwitcher)].join(" ")).join(" ; "));
+     "dialog=" + w.dialog, "modal=" + w.modal, "resizeable=" + w.resizeable, "skip=" + (w.skipTaskbar && w.skipSwitcher)].join(" ")).join(" ; "));
 EOF
 qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "$WORK/dump.js" dump > /dev/null
 qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start > /dev/null
@@ -73,8 +80,8 @@ while read -r caption state rest; do
     seen=$((seen + 1))
     printf '  %-18s %-9s %s\n' "$caption" "$state" "$rest"
     # Known limit: on Wayland a dialog without a parent is a plain normal window (dialog=false), so it tiles.
-    case "$caption" in normal-*|dialog-parentless) want=tiled ;; *) want=floating ;; esac
+    case "$caption" in normal-*|dialog-parentless) want=$NORMAL ;; *) want=floating ;; esac
     [ "$state" = "$want" ] || { echo "!! $caption should be $want"; fail=1; }
 done <<< "$(echo "$LINE" | tr ';' '\n' | sed 's/^ *//')"
-[ $seen -ge 9 ] || { echo "!! expected 9 windows, saw $seen"; fail=1; }
+[ $seen -ge 10 ] || { echo "!! expected 10 windows, saw $seen"; fail=1; }
 exit $fail

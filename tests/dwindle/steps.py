@@ -1,9 +1,13 @@
-"""Window script for tests/dwindle/run.sh: opens w1, w2, w3, waits (run.sh focuses w1), opens w4, then closes w3.
+"""Window helper for tests/dwindle/run.sh: reads commands from stdin, one per line.
 
-usage: steps.py <app id>
+  open NAME    show a plain window titled NAME
+  close NAME   close it
+  quit
+
+usage: steps.py <app id> < commands
 """
 import sys
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import QSocketNotifier
 from PyQt6.QtWidgets import QApplication, QWidget
 
 app = QApplication(sys.argv)
@@ -11,17 +15,24 @@ app.setDesktopFileName(sys.argv[1])
 wins = {}
 
 
-def show(name):
-    w = QWidget()
-    w.setWindowTitle(name)
-    w.resize(300, 200)
-    w.show()
-    wins[name] = w
+def command():
+    line = sys.stdin.readline()
+    if not line:
+        app.quit()
+        return
+    cmd, _, name = line.strip().partition(" ")
+    if cmd == "open":
+        w = QWidget()
+        w.setWindowTitle(name)
+        w.resize(300, 200)
+        w.show()
+        wins[name] = w
+    elif cmd == "close" and name in wins:
+        wins.pop(name).close()
+    elif cmd == "quit":
+        app.quit()
 
 
-for i, name in enumerate(["w1", "w2", "w3"]):
-    QTimer.singleShot(400 * i, lambda n=name: show(n))
-QTimer.singleShot(6000, lambda: show("w4"))      # run.sh focuses w1 at ~4s
-QTimer.singleShot(10000, lambda: wins["w3"].close())
-QTimer.singleShot(16000, app.quit)
+notifier = QSocketNotifier(sys.stdin.fileno(), QSocketNotifier.Type.Read)
+notifier.activated.connect(command)
 app.exec()
