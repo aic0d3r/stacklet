@@ -48,6 +48,13 @@
         <property name="text"><string>&lt;img src=&quot;data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTYwIDEwMCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjE1NiIgaGVpZ2h0PSI5NiIgcng9IjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzg4OCIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48ZyBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMS41IiBmaWxsPSIjM2I4MmY2Ij48cmVjdCB4PSI0NSIgeT0iNyIgd2lkdGg9IjcwIiBoZWlnaHQ9Ijg2IiByeD0iMyIgZmlsbC1vcGFjaXR5PSIuNTUiLz48cmVjdCB4PSIxMTkiIHk9IjciIHdpZHRoPSIzNCIgaGVpZ2h0PSI0MSIgcng9IjMiIGZpbGwtb3BhY2l0eT0iLjIyIi8+PHJlY3QgeD0iNyIgeT0iNyIgd2lkdGg9IjM0IiBoZWlnaHQ9Ijg2IiByeD0iMyIgZmlsbC1vcGFjaXR5PSIuMjIiLz48cmVjdCB4PSIxMTkiIHk9IjUyIiB3aWR0aD0iMzQiIGhlaWdodD0iNDEiIHJ4PSIzIiBmaWxsLW9wYWNpdHk9Ii4yMiIvPjwvZz48L3N2Zz4K&quot; width=&quot;128&quot; height=&quot;80&quot;&gt;</string></property>
        </widget>
       </item>
+      <item row="0" column="4">
+       <widget class="QLabel" name="previewDwindle">
+        <property name="alignment"><set>Qt::AlignCenter</set></property>
+        <property name="accessibleDescription"><string>Preview: each window split in two where a new one opened, side by side or top and bottom</string></property>
+        <property name="text"><string>&lt;img src=&quot;data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTYwIDEwMCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjE1NiIgaGVpZ2h0PSI5NiIgcng9IjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzg4OCIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48ZyBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMS41IiBmaWxsPSIjM2I4MmY2Ij48cmVjdCB4PSI3IiB5PSI3IiB3aWR0aD0iNzgiIGhlaWdodD0iNDIiIHJ4PSIzIiBmaWxsLW9wYWNpdHk9Ii41NSIvPjxyZWN0IHg9IjciIHk9IjUzIiB3aWR0aD0iNzgiIGhlaWdodD0iNDAiIHJ4PSIzIiBmaWxsLW9wYWNpdHk9Ii4yMiIvPjxyZWN0IHg9Ijg5IiB5PSI3IiB3aWR0aD0iNjQiIGhlaWdodD0iNDIiIHJ4PSIzIiBmaWxsLW9wYWNpdHk9Ii4yMiIvPjxyZWN0IHg9Ijg5IiB5PSI1MyIgd2lkdGg9IjMwIiBoZWlnaHQ9IjQwIiByeD0iMyIgZmlsbC1vcGFjaXR5PSIuMjIiLz48cmVjdCB4PSIxMjMiIHk9IjUzIiB3aWR0aD0iMzAiIGhlaWdodD0iNDAiIHJ4PSIzIiBmaWxsLW9wYWNpdHk9Ii4yMiIvPjwvZz48L3N2Zz4K&quot; width=&quot;128&quot; height=&quot;80&quot;&gt;</string></property>
+       </widget>
+      </item>
       <item row="1" column="0" alignment="Qt::AlignHCenter">
        <widget class="QRadioButton" name="kcfg_layoutTile">
         <property name="text"><string>Master and stack</string></property>
@@ -70,6 +77,12 @@
        <widget class="QRadioButton" name="kcfg_layoutCentered">
         <property name="text"><string>Centered</string></property>
         <property name="toolTip"><string>The main window in the middle, the others in columns on both sides.</string></property>
+       </widget>
+      </item>
+      <item row="1" column="4" alignment="Qt::AlignHCenter">
+       <widget class="QRadioButton" name="kcfg_layoutDwindle">
+        <property name="text"><string>Dwindle</string></property>
+        <property name="toolTip"><string>A new window splits the focused one, along its longer side. Meta+Alt+H / V pick the side, Meta+Alt+E flips a split.</string></property>
        </widget>
       </item>
       <item row="2" column="0">
@@ -108,7 +121,16 @@
         <property name="text"><string>&lt;small&gt;Wide screens: the window you work in stays in front of you.&lt;/small&gt;</string></property>
        </widget>
       </item>
-      <item row="3" column="0" colspan="4">
+      <item row="2" column="4">
+       <widget class="QLabel" name="hintDwindle">
+        <property name="alignment"><set>Qt::AlignHCenter|Qt::AlignTop</set></property>
+        <property name="wordWrap"><bool>true</bool></property>
+        <property name="minimumSize"><size><width>0</width><height>68</height></size></property>
+        <property name="textFormat"><enum>Qt::RichText</enum></property>
+        <property name="text"><string>&lt;small&gt;i3 and Hyprland habits: new windows open next to the one you work in.&lt;/small&gt;</string></property>
+       </widget>
+      </item>
+      <item row="3" column="0" colspan="5">
        <layout class="QFormLayout" name="styleForm">
         <item row="0" column="0">
          <widget class="QLabel" name="desktopLayoutsLabel">
@@ -252,7 +274,8 @@
      <layout class="QFormLayout" name="appsForm">
       <item row="0" column="0" colspan="2">
        <widget class="QCheckBox" name="kcfg_tileAll">
-        <property name="text"><string>Tile all apps</string></property>
+        <property name="text"><string>Tile all apps, not only the ones listed below</string></property>
+        <property name="toolTip"><string>Off (the default): only the apps in "Tile these apps" tile, terminals to start with. On: every app tiles, except what the float options and "Never tile" below keep floating.</string></property>
        </widget>
       </item>
       <item row="1" column="0">
@@ -271,40 +294,47 @@
        <widget class="QCheckBox" name="kcfg_floatSystem">
         <property name="enabled"><bool>false</bool></property>
         <property name="text"><string>Float system apps and utilities</string></property>
-        <property name="toolTip"><string>System Settings, file pickers and password prompts, Steam and games, calculators and screenshot tools, image viewers, video and music players, and "Configure" dialogs stay floating. Meta+Alt+A tiles one of them anyway.</string></property>
+        <property name="toolTip"><string>System Settings, file pickers and password prompts, password managers, calculators and screenshot tools, image viewers, and "Configure" dialogs stay floating. Meta+Alt+A tiles one of them anyway.</string></property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="3" column="1">
+       <widget class="QCheckBox" name="kcfg_floatMedia">
+        <property name="enabled"><bool>false</bool></property>
+        <property name="text"><string>Float games and media players</string></property>
+        <property name="toolTip"><string>Steam and its games, Lutris, Heroic, Bottles, Windows (.exe) apps, and video and music players stay floating. Meta+Alt+A tiles one of them anyway.</string></property>
+       </widget>
+      </item>
+      <item row="4" column="0">
        <widget class="QLabel" name="floatClassesLabel">
         <property name="enabled"><bool>false</bool></property>
         <property name="text"><string>&amp;Never tile:</string></property>
         <property name="buddy"><cstring>kcfg_floatClasses</cstring></property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="4" column="1">
        <widget class="QLineEdit" name="kcfg_floatClasses">
         <property name="enabled"><bool>false</bool></property>
         <property name="placeholderText"><string>e.g. org.gimp.gimp,obs</string></property>
         <property name="toolTip"><string>With "Tile all apps" ticked, these apps stay floating. Dialogs and fixed-size windows always float.</string></property>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="5" column="0">
        <widget class="QLabel" name="mainClassesLabel">
         <property name="text"><string>Always &amp;main:</string></property>
         <property name="buddy"><cstring>kcfg_mainClasses</cstring></property>
        </widget>
       </item>
-      <item row="4" column="1">
+      <item row="5" column="1">
        <widget class="QLineEdit" name="kcfg_mainClasses">
         <property name="placeholderText"><string>e.g. firefox,code</string></property>
         <property name="toolTip"><string>These apps always take the main slot; other windows stack beside them.</string></property>
        </widget>
       </item>
-      <item row="5" column="1">
+      <item row="6" column="1">
        <widget class="QLabel" name="classesHint">
         <property name="wordWrap"><bool>true</bool></property>
         <property name="textFormat"><enum>Qt::RichText</enum></property>
-        <property name="text"><string>&lt;small&gt;Window classes, separated by commas. Press Meta+Alt+A on a window to add or remove its app.&lt;br&gt;&lt;br&gt;Not tiling? Dialogs, fixed-size windows, and windows that are minimized, fullscreen or on all desktops are left alone, and so are screens and desktops where tiling is turned off (Behaviour tab).&lt;/small&gt;</string></property>
+        <property name="text"><string>&lt;small&gt;Window classes, separated by commas. Press Meta+Alt+A on a window to add or remove its app.&lt;br&gt;&lt;br&gt;Not tiling? Dialogs (also modal ones without a parent), fixed-size windows, and windows that are minimized, fullscreen or on all desktops are left alone, and so are screens and desktops where tiling is turned off (Behaviour tab).&lt;/small&gt;</string></property>
        </widget>
       </item>
      </layout>
@@ -541,6 +571,7 @@
   <connection><sender>kcfg_tileAll</sender><signal>toggled(bool)</signal><receiver>classesLabel</receiver><slot>setDisabled(bool)</slot></connection>
   <connection><sender>kcfg_tileAll</sender><signal>toggled(bool)</signal><receiver>kcfg_floatClasses</receiver><slot>setEnabled(bool)</slot></connection>
   <connection><sender>kcfg_tileAll</sender><signal>toggled(bool)</signal><receiver>kcfg_floatSystem</receiver><slot>setEnabled(bool)</slot></connection>
+  <connection><sender>kcfg_tileAll</sender><signal>toggled(bool)</signal><receiver>kcfg_floatMedia</receiver><slot>setEnabled(bool)</slot></connection>
   <connection><sender>kcfg_tileAll</sender><signal>toggled(bool)</signal><receiver>floatClassesLabel</receiver><slot>setEnabled(bool)</slot></connection>
  </connections>
 </ui>

@@ -39,43 +39,75 @@ function spiralRects(n, ratio, mirror = false, portrait = false) {
     return orient(out, mirror, portrait);
 }
 
-// Dwindle (as in Hyprland and bspwm): the windows are leaves of a binary tree; a node is a window or {kids: [a, b]}.
+// Dwindle (as in Hyprland and bspwm): the windows are leaves of a binary tree; a node is a window or
+// {kids: [a, b], ratio?, dir?}, dir being a split direction the user pinned (else it follows the tile's shape).
 // A new window splits the tile of the window before it in `wins` (the focused one when it opened, see place);
 // a closed window's sibling takes its space. Leaves get relabelled with `wins` in order, so swaps still work.
-function dwindleSync(tree, wins) {
+// dirOf(new window) -> a direction picked for its split beforehand, or undefined.
+function dwindleSync(tree, wins, dirOf = () => undefined) {
+    const node = (n, kids) => Object.assign({}, n, { kids }); // keeps the split's ratio
     const prune = n => !n ? null : !n.kids ? (wins.includes(n) ? n : null) :
-        (([a, b]) => a && b ? { kids: [a, b] } : a || b)(n.kids.map(prune));
+        (([a, b]) => a && b ? node(n, [a, b]) : a || b)(n.kids.map(prune));
     const leaves = n => !n ? [] : n.kids ? [...leaves(n.kids[0]), ...leaves(n.kids[1])] : [n];
-    const put = (n, at, r) => n === at ? r : n.kids ? { kids: n.kids.map(x => put(x, at, r)) } : n;
+    const put = (n, at, r) => n === at ? r : n.kids ? node(n, n.kids.map(x => put(x, at, r))) : n;
     tree = prune(tree);
     wins.forEach((w, i) => {
         const have = leaves(tree);
         if (have.includes(w)) return;
         const before = wins.slice(0, i).reverse().find(x => have.includes(x));
         const after = wins.slice(i + 1).find(x => have.includes(x));
-        tree = before ? put(tree, before, { kids: [before, w] }) : after ? put(tree, after, { kids: [w, after] }) : w;
+        const dir = dirOf(w), split = kids => dir ? { kids, dir } : { kids };
+        tree = before ? put(tree, before, split([before, w])) : after ? put(tree, after, split([w, after])) : w;
     });
     let i = 0;
-    const relabel = n => !n ? null : n.kids ? { kids: n.kids.map(relabel) } : wins[i++];
+    const relabel = n => !n ? null : n.kids ? node(n, n.kids.map(relabel)) : wins[i++];
     return relabel(tree);
+}
+
+// Read every split's ratio back from where its windows sit now, so a border the user dragged sticks.
+// rectOf(window) -> its tile's rect, or null; a split with a window that has no tile keeps its old ratio.
+function dwindleRatios(tree, rectOf) {
+    const union = (a, b) => a && b && { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y),
+        width: Math.max(a.x + a.width, b.x + b.width) - Math.min(a.x, b.x), height: Math.max(a.y + a.height, b.y + b.height) - Math.min(a.y, b.y) };
+    const walk = n => {
+        if (!n.kids) return { n, r: rectOf(n) };
+        const [a, b] = n.kids.map(walk), r = union(a.r, b.r), out = Object.assign({}, n, { kids: [a.n, b.n] });
+        if (r && r.width > 0 && r.height > 0) {
+            const side = Math.abs(a.r.height - r.height) < 1e-3; // first half spans the full height: side by side
+            out.ratio = Math.min(0.9, Math.max(0.1, side ? a.r.width / r.width : a.r.height / r.height));
+        }
+        return { n: out, r };
+    };
+    return tree && walk(tree).n;
 }
 
 // Leaf rects in leaf order, plus the direction of each split in depth-first order. Each split goes side by side
 // when its tile is wider than tall (`aspect` = screen width / height), else top and bottom. The root split takes
-// `ratio`, the rest halves. `mirror` flips along the root split, so the first window's side moves.
+// `ratio`, the others their own (default half). `mirror` flips along the root split, so the first window's side moves.
 function dwindleRects(tree, ratio, aspect, mirror = false) {
-    const rects = [], splits = [];
+    const rects = [], splits = [], nodes = [];
     (function walk(n, r, f) {
         if (!n.kids) { rects.push(r); return; }
-        const side = r.width * aspect >= r.height;
+        const side = n.dir ? n.dir === HORIZONTAL : r.width * aspect >= r.height;
         splits.push(side ? HORIZONTAL : VERTICAL);
-        walk(n.kids[0], side ? { x: r.x, y: r.y, width: r.width * f, height: r.height } : { x: r.x, y: r.y, width: r.width, height: r.height * f }, 0.5);
-        walk(n.kids[1], side ? { x: r.x + r.width * f, y: r.y, width: r.width * (1 - f), height: r.height }
-            : { x: r.x, y: r.y + r.height * f, width: r.width, height: r.height * (1 - f) }, 0.5);
+        nodes.push(n);
+        const [a, b] = n.kids, own = k => k.ratio || 0.5;
+        walk(a, side ? { x: r.x, y: r.y, width: r.width * f, height: r.height } : { x: r.x, y: r.y, width: r.width, height: r.height * f }, own(a));
+        walk(b, side ? { x: r.x + r.width * f, y: r.y, width: r.width * (1 - f), height: r.height }
+            : { x: r.x, y: r.y + r.height * f, width: r.width, height: r.height * (1 - f) }, own(b));
     })(tree, { x: 0, y: 0, width: 1, height: 1 }, ratio);
-    if (!mirror || !splits.length) return { rects, splits };
+    if (!mirror || !splits.length) return { rects, splits, nodes };
     const flip = splits[0] === HORIZONTAL ? r => Object.assign({}, r, { x: 1 - r.x - r.width }) : r => Object.assign({}, r, { y: 1 - r.y - r.height });
-    return { rects: rects.map(flip), splits };
+    return { rects: rects.map(flip), splits, nodes };
+}
+
+// Pin the split that holds `win` to the other direction (i3's toggle split). Changes `tree` in place; false if
+// `win` has no split (a lone window).
+function dwindleFlip(tree, win, ratio, aspect) {
+    const { splits, nodes } = dwindleRects(tree, ratio, aspect), i = nodes.findIndex(n => n.kids.includes(win));
+    if (i < 0) return false;
+    nodes[i].dir = splits[i] === HORIZONTAL ? VERTICAL : HORIZONTAL;
+    return true;
 }
 
 // Centered master: main window in the middle at width `centre`, the stack alternating right and left
@@ -133,19 +165,22 @@ const SYSTEM_FLOAT = list(
     "xdg-desktop-portal-kde,org.freedesktop.impl.portal.desktop.kde,xdg-desktop-portal-gtk,xdg-desktop-portal-gnome," +
     "org.kde.polkit-kde-authentication-agent-1,polkit-kde-authentication-agent-1,pinentry*,gcr-prompter," +
     "org.kde.ksecretd,kwalletd6,kwalletd5," + // portals & prompts
+    "org.keepassxc.keepassxc,keepassxc,bitwarden,com.bitwarden.desktop,1password," + // password managers
+    "org.kde.kcalc,org.kde.kalk,org.kde.spectacle,org.kde.kcolorchooser,org.kde.kruler,org.kde.kcharselect,org.kde.kdeconnect.*," +
+    "org.kde.ark,org.kde.gwenview,org.gnome.loupe,eog,qimgv,feh,imv"); // viewers & small tools
+// "Float games and media": a matter of taste, so its own switch
+const GAMES_MEDIA = list(
     "steam,steam_app_*,steamwebhelper,net.lutris.lutris,lutris,heroic,com.heroicgameslauncher.hgl,com.usebottles.bottles," +
     "*.exe,wine," + // games & launchers
-    "org.kde.kcalc,org.kde.kalk,org.kde.spectacle,org.kde.kcolorchooser,org.kde.kruler,org.kde.kcharselect,org.kde.kdeconnect.*," +
-    "org.kde.ark,org.kde.gwenview,org.gnome.loupe,eog,qimgv,feh,imv," + // viewers & small tools
     "mpv,vlc,org.kde.haruna,io.github.celluloid_player.celluloid,spotify,org.kde.elisa,strawberry"); // media
 const SYSTEM_TITLE = /^(configure\b|settings$|preferences$)/i; // parentless "Configure — App" dialogs
 const matches = (l, c) => l.some(p => p.endsWith("*") ? c.startsWith(p.slice(0, -1)) : p.startsWith("*") ? c.endsWith(p.slice(1)) : p === c);
-// Should a window of class `c` titled `title` tile? o: {tileAll, system, tileClasses, floatClasses, tileAnyway}
+// Should a window of class `c` titled `title` tile? o: {tileAll, system, media, tileClasses, floatClasses, tileAnyway}
 function appTiles(c, title, o) {
     if (!o.tileAll) return matches(o.tileClasses, c);
     if (matches(o.floatClasses, c)) return false;
     if (o.tileAnyway.includes(c)) return true; // Meta+Alt+A over the built-in list
-    return !(o.system && (matches(SYSTEM_FLOAT, c) || SYSTEM_TITLE.test(title)));
+    return !(o.system && (matches(SYSTEM_FLOAT, c) || SYSTEM_TITLE.test(title))) && !(o.media && matches(GAMES_MEDIA, c));
 }
 // Meta+Alt+A: flip `c` and return the list entries that change. Tile-all edits floatClasses and the
 // hidden tileAnyway list (to beat the built-in list), otherwise tileClasses.
@@ -165,7 +200,7 @@ function migrateApps(done, tileAll, tileRaw, floatRaw = "") {
     return out;
 }
 
-if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, list, TERMINALS }; // node self-test
+if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, dwindleFlip, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, list, TERMINALS }; // node self-test
 
 const kwinRead = typeof readConfig !== "undefined" ? readConfig : null;
 if (typeof workspace !== "undefined") {
@@ -183,7 +218,7 @@ if (typeof workspace !== "undefined") {
         "const c = ConfigFile('kwinrc', 'Script-stacklet');" +
         Object.keys(entries).map(k => "c.writeEntry(" + JSON.stringify(k) + ", " + JSON.stringify(entries[k]) + ");").join(""));
     };
-    const apps = { tileAll, system: flag("floatSystem", true), tileClasses: list(readConfig("tileClasses", TERMINALS)),
+    const apps = { tileAll, system: flag("floatSystem", true), media: flag("floatMedia", true), tileClasses: list(readConfig("tileClasses", TERMINALS)),
         floatClasses: list(readConfig("floatClasses", "")), tileAnyway: list(readConfig("tileAnyway", "")) };
     const migrated = migrateApps(flag("appListsV2"), tileAll, readConfig("tileClasses", TERMINALS), readConfig("floatClasses", ""));
     if (migrated) {
@@ -203,7 +238,7 @@ if (typeof workspace !== "undefined") {
     const offDesktops = list(readConfig("disabledDesktops", ""));
     const TILE = 0, SPIRAL = 1, MONOCLE = 2, CENTERED = 3, DWINDLE = 4; // saved by number: append only
     const LAYOUT_LABELS = ["master and stack", "spiral", "monocle", "centered master", "dwindle"];
-    const layoutDefault = flag("layoutCentered") ? CENTERED : flag("layoutMonocle") ? MONOCLE : flag("layoutSpiral") ? SPIRAL : TILE;
+    const layoutDefault = flag("layoutDwindle") ? DWINDLE : flag("layoutCentered") ? CENTERED : flag("layoutMonocle") ? MONOCLE : flag("layoutSpiral") ? SPIRAL : TILE;
     const layoutNames = { master: TILE, tile: TILE, spiral: SPIRAL, dwindle: DWINDLE, monocle: MONOCLE, centered: CENTERED, center: CENTERED, centre: CENTERED };
     const stashDefault = flag("stash"); // centered master starts with narrow side columns
     const stashSide = clampRatio(readConfig("stashWidth", 0.15), 0.05, 0.3, 0.15);
@@ -253,6 +288,8 @@ if (typeof workspace !== "undefined") {
     const home = new Map();       // window -> {output, desktop} it was last laid out in
     let active = null, prevActive = null, closedActive = null, pendingFocus = null;
     const trees = {};           // group key -> dwindle tree (not saved: rebuilt in layout order after a restart)
+    let nextSplit = null;       // dwindle: direction the next new window splits the focused one in (Meta+Alt+H / V)
+    const newSplit = new Map(); // new window -> that direction, until its group is laid out
     let scratch = [];           // windows in the scratchpad, in the order they were sent
     const focusOrder = new Map(); // group key -> its windows in layout order before the focus shortcut
     const laid = {};            // group key -> width kind of the tiles we built last, to read drags from
@@ -261,8 +298,11 @@ if (typeof workspace !== "undefined") {
 
     const key = (o, d) => o.name + "|" + d.x11DesktopNumber; // saved across restarts, so no desktop uuid
     const cls = w => String(w.resourceClass).toLowerCase();
-    const wanted = w => w.normalWindow && !w.specialWindow && !w.transient &&
-        (!tileAll || w.resizeable) && appTiles(cls(w), String(w.caption), apps);
+    // same min and max size: a window that can't be resized, even if KWin calls it resizeable
+    const fixedSize = w => w.minSize && w.maxSize && w.minSize.width > 0 && w.minSize.width === w.maxSize.width && w.minSize.height === w.maxSize.height;
+    // modal: a dialog opened without a parent (dialog and utility types aren't normalWindow already)
+    const wanted = w => w.normalWindow && !w.specialWindow && !w.transient && !w.modal &&
+        w.resizeable && !fixedSize(w) && appTiles(cls(w), String(w.caption), apps);
     // a window on another Activity still sits on this screen and desktop: counting it leaves an empty tile
     const onActivity = w => !w.activities.length || w.activities.includes(workspace.currentActivity);
     // hidden from taskbar and switcher = not a window the user manages (e.g. Xwayland Video Bridge: invisible, type normal)
@@ -310,6 +350,11 @@ if (typeof workspace !== "undefined") {
         // keep a main size the user dragged, if the tiles are still the ones we built for this kind
         const dragged = groups[k] && laid[k] === kind && draggedRatio(root, portrait, kind);
         if (dragged) setWidth(k, kind, dragged);
+        // dwindle: every split keeps a border the user dragged (the root one is the main width)
+        if (mode === DWINDLE && trees[k] && groups[k] && laid[k] === kind) {
+            trees[k] = dwindleRatios(trees[k], w => !w.deleted && w.tile ? w.tile.relativeGeometry : null);
+            if (trees[k].ratio) setWidth(k, kind, trees[k].ratio);
+        }
         const ratio = widthOf(k, kind);
         laid[k] = kind;
 
@@ -320,7 +365,8 @@ if (typeof workspace !== "undefined") {
             root.padding = smartGaps && (wins.length === 1 || one) ? 0 : gap; // KWin spreads it: full at screen edges, half between tiles
             root.minimumSize = { width: 0.05, height: 0.05 }; // default 0.15 breaks stacks of 7+ windows; children inherit
             let slots = [root]; // monocle: every window shares the root tile, the focused one is on top
-            if (mode === DWINDLE) trees[k] = dwindleSync(trees[k], wins); else delete trees[k];
+            if (mode === DWINDLE) trees[k] = dwindleSync(trees[k], wins, w => newSplit.get(w)); else delete trees[k];
+            for (const w of wins) newSplit.delete(w);
             if (wins.length > 1 && mode === DWINDLE) {
                 const { rects, splits } = dwindleRects(trees[k], ratio, output.geometry.width / output.geometry.height, mirror);
                 slots = [];
@@ -455,6 +501,7 @@ if (typeof workspace !== "undefined") {
             if (!f || f === w || !groupOf(w.output, w.desktops[0]).includes(f)) return;
             order = order.filter(x => x !== w);
             order.splice(order.indexOf(f) + 1, 0, w);
+            if (nextSplit) { newSplit.set(w, nextSplit); nextSplit = null; }
             return;
         }
         if (newWindow !== 1 && newWindow !== 2) return;
@@ -515,6 +562,7 @@ if (typeof workspace !== "undefined") {
         if (active === w) active = null;
         if (closedActive === w) closedActive = null;
         if (prevActive === w) prevActive = null;
+        newSplit.delete(w);
         if (pendingFocus === w) pendingFocus = null;
         retileAll(ks);
         if (next) { pendingFocus = next; workspace.activeWindow = next; }
@@ -664,6 +712,28 @@ if (typeof workspace !== "undefined") {
         osd("Stacklet: " + LAYOUT_LABELS[now] + (now === SPIRAL && n < 4 ? " (same as master and stack until 4 windows)" : ""));
     }
 
+    // Dwindle split control, i3 style: pick how the focused window splits for the next new window, or flip a split.
+    const dwindleWindow = () => {
+        const w = tiledWindow();
+        if (w && modeOf(key(w.output, w.desktops[0]), w.desktops[0]).mode === DWINDLE) return w;
+        osd("Stacklet: split keys work in the dwindle layout (Meta+Shift+Space)");
+        return null;
+    };
+    for (const [name, keys, dir, label] of [["Beside", "Meta+Alt+H", HORIZONTAL, "beside"], ["Below", "Meta+Alt+V", VERTICAL, "below"]]) {
+        registerShortcut("StackletSplit" + name, "Stacklet: Next window opens " + label + " the focused one (dwindle; again: automatic)", keys, () => {
+            if (!dwindleWindow()) return;
+            nextSplit = nextSplit === dir ? null : dir;
+            osd("Stacklet: " + (nextSplit ? "next window opens " + label + " this one" : "next split follows the tile's shape again"));
+        });
+    }
+    registerShortcut("StackletFlipSplit", "Stacklet: Flip the focused window's split (dwindle)", "Meta+Alt+E", () => {
+        const w = dwindleWindow();
+        if (!w) return;
+        const k = key(w.output, w.desktops[0]), g = w.output.geometry;
+        if (!trees[k] || !dwindleFlip(trees[k], w, widthOf(k, "m"), g.width / g.height)) return;
+        retileAll([k]);
+    });
+
     registerShortcut("StackletMonocle", "Stacklet: Monocle on / off (focused window fills the screen)", "Meta+Shift+M", () =>
         switchLayout((cur, base) => cur === MONOCLE ? (base === MONOCLE ? TILE : base) : MONOCLE));
 
@@ -714,7 +784,8 @@ if (typeof workspace !== "undefined") {
     for (const w of workspace.windowList()) track(w);
     retileAll();
     if (!flag("welcomed")) { // once: nothing visible happens until a tiled app opens
-        osd(tileAll ? "Stacklet is on: tiling all apps. Meta+F floats a window." : "Stacklet is on: tiling terminals. Meta+Alt+A tiles any app.");
+        osd(tileAll ? "Stacklet is on: tiling all apps. Meta+F floats a window."
+            : "Stacklet is on: tiling terminals only. Meta+Alt+A tiles an app; Tile all apps is in its settings.");
         writeConfig({ welcomed: "true" });
     }
 }

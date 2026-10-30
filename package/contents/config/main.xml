@@ -20,6 +20,10 @@
       <label>Layout: centered master</label>
       <default>false</default>
     </entry>
+    <entry name="layoutDwindle" type="Bool">
+      <label>Layout: dwindle</label>
+      <default>false</default>
+    </entry>
     <entry name="centerRatio" type="Double">
       <label>Width of the centred main window (0.15 to 0.85)</label>
       <default>0.5</default>
@@ -53,7 +57,11 @@
       <default></default>
     </entry>
     <entry name="floatSystem" type="Bool">
-      <label>With "Tile all apps": float system settings, prompts, games, viewers, media players and "Configure" dialogs</label>
+      <label>With "Tile all apps": float system settings, prompts, password managers, small tools, viewers and "Configure" dialogs</label>
+      <default>true</default>
+    </entry>
+    <entry name="floatMedia" type="Bool">
+      <label>With "Tile all apps": float Steam, game launchers, Windows (.exe) apps and media players</label>
       <default>true</default>
     </entry>
     <entry name="tileAll" type="Bool">

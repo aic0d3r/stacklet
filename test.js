@@ -1,6 +1,6 @@
 // node test.js — checks the layout math (the KWin part needs a live session)
 const assert = require("assert");
-const { slotRects, spiralRects, dwindleSync, dwindleRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, TERMINALS } = require("./package/contents/code/main.js");
+const { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, TERMINALS } = require("./package/contents/code/main.js");
 
 assert.deepStrictEqual(slotRects(1, 0.55), [{ x: 0, y: 0, width: 1, height: 1 }]);
 const two = slotRects(2, 0.55);
@@ -66,7 +66,7 @@ assert.deepStrictEqual(centeredRects(3, 0.6, false, true), slotRects(3, 0.6, 1, 
 assert.strictEqual(clampRatio(0.2, 0.05, 0.3, 0.15), 0.2);
 assert.strictEqual(clampRatio(0.4, 0.05, 0.3, 0.15), 0.15);
 // Meta+Alt+A edits the list of the current mode
-const apps = (o = {}) => Object.assign({ tileAll: true, system: true, tileClasses: ["a"], floatClasses: [], tileAnyway: [] }, o);
+const apps = (o = {}) => Object.assign({ tileAll: true, system: true, media: true, tileClasses: ["a"], floatClasses: [], tileAnyway: [] }, o);
 // which apps tile
 assert.ok(appTiles("a", "", apps({ tileAll: false })) && !appTiles("b", "", apps({ tileAll: false })));
 assert.ok(appTiles("org.kde.dolphin", "build — Dolphin", apps()));
@@ -74,6 +74,8 @@ assert.ok(!appTiles("systemsettings", "KWin Scripts — System Settings", apps()
 assert.ok(!appTiles("steam_app_570", "", apps()) && !appTiles("setup.exe", "", apps()) && !appTiles("pinentry-qt", "", apps()));
 assert.ok(!appTiles("org.kde.dolphin", "Configure — Dolphin", apps())); // parentless config dialog
 assert.ok(appTiles("systemsettings", "", apps({ system: false })));
+assert.ok(appTiles("steam", "", apps({ media: false })) && !appTiles("systemsettings", "", apps({ media: false }))); // two separate switches
+assert.ok(!appTiles("org.keepassxc.keepassxc", "", apps()));
 assert.ok(appTiles("systemsettings", "", apps({ tileAnyway: ["systemsettings"] })));
 assert.ok(!appTiles("systemsettings", "", apps({ tileAnyway: ["systemsettings"], floatClasses: ["systemsettings"] })));
 // Meta+Alt+A edits the lists of the current mode
@@ -102,4 +104,12 @@ assert.strictEqual(dwindleSync(tr, []), null);
 const dm = dwindleRects(tr, 0.6, 16 / 9, true).rects;
 near(dm[2].x, 0); near(dm[1].x, 0.4); near(dm[0].x, 0.7); // mirrored; a 0.6-wide half is wider than tall, so a|c
 near(dwindleRects(dwindleSync(null, [1, 2, 3, 4, 5, 6]), 0.55, 9 / 16).rects.reduce((s, r) => s + r.width * r.height, 0), 1);
+// dragged inner border: a over c moved from 50/50 to 30/70; the ratio is read back, kept through a new window, and laid out
+const at = { a: { x: 0, y: 0, width: 0.5, height: 0.3 }, c: { x: 0, y: 0.3, width: 0.5, height: 0.7 }, b: { x: 0.5, y: 0, width: 0.5, height: 1 } };
+const rd = dwindleRatios(tr, w => at[w]);
+near(rd.ratio, 0.5); near(rd.kids[0].ratio, 0.3);
+near(dwindleRatios(tr, w => w === "c" ? null : at[w]).kids[0].ratio || 0.5, 0.5); // c has no tile: keep the old ratio
+const grown = dwindleSync(rd, ["a", "c", "b", "d"]); // d splits b
+near(grown.kids[0].ratio, 0.3);
+near(dwindleRects(grown, 0.5, 16 / 9).rects[1].y, 0.3);
 console.log("ok");

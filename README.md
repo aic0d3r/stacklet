@@ -24,13 +24,13 @@ The defaults tile terminals, and you add other apps from a normal settings page.
 
 ## Features
 
-- Only the apps you list get tiled (default: kitty, Konsole, Alacritty, Ghostty, foot, WezTerm). Everything else floats. Or tick "Tile all apps": then your work apps tile, while "Float system apps and utilities" (on by default) keeps System Settings, file pickers, password prompts, Steam and games, calculators, screenshot tools, image viewers, video and music players and "Configure …" dialogs floating. Add your own apps under "Never tile". Meta+Alt+A adds or removes the focused window's app, so you never have to look up a window class.
-- Five layouts (the first four with a preview on the settings page):
+- Only the apps you list get tiled (default: kitty, Konsole, Alacritty, Ghostty, foot, WezTerm). Everything else floats. Or tick "Tile all apps": then your work apps tile, while "Float system apps and utilities" (on by default) keeps System Settings, file pickers, password prompts, password managers, calculators, screenshot tools, image viewers and "Configure …" dialogs floating, and "Float games and media players" (also on) does the same for Steam, game launchers, Windows (.exe) apps and video and music players. Add your own apps under "Never tile". Meta+Alt+A adds or removes the focused window's app, so you never have to look up a window class.
+- Five layouts, each with a preview on the settings page:
   - **Master and stack**: the first window on the left or right, the rest stacked beside it.
   - **Spiral**: each new window takes half of the space left.
   - **Monocle**: one window fills the screen.
   - **Centered master**: the main window in the middle (its own width, default 50%), the others in columns on both sides. With two windows the main one stays centred. Optional **stash**: the side columns become narrow strips (default 15% each) of small, live windows.
-  - **Dwindle**, as in Hyprland: a new window splits the focused window's tile, side by side if that tile is wider than tall, else top and bottom. When a window closes, its neighbour in that split takes the space. Switch to it with Meta+Shift+Space or per desktop (`2=dwindle`); it has no button on the settings page yet.
+  - **Dwindle**, as in Hyprland: a new window splits the focused window's tile, side by side if that tile is wider than tall, else top and bottom. When a window closes, its neighbour in that split takes the space. Like in i3, Meta+Alt+H or Meta+Alt+V picks whether the next window opens beside or below the focused one, and Meta+Alt+E flips a split. Borders you drag between windows stay put.
 - Pick a starting layout, or one per screen and virtual desktop, and switch on the fly. A layout you switch to by shortcut, and widths you drag, are usually kept after a restart (see Known limits), until you change the layout the settings page gives that desktop. A lone window always fills the screen.
 - **Spotlight** (Meta+Alt+C): the focused window goes to the centre, every other tiled window to the stash. Press again to get the previous layout back.
 - **Scratchpad**: hide windows and call them up centred over any desktop (default 60% × 60% of the screen), one at a time.
@@ -54,6 +54,8 @@ Every shortcut can be changed in System Settings → Shortcuts → KWin (search 
 | Meta+Alt+Shift+arrows | Swap with the neighbouring tile |
 | Meta+Alt+] / Meta+Alt+[ | Grow / shrink the main window by 5% |
 | Meta+Shift+Space | Switch layout (master and stack, spiral, monocle, centered, dwindle) for this screen and desktop; kept after a restart |
+| Meta+Alt+H / Meta+Alt+V | Dwindle: the next new window opens beside / below the focused one (press again for automatic) |
+| Meta+Alt+E | Dwindle: flip the focused window's split between side by side and top and bottom |
 | Meta+Shift+M | Monocle on / off for this screen and desktop: every tiled window fills the area, the focused one on top |
 | Meta+Alt+. / Meta+Alt+, | Focus the next / previous tiled window (use this to cycle in monocle) |
 | Meta+Alt+T / Meta+Alt+Shift+T | Rotate the stack forwards / backwards |
@@ -151,7 +153,7 @@ The settings page is checked by hand in a live Plasma session.
 ## Known limits
 
 - Windows on all desktops, minimized or fullscreen are left alone, and so are windows hidden from both the taskbar and the task switcher (helpers such as Xwayland Video Bridge).
-- Dialogs, About boxes and tool windows that belong to a parent window never tile, and neither do windows that can't be resized. A dialog an app opens without a parent looks like a normal window on Wayland, so it tiles: Meta+F floats it.
+- Dialogs, About boxes and tool windows that belong to a parent window never tile, and neither do modal dialogs or windows that can't be resized (also when the minimum and maximum size are the same). A non-modal dialog an app opens without a parent looks like a normal window on Wayland, so it tiles: Meta+F floats it.
 - Settings apply when you close or leave System Settings: Stacklet then restarts if one of its settings changed. Like turning it off and on, that tiles windows floated with Meta+F again and brings back hidden scratchpad windows.
 - Spiral looks the same as master and stack until the fourth window.
 - Dwindle remembers which window split which only until Stacklet restarts; after that it rebuilds the splits in layout order, each window splitting the one before it.
