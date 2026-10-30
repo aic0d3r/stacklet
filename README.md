@@ -47,7 +47,7 @@ Every shortcut can be changed in System Settings → Shortcuts → KWin (search 
 | Key | Action |
 | --- | --- |
 | Meta+Shift+Return | Make the focused window the main one |
-| Meta+F | Float / re-tile the focused window (dragging a tile out also floats it, unless you turn that off under Behaviour) |
+| Meta+F | Float / re-tile the focused window. On a window Stacklet leaves floating, it tiles just that window (dragging a tile out also floats it, unless you turn that off under Behaviour) |
 | Meta+Alt+A | Tile / untile the focused window's app and save it to the settings ("Tile these apps", or "Never tile" with "Tile all apps" on; works on the built-in floating apps too) |
 | Meta+Alt+arrows | Focus the neighbouring tile (KWin's own shortcut) |
 | Meta+Alt+Shift+arrows | Swap with the neighbouring tile |
@@ -75,7 +75,7 @@ kpackagetool6 -t KWin/Script -u package        # update
 ./package.sh                                   # or build build/stacklet-<version>.kwinscript
 ```
 
-Then enable **Stacklet** in System Settings → Window Management → KWin Scripts. Settings (layout, apps, sizes) are under the gear icon there; turn the script off and on to apply them. The shortcuts work right away.
+Then enable **Stacklet** in System Settings → Window Management → KWin Scripts. Settings (layout, apps, sizes) are under the gear icon there; they take effect when you close or leave System Settings. The shortcuts work right away.
 
 Don't run it together with another tiling script (Kröhnkite, Polonium, …).
 
@@ -122,6 +122,12 @@ tests/activities/run.sh        # does a window on another Activity leave a gap?
 
 Same private virtual KWin, plus Plasma's activity service with a second Activity. It moves one of three windows there and checks that the stack closes up, that the window tiles alone on its Activity, and that switching back keeps the layout.
 
+```sh
+tests/reload/run.sh            # do changed settings apply without turning Stacklet off and on?
+```
+
+Same private virtual KWin. It floats a window, has KWin re-read its config with nothing changed (Stacklet must keep running, so the window stays floating), then changes the gap and checks that Stacklet restarted with it.
+
 The settings page is checked by hand in a live Plasma session.
 
 </details>
@@ -131,13 +137,15 @@ The settings page is checked by hand in a live Plasma session.
 - The Apps tab has two lists: "Tile these apps" and "Never tile". The one "Tile all apps" doesn't use is greyed out. Before, one list meant opposite things depending on the checkbox, so ticking it made your terminals float.
 - "Tile all apps" now floats system apps and utilities by default: System Settings, file pickers, prompts, games, viewers, media players and "Configure …" dialogs. Untick "Float system apps and utilities" for the old behaviour.
 - Meta+Alt+A saves its change instead of lasting until restart.
+- No more turning Stacklet off and on: settings apply when you close or leave System Settings.
+- The first start shows a short note on what gets tiled. The Shortcuts tab starts with the five keys to learn first, and the Apps tab explains why a window might not tile.
 - Upgrading with "Tile every window" on: your old exclude list moves to "Never tile" on the first start (with plasmashell running).
 
 ## Known limits
 
 - Windows on all desktops, minimized or fullscreen are left alone, and so are windows hidden from both the taskbar and the task switcher (helpers such as Xwayland Video Bridge).
 - Dialogs, About boxes and tool windows that belong to a parent window never tile, and neither do windows that can't be resized. A dialog an app opens without a parent looks like a normal window on Wayland, so it tiles: Meta+F floats it.
-- Settings apply when the script is loaded: turn Stacklet off and on in KWin Scripts after changing them.
+- Settings apply when you close or leave System Settings: Stacklet then restarts if one of its settings changed. Like turning it off and on, that tiles windows floated with Meta+F again and brings back hidden scratchpad windows.
 - Spiral looks the same as master and stack until the fourth window.
 - Stacklet replaces the Meta+T tile layout on every desktop where it tiles a window.
 - Saved layouts, widths and Meta+Alt+A app changes are written through Plasma's shell (KWin scripts can't write their config), so nothing is saved while plasmashell isn't running. If the settings page is open, close it before using Meta+Alt+A or Apply will overwrite the change. A width still resets when its desktop has no tiled windows, which usually happens when you log out.

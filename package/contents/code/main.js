@@ -128,14 +128,22 @@ function migrateApps(done, tileAll, tileRaw, floatRaw = "") {
 
 if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, list, TERMINALS }; // node self-test
 
+const kwinRead = typeof readConfig !== "undefined" ? readConfig : null;
 if (typeof workspace !== "undefined") {
+    // Every setting read at start, to restart when one changes. key -> [default, value, values we wrote...]
+    const seen = {};
+    const readConfig = (k, d) => { const v = kwinRead(k, d); seen[k] = [d, String(v)]; return v; };
     const flag = (k, d = false) => String(readConfig(k, d)) === "true";
     const tileAll = flag("tileAll");
     // KWin 6.8 scripts can read their config but have no writeConfig; Plasma's desktop scripting can write it.
     // shortcut: needs plasmashell running; nothing is saved without it.
-    const writeConfig = entries => callDBus("org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell", "evaluateScript",
+    const writeConfig = entries => {
+        // our own writes are no reason to restart, whether plasmashell stored them yet or not
+        for (const k in entries) if (seen[k]) seen[k].push(String(entries[k]));
+        callDBus("org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell", "evaluateScript",
         "const c = ConfigFile('kwinrc', 'Script-stacklet');" +
         Object.keys(entries).map(k => "c.writeEntry(" + JSON.stringify(k) + ", " + JSON.stringify(entries[k]) + ");").join(""));
+    };
     const apps = { tileAll, system: flag("floatSystem", true), tileClasses: list(readConfig("tileClasses", TERMINALS)),
         floatClasses: list(readConfig("floatClasses", "")), tileAnyway: list(readConfig("tileAnyway", "")) };
     const migrated = migrateApps(flag("appListsV2"), tileAll, readConfig("tileClasses", TERMINALS), readConfig("floatClasses", ""));
@@ -348,8 +356,9 @@ if (typeof workspace !== "undefined") {
     }
 
     // true if w was newly tracked
-    function track(w) {
-        if (!wanted(w) || order.includes(w)) return false;
+    // force: tile it even though the app lists / resize rule say float (Meta+F on a floating window)
+    function track(w, force) {
+        if (!(force ? w.normalWindow && !w.specialWindow : wanted(w)) || order.includes(w)) return false;
         order.push(w);
         if (!hooked.has(w)) {
             hooked.add(w);
@@ -404,7 +413,19 @@ if (typeof workspace !== "undefined") {
     workspace.currentActivityChanged.connect(() => retileAll());
     for (const o of workspace.screens) o.geometryChanged.connect(retileAll); // rotation
     workspace.windowAdded.connect(w => { if (track(w)) { place(w); retileAll(keysOf(w)); } });
+    // Apply on the settings page only writes kwinrc: KWin neither re-reads it nor restarts scripts. So when the
+    // user leaves or closes System Settings, have KWin re-read it, and restart Stacklet if its settings changed.
+    const settingsApp = w => w && ["systemsettings", "kcmshell6", "org.kde.kcmshell6"].includes(cls(w));
+    const reconfigure = () => callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure");
+    options.configChanged.connect(() => {
+        if (!Object.keys(seen).some(k => k !== "savedState" && !seen[k].slice(1).includes(String(kwinRead(k, seen[k][0]))))) return;
+        // A clean off and on. Unload only deletes us later, so a direct Scripting.start would still see us
+        // loaded; reconfigure runs start after its timer, once we're gone.
+        callDBus("org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting", "unloadScript", "stacklet");
+        reconfigure();
+    });
     workspace.windowActivated.connect(a => {
+        if (settingsApp(active) && !settingsApp(a)) reconfigure();
         // KWin may move focus before windowRemoved fires: remember if the old active window just died
         if (active && active !== a && active.deleted) closedActive = active;
         if (a) active = a;
@@ -413,6 +434,7 @@ if (typeof workspace !== "undefined") {
         if (t && a !== t && order.includes(t)) workspace.activeWindow = t; // KWin picked its own; ours wins
     });
     workspace.windowRemoved.connect(w => {
+        if (settingsApp(w)) reconfigure();
         let next = null;
         const h = home.get(w), ks = keysOf(w);
         if (focusAfterClose && (w === active || w === closedActive) && h && order.includes(w)) {
@@ -516,9 +538,13 @@ if (typeof workspace !== "undefined") {
     });
 
     registerShortcut("StackletToggleFloat", "Stacklet: Float / tile focused window", "Meta+F", () => {
-        const w = tracked();
+        const w = workspace.activeWindow;
         if (!w) return;
-        if (floating.has(w)) floating.delete(w);
+        if (!order.includes(w)) {
+            // a window Stacklet leaves floating (not in the tile list, system app, ...): tile this one window
+            if (!track(w, true)) { osd("Stacklet: this window can't be tiled"); return; }
+            osd("Stacklet: tiling this window. Meta+F again floats it.");
+        } else if (floating.has(w)) floating.delete(w);
         else {
             floating.add(w);
             if (w.tile) release(w);
@@ -624,4 +650,8 @@ if (typeof workspace !== "undefined") {
 
     for (const w of workspace.windowList()) track(w);
     retileAll();
+    if (!flag("welcomed")) { // once: nothing visible happens until a tiled app opens
+        osd(tileAll ? "Stacklet is on: tiling all apps. Meta+F floats a window." : "Stacklet is on: tiling terminals. Meta+Alt+A tiles any app.");
+        writeConfig({ welcomed: "true" });
+    }
 }
