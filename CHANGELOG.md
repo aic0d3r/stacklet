@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fixed: maximizing a tiled window (for example double-clicking a browser's tab strip) took it out of the layout for good, so after unmaximizing it floated and the Stacklet shortcuts ignored it. Only dragging a window out floats it now; anything else puts it straight back in its tile. Monocle (Meta+Shift+M) is the way to fill the screen.
+
 ## 1.3.1
 
 - Grow / shrink main window (Meta+Alt+] / Meta+Alt+[) now shows an on-screen message when it can't act: the focused window isn't tiled, the layout is monocle, there's only one window, or the main window is already at its largest or smallest size.

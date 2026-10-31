@@ -475,10 +475,10 @@ if (typeof workspace !== "undefined") {
                 if (!busy && w.tile && order.includes(w) && floating.has(w)) { floating.delete(w); retileAll(keysOf(w)); return; }
                 // dragFloats off: leave its tile empty while dragging; on drop it swaps or snaps back
                 if (!dragFloats && !busy && moving.has(w) && order.includes(w) && !w.tile && tileable(w)) { draggedOut.add(w); return; }
-                // user dragged a tiled window out: let it float instead of snapping it back
+                // user dragged a tiled window out: let it float instead of snapping it back.
+                // Lost its tile some other way (maximize: tab strip double-click, KWin's own keys): back into the layout.
                 if (!busy && order.includes(w) && !w.tile && tileable(w)) {
-                    floating.add(w);
-                    if (moving.has(w)) draggedOut.add(w);
+                    if (moving.has(w)) { floating.add(w); draggedOut.add(w); }
                     retileAll(keysOf(w));
                 }
             });
