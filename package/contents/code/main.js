@@ -308,6 +308,7 @@ if (typeof workspace !== "undefined") {
     const draggedOut = new Set(); // tiled windows the current drag pulled out of the layout
     const home = new Map();       // window -> {output, desktop} it was last laid out in
     const parked = new Map();     // maximized window -> its group's dwindle tree from before, so restoring puts it back in the same tile
+    const maxing = new Set();     // windows asked to maximize whose client hasn't answered yet: already out of the layout
     const inTree = (n, w) => n && (n.kids ? n.kids.some(x => inTree(x, w)) : n === w);
     let active = null, prevActive = null, closedActive = null, pendingFocus = null;
     const trees = {};           // group key -> dwindle tree (not saved: rebuilt in layout order after a restart)
@@ -330,7 +331,7 @@ if (typeof workspace !== "undefined") {
     const onActivity = w => !w.activities.length || w.activities.includes(workspace.currentActivity);
     // hidden from taskbar and switcher = not a window the user manages (e.g. Xwayland Video Bridge: invisible, type normal)
     const helper = w => w.skipTaskbar && w.skipSwitcher;
-    const tileable = w => !w.deleted && !floating.has(w) && !scratch.includes(w) && !w.minimized && !w.fullScreen && !w.maximizeMode &&
+    const tileable = w => !w.deleted && !floating.has(w) && !scratch.includes(w) && !w.minimized && !w.fullScreen && !w.maximizeMode && !maxing.has(w) &&
         !helper(w) && w.output && w.desktops.length === 1 && onActivity(w) &&
         !offScreens.includes(String(w.output.name).toLowerCase()) &&
         !offDesktops.includes(String(w.desktops[0].x11DesktopNumber));
@@ -491,11 +492,16 @@ if (typeof workspace !== "undefined") {
             hooked.add(w);
             for (const sig of ["desktopsChanged", "outputChanged", "minimizedChanged", "fullScreenChanged", "activitiesChanged", "skipTaskbarChanged", "skipSwitcherChanged"])
                 w[sig].connect(() => retileAll(keysOf(w)));
-            w.maximizedChanged.connect(() => {
-                const h = home.get(w);
-                if (w.maximizeMode && h && !floating.has(w) && !parked.has(w) && inTree(trees[key(h.output, h.desktop)], w)) parked.set(w, trees[key(h.output, h.desktop)]);
-                retileAll(keysOf(w));
+            // fires before KWin drops the tile and before the client answers: the tree and the tiles are still intact
+            w.maximizedAboutToChange.connect(mode => {
+                if (!mode) { maxing.delete(w); return; }
+                const h = home.get(w), k = h && key(h.output, h.desktop);
+                if (!h || floating.has(w) || maxing.has(w) || w.maximizeMode || !tileable(w)) return;
+                // take in borders dragged since the last layout, or restoring would bring the old ones back
+                if (laid[k] && inTree(trees[k], w)) parked.set(w, dwindleRatios(trees[k], x => !x.deleted && x.tile ? x.tile.relativeGeometry : null));
+                maxing.add(w);
             });
+            w.maximizedChanged.connect(() => { maxing.delete(w); retileAll(keysOf(w)); });
             w.tileChanged.connect(() => {
                 // KWin moves windows out of tiles we remove into another tile, later (Wayland is async):
                 // one we don't lay out (helper, other Activity, ...) would sit invisibly in someone else's tile
@@ -506,6 +512,7 @@ if (typeof workspace !== "undefined") {
                 if (!dragFloats && !busy && moving.has(w) && order.includes(w) && !w.tile && tileable(w)) { draggedOut.add(w); return; }
                 // user dragged a tiled window out: let it float instead of snapping it back.
                 // Lost its tile some other way (KWin's own keys): back into the layout. Maximized windows aren't tileable: they float until restored.
+                if (!busy && !w.tile && maxing.has(w)) { retileAll(keysOf(w)); return; } // maximizing: close the gap now
                 if (!busy && order.includes(w) && !w.tile && tileable(w)) {
                     if (moving.has(w)) { floating.add(w); draggedOut.add(w); }
                     retileAll(keysOf(w));
@@ -603,6 +610,7 @@ if (typeof workspace !== "undefined") {
         hooked.delete(w);
         home.delete(w);
         parked.delete(w);
+        maxing.delete(w);
         if (active === w) active = null;
         if (closedActive === w) closedActive = null;
         if (prevActive === w) prevActive = null;
