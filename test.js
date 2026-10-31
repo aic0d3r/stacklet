@@ -1,6 +1,6 @@
 // node test.js — checks the layout math (the KWin part needs a live session)
 const assert = require("assert");
-const { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, TERMINALS } = require("./package/contents/code/main.js");
+const { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, TERMINALS } = require("./package/contents/code/main.js");
 
 assert.deepStrictEqual(slotRects(1, 0.55), [{ x: 0, y: 0, width: 1, height: 1 }]);
 const two = slotRects(2, 0.55);
@@ -113,4 +113,18 @@ near(dwindleRatios(tr, w => w === "c" ? null : at[w]).kids[0].ratio || 0.5, 0.5)
 const grown = dwindleSync(rd, ["a", "c", "b", "d"]); // d splits b
 near(grown.kids[0].ratio, 0.3);
 near(dwindleRects(grown, 0.5, 16 / 9).rects[1].y, 0.3);
+// restart check: tileClasses=kitty, Meta+Alt+A tiles firefox and untiles it again, then the settings page adds firefox
+const seen = { tileClasses: ["", "kitty"] }, now = v => () => v;
+seen.tileClasses.push("kitty,firefox");
+assert.ok(!settingsChanged(seen, now("kitty"))); // plasmashell hasn't stored it yet: no restart
+confirmWrite(seen, "tileClasses", "kitty,firefox");
+seen.tileClasses.push("kitty");
+confirmWrite(seen, "tileClasses", "kitty");
+assert.deepStrictEqual(seen.tileClasses, ["", "kitty"]);
+assert.ok(settingsChanged(seen, now("kitty,firefox")) && !settingsChanged(seen, now("kitty")));
+// dragged main width is read back as is (the caller caps it), not reset to the 55% default
+const root = (dir, ws) => ({ layoutDirection: dir, tiles: ws.map(width => ({ relativeGeometry: { width, height: 1 } })) });
+assert.strictEqual(draggedRatio(root(1, [0.9, 0.1]), false), 0.9);
+assert.strictEqual(draggedRatio(root(1, [0.1, 0.9]), false, "m", true), 0.9); // mirrored: main on the right
+assert.strictEqual(draggedRatio(root(2, [0.5, 0.5]), false), undefined); // not a layout we built
 console.log("ok");

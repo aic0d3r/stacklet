@@ -1,7 +1,11 @@
 # Changelog
 
-## Unreleased
+## 1.3.2
 
+- Fixed: dragging the main window wider than 85% (master and stack, spiral) made it jump back to 55% when the next window opened. It now stays at 85%, the largest main size.
+- Fixed: after Meta+Alt+A changed an app list, a later change to that list on the settings page could be ignored until the next login.
+- Fixed: a screen plugged in after login didn't re-tile when you rotated it to portrait.
+- Fixed: with two main windows set, spiral, centered master and dwindle treated the second window as a main one too: "new windows go to the stack top" put them one place lower, and rotating the stack (Meta+Alt+T) skipped that window.
 - Fixed: maximizing a tiled window (for example double-clicking a browser's tab strip) took it out of the layout for good, so after unmaximizing it floated and the Stacklet shortcuts ignored it. Only dragging a window out floats it now; anything else puts it straight back in its tile. Monocle (Meta+Shift+M) is the way to fill the screen.
 
 ## 1.3.1

@@ -200,11 +200,31 @@ function migrateApps(done, tileAll, tileRaw, floatRaw = "") {
     return out;
 }
 
-if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, dwindleFlip, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, list, TERMINALS }; // node self-test
+// Restart check when KWin re-reads its config. seen: key -> [default, value in kwinrc, values we sent since...];
+// any of those is no change. read(key, default) -> the value now.
+function settingsChanged(seen, read) {
+    return Object.keys(seen).some(k => !seen[k].slice(1).includes(String(read(k, seen[k][0]))));
+}
+// plasmashell stored `v` for `k`: the values before it are no longer in kwinrc, so they count as a change again
+function confirmWrite(seen, k, v) {
+    const l = seen[k];
+    if (l && l.indexOf(v, 1) > 1) l.splice(1, l.indexOf(v, 1) - 1);
+}
+
+// Main size as laid out in root's tiles, or undefined if the layout isn't ours. Not clamped: the caller caps it.
+function draggedRatio(root, portrait, kind = "m", mirror = false) {
+    if (kind !== "m" && !portrait) // centered: three columns, main in the middle
+        return root.tiles.length === 3 && root.layoutDirection === HORIZONTAL ? root.tiles[1].relativeGeometry.width : undefined;
+    if (root.tiles.length !== 2 || root.layoutDirection !== (portrait ? VERTICAL : HORIZONTAL)) return undefined;
+    const g = root.tiles[mirror ? 1 : 0].relativeGeometry;
+    return portrait ? g.height : g.width;
+}
+
+if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, dwindleFlip, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, list, TERMINALS }; // node self-test
 
 const kwinRead = typeof readConfig !== "undefined" ? readConfig : null;
 if (typeof workspace !== "undefined") {
-    // Every setting read at start, to restart when one changes. key -> [default, value, values we wrote...]
+    // Every setting read at start, to restart when one changes (see settingsChanged)
     const seen = {};
     const readConfig = (k, d) => { const v = kwinRead(k, d); seen[k] = [d, String(v)]; return v; };
     const flag = (k, d = false) => String(readConfig(k, d)) === "true";
@@ -216,7 +236,8 @@ if (typeof workspace !== "undefined") {
         for (const k in entries) if (seen[k]) seen[k].push(String(entries[k]));
         callDBus("org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell", "evaluateScript",
         "const c = ConfigFile('kwinrc', 'Script-stacklet');" +
-        Object.keys(entries).map(k => "c.writeEntry(" + JSON.stringify(k) + ", " + JSON.stringify(entries[k]) + ");").join(""));
+        Object.keys(entries).map(k => "c.writeEntry(" + JSON.stringify(k) + ", " + JSON.stringify(entries[k]) + ");").join(""),
+        () => { for (const k in entries) confirmWrite(seen, k, String(entries[k])); }); // called on success only
     };
     const apps = { tileAll, system: flag("floatSystem", true), media: flag("floatMedia", true), tileClasses: list(readConfig("tileClasses", TERMINALS)),
         floatClasses: list(readConfig("floatClasses", "")), tileAnyway: list(readConfig("tileAnyway", "")) };
@@ -258,7 +279,7 @@ if (typeof workspace !== "undefined") {
     // group key -> {mode, stash, base, prev?} picked with the shortcuts, kept across restarts in `savedState`.
     // `base` is the settings layout at the time: once the settings page changes it, the entry is ignored.
     let modes = {}, ratios = {}; // ratios: group key -> {m, c, s} main widths the user dragged or set
-    let savedJson = String(readConfig("savedState", ""));
+    let savedJson = String(kwinRead("savedState", "")); // not in `seen`: our own state, no reason to restart
     try {
         const s = JSON.parse(savedJson || "{}");
         if (s && typeof s.modes === "object" && typeof s.ratios === "object") ({ modes, ratios } = s);
@@ -321,14 +342,8 @@ if (typeof workspace !== "undefined") {
         "showText", "view-split-left-right", text);
 
     const isPortrait = o => o.geometry.height > o.geometry.width;
-    // main size as currently laid out in root's tiles, or undefined if the layout isn't ours
-    function draggedRatio(root, portrait, kind = "m") {
-        if (kind !== "m" && !portrait) // centered: three columns, main in the middle
-            return root.tiles.length === 3 && root.layoutDirection === HORIZONTAL ? root.tiles[1].relativeGeometry.width : undefined;
-        if (root.tiles.length !== 2 || root.layoutDirection !== (portrait ? VERTICAL : HORIZONTAL)) return undefined;
-        const g = root.tiles[mirror ? 1 : 0].relativeGeometry;
-        return clampRatio(portrait ? g.height : g.width);
-    }
+    // main windows of a layout: only master and stack has a setting for it
+    const mainsOf = mode => mode === TILE ? mainCount : 1;
 
     // n tiles in a row (or column) inside one tile, split along dir
     function column(col, n, dir) {
@@ -348,7 +363,7 @@ if (typeof workspace !== "undefined") {
         const [outer, inner] = portrait ? [VERTICAL, HORIZONTAL] : [HORIZONTAL, VERTICAL];
         const st = modeOf(k, desktop), mode = st.mode, kind = kindOf(st);
         // keep a main size the user dragged, if the tiles are still the ones we built for this kind
-        const dragged = groups[k] && laid[k] === kind && draggedRatio(root, portrait, kind);
+        const dragged = groups[k] && laid[k] === kind && draggedRatio(root, portrait, kind, mirror);
         if (dragged) setWidth(k, kind, dragged);
         // dwindle: every split keeps a border the user dragged (the root one is the main width)
         if (mode === DWINDLE && trees[k] && groups[k] && laid[k] === kind) {
@@ -365,10 +380,12 @@ if (typeof workspace !== "undefined") {
             root.padding = smartGaps && (wins.length === 1 || one) ? 0 : gap; // KWin spreads it: full at screen edges, half between tiles
             root.minimumSize = { width: 0.05, height: 0.05 }; // default 0.15 breaks stacks of 7+ windows; children inherit
             let slots = [root]; // monocle: every window shares the root tile, the focused one is on top
+            let rects = null, cols = [], colRects = []; // where slots (and centered's columns) go
             if (mode === DWINDLE) trees[k] = dwindleSync(trees[k], wins, w => newSplit.get(w)); else delete trees[k];
             for (const w of wins) newSplit.delete(w);
             if (wins.length > 1 && mode === DWINDLE) {
-                const { rects, splits } = dwindleRects(trees[k], ratio, output.geometry.width / output.geometry.height, mirror);
+                let splits;
+                ({ rects, splits } = dwindleRects(trees[k], ratio, output.geometry.width / output.geometry.height, mirror));
                 slots = [];
                 let s = 0;
                 const build = (n, tile) => {
@@ -378,9 +395,8 @@ if (typeof workspace !== "undefined") {
                     build(n.kids[1], halves[swap ? 0 : 1]);
                 };
                 build(trees[k], root);
-                for (let pass = 0; pass < 2; pass++) slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
             } else if (wins.length > 1 && mode === SPIRAL) {
-                const rects = spiralRects(wins.length, ratio, mirror, portrait);
+                rects = spiralRects(wins.length, ratio, mirror, portrait);
                 slots = [];
                 let cur = root;
                 for (let i = 0; i < wins.length - 1; i++) {
@@ -394,28 +410,27 @@ if (typeof workspace !== "undefined") {
                     cur = halves[first ? 1 : 0];
                 }
                 slots.push(cur);
-                for (let pass = 0; pass < 2; pass++) slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
             } else if (wins.length > 1 && mode === CENTERED && !portrait) {
                 // left | main | right columns; with 2 windows one side stays empty so the main stays centred
-                const rects = centeredRects(wins.length, ratio, mirror), k1 = wins.length - 1, s = (1 - ratio) / 2;
-                const cols = column(root, 3, HORIZONTAL);
+                const k1 = wins.length - 1, s = (1 - ratio) / 2;
+                rects = centeredRects(wins.length, ratio, mirror);
+                cols = column(root, 3, HORIZONTAL);
                 const first = column(cols[mirror ? 0 : 2], Math.ceil(k1 / 2), VERTICAL);
                 const second = k1 > 1 ? column(cols[mirror ? 2 : 0], Math.floor(k1 / 2), VERTICAL) : [];
                 slots = [cols[1]];
                 for (let j = 0; j < k1; j++) slots.push((j % 2 ? second : first)[j >> 1]);
-                const colRects = [0, s, s + ratio].map((x, i) => ({ x, y: 0, width: i === 1 ? ratio : s, height: 1 }));
-                for (let pass = 0; pass < 2; pass++) {
-                    cols.forEach((t, i) => { t.relativeGeometry = colRects[i]; });
-                    slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
-                }
+                colRects = [0, s, s + ratio].map((x, i) => ({ x, y: 0, width: i === 1 ? ratio : s, height: 1 }));
             } else if (wins.length > 1 && !one) {
-                const main = mode === CENTERED ? 1 : mainCount; // centered on a portrait screen: one main row on top
-                const rects = slotRects(wins.length, ratio, main, mirror, portrait);
+                const main = mainsOf(mode); // centered on a portrait screen: one main row on top
+                rects = slotRects(wins.length, ratio, main, mirror, portrait);
                 const m = Math.min(main, wins.length - 1);
-                const cols = root.split(outer);
-                slots = [...column(cols[mirror ? 1 : 0], m, inner), ...column(cols[mirror ? 0 : 1], wins.length - m, inner)];
-                // KWin shifts neighbours when one tile is resized, so a second pass settles longer stacks
-                for (let pass = 0; pass < 2; pass++) slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
+                const halves = root.split(outer);
+                slots = [...column(halves[mirror ? 1 : 0], m, inner), ...column(halves[mirror ? 0 : 1], wins.length - m, inner)];
+            }
+            // KWin shifts neighbours when one tile is resized, so a second pass settles longer stacks
+            if (rects) for (let pass = 0; pass < 2; pass++) {
+                cols.forEach((t, i) => { t.relativeGeometry = colRects[i]; });
+                slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
             }
             wins.forEach((w, i) => {
                 if (w.maximizeMode) w.setMaximize(false, false);
@@ -501,7 +516,8 @@ if (typeof workspace !== "undefined") {
     // move a freshly added window to where the "new windows go" setting wants it
     function place(w) {
         if (!w.output || w.desktops.length !== 1) return;
-        if (modeOf(key(w.output, w.desktops[0]), w.desktops[0]).mode === DWINDLE) {
+        const mode = modeOf(key(w.output, w.desktops[0]), w.desktops[0]).mode;
+        if (mode === DWINDLE) {
             // dwindle: right after the window that had focus, so it splits that one (KWin focuses w before windowAdded)
             const f = active === w ? prevActive : active;
             if (!f || f === w || !groupOf(w.output, w.desktops[0]).includes(f)) return;
@@ -511,7 +527,7 @@ if (typeof workspace !== "undefined") {
             return;
         }
         if (newWindow !== 1 && newWindow !== 2) return;
-        const target = groupOf(w.output, w.desktops[0]).filter(x => x !== w)[newWindow === 2 ? 0 : mainCount];
+        const target = groupOf(w.output, w.desktops[0]).filter(x => x !== w)[newWindow === 2 ? 0 : mainsOf(mode)];
         if (!target) return;
         order = order.filter(x => x !== w);
         order.splice(order.indexOf(target), 0, w);
@@ -523,9 +539,15 @@ if (typeof workspace !== "undefined") {
         if (w.tile && !w.deleted) release(w);
     }
 
-    workspace.screensChanged.connect(retileAll);
+    // rotation: hook every screen once, also those plugged in later
+    let screens = [];
+    const hookScreens = () => {
+        for (const o of workspace.screens) if (!screens.includes(o)) o.geometryChanged.connect(retileAll);
+        screens = [...workspace.screens];
+    };
+    hookScreens();
+    workspace.screensChanged.connect(() => { hookScreens(); retileAll(); });
     workspace.currentActivityChanged.connect(() => retileAll());
-    for (const o of workspace.screens) o.geometryChanged.connect(retileAll); // rotation
     workspace.windowAdded.connect(w => { if (track(w)) { place(w); retileAll(keysOf(w)); } });
     // Apply on the settings page only writes kwinrc: KWin neither re-reads it nor restarts scripts. So when the
     // user leaves or closes System Settings, have KWin re-read it, and restart Stacklet if its settings changed.
@@ -533,7 +555,7 @@ if (typeof workspace !== "undefined") {
     const settingsApp = w => w && (["systemsettings", "kcmshell6", "org.kde.kcmshell6"].includes(cls(w)) || cls(w).startsWith("kcm_"));
     const reconfigure = () => callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure");
     options.configChanged.connect(() => {
-        if (!Object.keys(seen).some(k => k !== "savedState" && !seen[k].slice(1).includes(String(kwinRead(k, seen[k][0]))))) return;
+        if (!settingsChanged(seen, kwinRead)) return;
         // A clean off and on. Unload only deletes us later, so a direct Scripting.start would still see us
         // loaded; reconfigure runs start after its timer, once we're gone.
         callDBus("org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting", "unloadScript", "stacklet");
@@ -762,7 +784,7 @@ if (typeof workspace !== "undefined") {
             const w = tiledWindow();
             if (!w) return;
             const g = groupOf(w.output, w.desktops[0]);
-            const main = modeOf(key(w.output, w.desktops[0]), w.desktops[0]).mode === CENTERED ? 1 : mainCount;
+            const main = mainsOf(modeOf(key(w.output, w.desktops[0]), w.desktops[0]).mode);
             const stack = g.slice(Math.min(main, g.length - 1));
             if (stack.length < 2) return;
             rotateOrder(order, stack, dir);
@@ -771,19 +793,20 @@ if (typeof workspace !== "undefined") {
     }
 
     // keyboard resize of the main size, in 5% steps, for the focused window's screen + desktop
-    for (const [name, label, keys, delta] of [["Grow", "Grow", "Meta+Alt+]", 0.05], ["Shrink", "Shrink", "Meta+Alt+[", -0.05]]) {
-        registerShortcut("Stacklet" + name + "Main", "Stacklet: " + label + " main window", keys, () => {
+    for (const [name, keys, delta] of [["Grow", "Meta+Alt+]", 0.05], ["Shrink", "Meta+Alt+[", -0.05]]) {
+        registerShortcut("Stacklet" + name + "Main", "Stacklet: " + name + " main window", keys, () => {
             const w = tiledWindow();
             if (!w) { osd("Stacklet: focus a tiled window first"); return; }
             const o = w.output, d = w.desktops[0], k = key(o, d), root = workspace.rootTile(o, d);
             const st = modeOf(k, d), kind = kindOf(st);
             if (st.mode === MONOCLE) { osd("Stacklet: monocle has no main window to resize"); return; }
             if (groupOf(o, d).length < 2) { osd("Stacklet: only one window here, nothing to resize"); return; }
-            const cur = (root && laid[k] === kind && draggedRatio(root, isPortrait(o), kind)) || widthOf(k, kind);
+            const [, lo, hi] = WIDTHS[kind];
+            const cur = Math.min(hi, Math.max(lo, (root && laid[k] === kind && draggedRatio(root, isPortrait(o), kind, mirror)) || widthOf(k, kind)));
             setWidth(k, kind, cur + delta);
             if (Math.abs(ratios[k][kind] - cur) < 0.001) {
                 osd("Stacklet: main window is already at its " + (delta > 0 ? "largest" : "smallest") +
-                    " (" + Math.round(WIDTHS[kind][delta > 0 ? 2 : 1] * 100) + "%)");
+                    " (" + Math.round((delta > 0 ? hi : lo) * 100) + "%)");
                 return;
             }
             delete laid[k]; // so layOut uses this value instead of re-reading the old tiles

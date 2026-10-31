@@ -4,7 +4,7 @@ Everything to paste into the store form, plus the files to upload.
 
 ## Files to upload
 
-- **File:** `build/stacklet-1.3.1.kwinscript` (build it with `./package.sh`)
+- **File:** `build/stacklet-1.3.2.kwinscript` (build it with `./package.sh`)
 - **Screenshots:** `store/screenshot-tiling.png`, `store/screenshot-settings.png`
 - **Icon / logo:** `store/logo-256.png` (source: `store/logo.svg`)
 - **GitHub social preview:** `store/social-preview.png` (Settings → Social preview)
@@ -97,6 +97,10 @@ Source and bug reports: https://github.com/aic0d3r/stacklet
 ## Tags
 
 tiling, tiling window manager, window management, kwin script, plasma 6, terminals, i3, productivity
+
+## Changelog 1.3.2
+
+Bug fixes. Maximizing a tiled window (for example double-clicking a browser's tab strip) no longer takes it out of the layout for good. A main window dragged wider than 85% stays at 85% instead of jumping back to 55%. A settings-page change to an app list right after Meta+Alt+A is no longer ignored. Screens plugged in after login re-tile when rotated. With two main windows set, spiral, centered master and dwindle no longer treat the second window as a main one.
 
 ## Changelog 1.3.1
 
