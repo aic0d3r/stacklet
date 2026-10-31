@@ -471,6 +471,8 @@ if (typeof workspace !== "undefined") {
                 // KWin moves windows out of tiles we remove into another tile, later (Wayland is async):
                 // one we don't lay out (helper, other Activity, ...) would sit invisibly in someone else's tile
                 if (!busy && w.tile && order.includes(w) && !floating.has(w) && !tileable(w)) { release(w); return; }
+                // user dropped a floating window into a tile (KWin's snap): it's tiled again, else it sits there untracked
+                if (!busy && w.tile && order.includes(w) && floating.has(w)) { floating.delete(w); retileAll(keysOf(w)); return; }
                 // dragFloats off: leave its tile empty while dragging; on drop it swaps or snaps back
                 if (!dragFloats && !busy && moving.has(w) && order.includes(w) && !w.tile && tileable(w)) { draggedOut.add(w); return; }
                 // user dragged a tiled window out: let it float instead of snapping it back

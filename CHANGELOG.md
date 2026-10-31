@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## 1.3.1
 
 - Grow / shrink main window (Meta+Alt+] / Meta+Alt+[) now shows an on-screen message when it can't act: the focused window isn't tiled, the layout is monocle, there's only one window, or the main window is already at its largest or smallest size.
+- Fixed: a window you dragged out (so it floated) and then dropped into a tile looked tiled but stayed floating, so the Stacklet shortcuts ignored it. Dropping it into a tile now tiles it again.
 
 ## 1.3.0
 

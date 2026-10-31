@@ -4,7 +4,7 @@ Everything to paste into the store form, plus the files to upload.
 
 ## Files to upload
 
-- **File:** `build/stacklet-1.3.0.kwinscript` (build it with `./package.sh`)
+- **File:** `build/stacklet-1.3.1.kwinscript` (build it with `./package.sh`)
 - **Screenshots:** `store/screenshot-tiling.png`, `store/screenshot-settings.png`
 - **Icon / logo:** `store/logo-256.png` (source: `store/logo.svg`)
 - **GitHub social preview:** `store/social-preview.png` (Settings → Social preview)
@@ -97,6 +97,10 @@ Source and bug reports: https://github.com/aic0d3r/stacklet
 ## Tags
 
 tiling, tiling window manager, window management, kwin script, plasma 6, terminals, i3, productivity
+
+## Changelog 1.3.1
+
+Fixed a window you dragged out and then dropped into a tile: it looked tiled but stayed floating, so the shortcuts ignored it. Grow / shrink main window now says why when it can't act (window not tiled, monocle, one window, or already at its limit).
 
 ## Changelog 1.3.0
 
