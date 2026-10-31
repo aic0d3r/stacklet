@@ -143,7 +143,7 @@ The settings page is checked by hand in a live Plasma session.
 
 ## Known limits
 
-- Windows on all desktops, minimized or fullscreen are left alone, and so are windows hidden from both the taskbar and the task switcher (helpers such as Xwayland Video Bridge).
+- Windows on all desktops, minimized, maximized or fullscreen are left alone (a maximized window re-tiles when restored), and so are windows hidden from both the taskbar and the task switcher (helpers such as Xwayland Video Bridge).
 - Dialogs, About boxes and tool windows that belong to a parent window never tile, and neither do modal dialogs or windows that can't be resized (also when the minimum and maximum size are the same). A non-modal dialog an app opens without a parent looks like a normal window on Wayland, so it tiles: Meta+F floats it.
 - Settings apply when you close or leave System Settings: Stacklet then restarts if one of its settings changed. Like turning it off and on, that tiles windows floated with Meta+F again and brings back hidden scratchpad windows.
 - Spiral looks the same as master and stack until the fourth window.

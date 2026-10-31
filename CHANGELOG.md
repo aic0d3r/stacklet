@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Changed: maximizing a tiled window (button, double-click on the title bar or a tab strip, KWin's shortcut) now really maximizes it, and the others re-tile around the gap. Restoring it puts it back in its tile. This also ends the brief stretch-then-snap-back flash from 1.3.2.
+
 ## 1.3.2
 
 - Fixed: dragging the main window wider than 85% (master and stack, spiral) made it jump back to 55% when the next window opened. It now stays at 85%, the largest main size.

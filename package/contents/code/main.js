@@ -328,7 +328,7 @@ if (typeof workspace !== "undefined") {
     const onActivity = w => !w.activities.length || w.activities.includes(workspace.currentActivity);
     // hidden from taskbar and switcher = not a window the user manages (e.g. Xwayland Video Bridge: invisible, type normal)
     const helper = w => w.skipTaskbar && w.skipSwitcher;
-    const tileable = w => !w.deleted && !floating.has(w) && !scratch.includes(w) && !w.minimized && !w.fullScreen &&
+    const tileable = w => !w.deleted && !floating.has(w) && !scratch.includes(w) && !w.minimized && !w.fullScreen && !w.maximizeMode &&
         !helper(w) && w.output && w.desktops.length === 1 && onActivity(w) &&
         !offScreens.includes(String(w.output.name).toLowerCase()) &&
         !offDesktops.includes(String(w.desktops[0].x11DesktopNumber));
@@ -433,7 +433,6 @@ if (typeof workspace !== "undefined") {
                 slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
             }
             wins.forEach((w, i) => {
-                if (w.maximizeMode) w.setMaximize(false, false);
                 if (!slots[one ? 0 : i].manage(w)) // root.manage can refuse; fall back to filling the work area
                     w.frameGeometry = workspace.clientArea(KWin.MaximizeArea, output, desktop);
             });
@@ -480,7 +479,7 @@ if (typeof workspace !== "undefined") {
         order.push(w);
         if (!hooked.has(w)) {
             hooked.add(w);
-            for (const sig of ["desktopsChanged", "outputChanged", "minimizedChanged", "fullScreenChanged", "activitiesChanged", "skipTaskbarChanged", "skipSwitcherChanged"])
+            for (const sig of ["desktopsChanged", "outputChanged", "minimizedChanged", "fullScreenChanged", "maximizedChanged", "activitiesChanged", "skipTaskbarChanged", "skipSwitcherChanged"])
                 w[sig].connect(() => retileAll(keysOf(w)));
             w.tileChanged.connect(() => {
                 // KWin moves windows out of tiles we remove into another tile, later (Wayland is async):
@@ -491,7 +490,7 @@ if (typeof workspace !== "undefined") {
                 // dragFloats off: leave its tile empty while dragging; on drop it swaps or snaps back
                 if (!dragFloats && !busy && moving.has(w) && order.includes(w) && !w.tile && tileable(w)) { draggedOut.add(w); return; }
                 // user dragged a tiled window out: let it float instead of snapping it back.
-                // Lost its tile some other way (maximize: tab strip double-click, KWin's own keys): back into the layout.
+                // Lost its tile some other way (KWin's own keys): back into the layout. Maximized windows aren't tileable: they float until restored.
                 if (!busy && order.includes(w) && !w.tile && tileable(w)) {
                     if (moving.has(w)) { floating.add(w); draggedOut.add(w); }
                     retileAll(keysOf(w));
