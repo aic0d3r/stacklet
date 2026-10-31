@@ -102,6 +102,10 @@ assert.deepStrictEqual(dw.map(r => [r.x, r.y, r.width, r.height]), [[0, 0, 0.5, 
 assert.deepStrictEqual(dwindleSync(tr, ["c", "b"]), { kids: ["c", "b"] });
 assert.deepStrictEqual(dwindleSync(tr, ["b", "c", "a"]), { kids: [{ kids: ["b", "c"] }, "a"] }); // swaps move windows, not tiles
 assert.strictEqual(dwindleSync(tr, []), null);
+// a maximized window leaves the tree; syncing from the tree it left puts it back in the same tile
+const without = dwindleSync(tr, ["a", "b"]);
+assert.deepStrictEqual(without, { kids: ["a", "b"] });
+assert.deepStrictEqual(dwindleSync(tr, ["a", "c", "b"]), tr);
 const dm = dwindleRects(tr, 0.6, 16 / 9, true).rects;
 near(dm[2].x, 0); near(dm[1].x, 0.4); near(dm[0].x, 0.7); // mirrored; a 0.6-wide half is wider than tall, so a|c
 near(dwindleRects(dwindleSync(null, [1, 2, 3, 4, 5, 6]), 0.55, 9 / 16).rects.reduce((s, r) => s + r.width * r.height, 0), 1);

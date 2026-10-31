@@ -307,6 +307,8 @@ if (typeof workspace !== "undefined") {
     const moving = new Set();     // windows being dragged right now
     const draggedOut = new Set(); // tiled windows the current drag pulled out of the layout
     const home = new Map();       // window -> {output, desktop} it was last laid out in
+    const parked = new Map();     // maximized window -> its group's dwindle tree from before, so restoring puts it back in the same tile
+    const inTree = (n, w) => n && (n.kids ? n.kids.some(x => inTree(x, w)) : n === w);
     let active = null, prevActive = null, closedActive = null, pendingFocus = null;
     const trees = {};           // group key -> dwindle tree (not saved: rebuilt in layout order after a restart)
     let nextSplit = null;       // dwindle: direction the next new window splits the focused one in (Meta+Alt+H / V)
@@ -381,7 +383,15 @@ if (typeof workspace !== "undefined") {
             root.minimumSize = { width: 0.05, height: 0.05 }; // default 0.15 breaks stacks of 7+ windows; children inherit
             let slots = [root]; // monocle: every window shares the root tile, the focused one is on top
             let rects = null, cols = [], colRects = []; // where slots (and centered's columns) go
-            if (mode === DWINDLE) trees[k] = dwindleSync(trees[k], wins, w => newSplit.get(w)); else delete trees[k];
+            if (mode === DWINDLE) {
+                // shortcut: ratios dragged while it was maximized are lost on restore, and so is its place if the tree was rebuilt meanwhile
+                for (const w of wins) {
+                    const old = parked.get(w);
+                    parked.delete(w);
+                    if (old && !inTree(trees[k], w)) trees[k] = old;
+                }
+                trees[k] = dwindleSync(trees[k], wins, w => newSplit.get(w));
+            } else delete trees[k];
             for (const w of wins) newSplit.delete(w);
             if (wins.length > 1 && mode === DWINDLE) {
                 let splits;
@@ -479,8 +489,13 @@ if (typeof workspace !== "undefined") {
         order.push(w);
         if (!hooked.has(w)) {
             hooked.add(w);
-            for (const sig of ["desktopsChanged", "outputChanged", "minimizedChanged", "fullScreenChanged", "maximizedChanged", "activitiesChanged", "skipTaskbarChanged", "skipSwitcherChanged"])
+            for (const sig of ["desktopsChanged", "outputChanged", "minimizedChanged", "fullScreenChanged", "activitiesChanged", "skipTaskbarChanged", "skipSwitcherChanged"])
                 w[sig].connect(() => retileAll(keysOf(w)));
+            w.maximizedChanged.connect(() => {
+                const h = home.get(w);
+                if (w.maximizeMode && h && !floating.has(w) && !parked.has(w) && inTree(trees[key(h.output, h.desktop)], w)) parked.set(w, trees[key(h.output, h.desktop)]);
+                retileAll(keysOf(w));
+            });
             w.tileChanged.connect(() => {
                 // KWin moves windows out of tiles we remove into another tile, later (Wayland is async):
                 // one we don't lay out (helper, other Activity, ...) would sit invisibly in someone else's tile
@@ -587,6 +602,7 @@ if (typeof workspace !== "undefined") {
         draggedOut.delete(w);
         hooked.delete(w);
         home.delete(w);
+        parked.delete(w);
         if (active === w) active = null;
         if (closedActive === w) closedActive = null;
         if (prevActive === w) prevActive = null;
