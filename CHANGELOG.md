@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.3.3
 
-- Changed: maximizing a tiled window (button, double-click on the title bar or a tab strip, KWin's shortcut) now really maximizes it, and the others re-tile around the gap. Restoring it puts it back in its tile. This also ends the brief stretch-then-snap-back flash from 1.3.2.
+- Changed: maximizing a tiled window (button, double-click on the title bar or a tab strip, KWin's shortcut) now really maximizes it, and the others re-tile around the gap. Restoring it puts it back in its tile, in every layout, including dwindle borders you dragged before maximizing. This also ends the brief stretch-then-snap-back flash from 1.3.2. Windows that open already maximized float until restored.
 
 ## 1.3.2
 
