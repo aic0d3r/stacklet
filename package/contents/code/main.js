@@ -772,11 +772,18 @@ if (typeof workspace !== "undefined") {
     for (const [name, label, keys, delta] of [["Grow", "Grow", "Meta+Alt+]", 0.05], ["Shrink", "Shrink", "Meta+Alt+[", -0.05]]) {
         registerShortcut("Stacklet" + name + "Main", "Stacklet: " + label + " main window", keys, () => {
             const w = tiledWindow();
-            if (!w) return;
+            if (!w) { osd("Stacklet: focus a tiled window first"); return; }
             const o = w.output, d = w.desktops[0], k = key(o, d), root = workspace.rootTile(o, d);
-            const kind = kindOf(modeOf(k, d));
+            const st = modeOf(k, d), kind = kindOf(st);
+            if (st.mode === MONOCLE) { osd("Stacklet: monocle has no main window to resize"); return; }
+            if (groupOf(o, d).length < 2) { osd("Stacklet: only one window here, nothing to resize"); return; }
             const cur = (root && laid[k] === kind && draggedRatio(root, isPortrait(o), kind)) || widthOf(k, kind);
             setWidth(k, kind, cur + delta);
+            if (Math.abs(ratios[k][kind] - cur) < 0.001) {
+                osd("Stacklet: main window is already at its " + (delta > 0 ? "largest" : "smallest") +
+                    " (" + Math.round(WIDTHS[kind][delta > 0 ? 2 : 1] * 100) + "%)");
+                return;
+            }
             delete laid[k]; // so layOut uses this value instead of re-reading the old tiles
             retileAll([k]);
         });
