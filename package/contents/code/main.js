@@ -729,10 +729,17 @@ if (typeof workspace !== "undefined") {
         osd("Stacklet: " + (now ? "tiling " : "not tiling ") + c + " (saved)");
     });
 
-    // Focus by direction is KWin's own Meta+Alt+arrows, so only swapping lives here.
+    // Meta+arrows focus the neighbouring tile (taking them over from KWin's quick tile); Meta+Shift+arrows swap (new ids: older saved keys would override the default).
     for (const dir of ["Left", "Right", "Up", "Down"]) {
         const d = dir.toLowerCase();
-        registerShortcut("StackletSwap" + dir, "Stacklet: Swap with window " + d, "Meta+Alt+Shift+" + dir, () => {
+        registerShortcut("StackletFocus" + dir, "Stacklet: Focus window " + d, "Meta+" + dir, () => {
+            const w = tiledWindow();
+            if (!w) return;
+            const wins = groupOf(w.output, w.desktops[0]);
+            const j = pickNeighbor(wins.map(x => x.frameGeometry), wins.indexOf(w), d);
+            if (j >= 0) workspace.activeWindow = wins[j];
+        });
+        registerShortcut("StackletSwapWindow" + dir, "Stacklet: Swap with window " + d, "Meta+Shift+" + dir, () => {
             const w = tiledWindow();
             if (!w) return;
             const wins = groupOf(w.output, w.desktops[0]);

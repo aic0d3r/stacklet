@@ -50,8 +50,8 @@ Every shortcut can be changed in System Settings → Shortcuts → KWin (search 
 | Meta+Shift+Return | Make the focused window the main one |
 | Meta+F | Float / re-tile the focused window. On a window Stacklet leaves floating, it tiles just that window (dragging a tile out also floats it, unless you turn that off under Behaviour) |
 | Meta+Alt+A | Tile / untile the focused window's app and save it to the settings ("Tile these apps", or "Never tile" with "Tile all apps" on; works on the built-in floating apps too) |
-| Meta+Alt+arrows | Focus the neighbouring tile (KWin's own shortcut) |
-| Meta+Alt+Shift+arrows | Swap with the neighbouring tile |
+| Meta+arrows | Focus the neighbouring tile (first clear KWin's Quick Tile keys in System Settings) |
+| Meta+Shift+arrows | Swap with the neighbouring tile |
 | Meta+Alt+] / Meta+Alt+[ | Grow / shrink the main window by 5% |
 | Meta+Shift+Space | Switch layout (master and stack, spiral, monocle, centered, dwindle) for this screen and desktop; kept after a restart |
 | Meta+Alt+H / Meta+Alt+V | Dwindle: the next new window opens beside / below the focused one (press again for automatic) |

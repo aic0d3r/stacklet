@@ -71,7 +71,7 @@ Shortcuts (all changeable in System Settings → Shortcuts → KWin)
 
 • Meta+Alt+. / Meta+Alt+,: focus next / previous window
 
-• Meta+Alt+Shift+arrows: swap with a neighbour
+• Meta+Shift+arrows: swap with a neighbour
 
 • Meta+Alt+] / Meta+Alt+[: grow / shrink the main window
 
