@@ -228,7 +228,10 @@ if (typeof workspace !== "undefined") {
     const seen = {};
     const readConfig = (k, d) => { const v = kwinRead(k, d); seen[k] = [d, String(v)]; return v; };
     const flag = (k, d = false) => String(readConfig(k, d)) === "true";
-    const tileAll = flag("tileAll");
+    // Tile all apps is on for new installs. appListsV2 is set on the first run of 1.2+, so an install without it is new;
+    // older installs that never touched the setting keep false, and get it written so the settings page agrees.
+    const tileAllUnset = String(kwinRead("tileAll", "unset")) === "unset";
+    const tileAll = flag("tileAll", !flag("appListsV2"));
     // KWin 6.8 scripts can read their config but have no writeConfig; Plasma's desktop scripting can write it.
     // shortcut: needs plasmashell running; nothing is saved without it.
     const writeConfig = entries => {
@@ -241,6 +244,7 @@ if (typeof workspace !== "undefined") {
     };
     const apps = { tileAll, system: flag("floatSystem", true), media: flag("floatMedia", true), tileClasses: list(readConfig("tileClasses", TERMINALS)),
         floatClasses: list(readConfig("floatClasses", "")), tileAnyway: list(readConfig("tileAnyway", "")) };
+    if (tileAllUnset) writeConfig({ tileAll: String(tileAll) });
     const migrated = migrateApps(flag("appListsV2"), tileAll, readConfig("tileClasses", TERMINALS), readConfig("floatClasses", ""));
     if (migrated) {
         for (const k of ["tileClasses", "floatClasses"]) if (k in migrated) apps[k] = list(migrated[k]);

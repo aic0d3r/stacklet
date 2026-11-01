@@ -39,7 +39,7 @@ Five layouts, with a preview when you pick one:
 
 More
 
-• Only the apps you list get tiled (terminals by default). Or tile all apps: system apps, password managers, file pickers and "Configure" dialogs stay floating, and so do games and media players (each its own checkbox). Add your own apps to "Never tile".
+• Every normal window tiles by default. System apps, password managers, file pickers and "Configure" dialogs stay floating, and so do games and media players (each its own checkbox). Add your own apps to "Never tile".
 
 • Dialogs, modal windows and windows that can't be resized always float.
 
@@ -97,6 +97,10 @@ Source and bug reports: https://github.com/aic0d3r/stacklet
 ## Tags
 
 tiling, tiling window manager, window management, kwin script, plasma 6, terminals, i3, productivity
+
+## Changelog 1.4.0
+
+Tile all apps is now on for new installs: every normal window tiles, while system apps, password managers, games and media players stay floating. Existing installs keep their setting. New optional setting: Meta+arrows focus and Meta+Shift+arrows swap, as in Hyprland.
 
 ## Changelog 1.3.3
 

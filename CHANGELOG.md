@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0
+
+- Changed: "Tile all apps" is now on for new installs, so every normal window tiles. System apps and utilities, games and media players still float (their own checkboxes), and the Apps tab lists what to leave floating. Existing installs keep what they had.
+- New: optional "Use Meta+arrows" setting (Keys tab): Meta+arrows focus the neighbouring tile and Meta+Shift+arrows swap, as in Hyprland. KWin's Quick Tile and Move to Screen shortcuts hold those keys; `stacklet-keys on` frees them (`off` gives them back), or clear them by hand in System Settings. Off by default, so Meta+Alt+arrows (focus, KWin's own) and Meta+Alt+Shift+arrows (swap) work as before.
+
 ## 1.3.3
 
 - Changed: maximizing a tiled window (button, double-click on the title bar or a tab strip, KWin's shortcut) now really maximizes it, and the others re-tile around the gap. Restoring it puts it back in its tile, in every layout, including dwindle borders you dragged before maximizing. This also ends the brief stretch-then-snap-back flash from 1.3.2. Windows that open already maximized float until restored.

@@ -275,7 +275,7 @@
       <item row="0" column="0" colspan="2">
        <widget class="QCheckBox" name="kcfg_tileAll">
         <property name="text"><string>Tile all apps, not only the ones listed below</string></property>
-        <property name="toolTip"><string>Off (the default): only the apps in "Tile these apps" tile, terminals to start with. On: every app tiles, except what the float options and "Never tile" below keep floating.</string></property>
+        <property name="toolTip"><string>On (the default): every app tiles, except what the float options and "Never tile" below keep floating. Off: only the apps in "Tile these apps" tile, terminals to start with.</string></property>
        </widget>
       </item>
       <item row="1" column="0">

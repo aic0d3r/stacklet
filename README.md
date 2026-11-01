@@ -8,7 +8,7 @@
 [![KDE Store](https://img.shields.io/badge/KDE%20Store-Stacklet-3daee9?logo=kde&logoColor=white)](https://store.kde.org/p/2380552/)
 [![License: GPL-3.0-or-later](https://img.shields.io/github/license/aic0d3r/stacklet?color=blue)](LICENSE)
 
-A small auto-tiling script made for KDE Plasma 6.8 and Wayland. It tiles your terminals i3-style (master and stack, spiral, dwindle, monocle or centered master) and leaves every other window alone.
+A small auto-tiling script made for KDE Plasma 6.8 and Wayland. It tiles your windows i3-style (master and stack, spiral, dwindle, monocle or centered master).
 
 [**Get it on the KDE Store**](https://store.kde.org/p/2380552/) · [Releases](https://github.com/aic0d3r/stacklet/releases) · [Changelog](CHANGELOG.md)
 
@@ -18,13 +18,13 @@ I wanted tiling on Plasma without leaving Plasma. Kröhnkite does its own tiling
 
 So I wrote Stacklet, made for Plasma 6.8 and newer. It drives Plasma's native tiles, so resizing, Meta+T layouts and per-desktop tile layouts keep working. Install it, tick it in KWin Scripts, done.
 
-The defaults tile terminals, and you add other apps from a normal settings page.
+Everything tiles by default except system apps, games and media players; you change that from a normal settings page.
 
 ![Stacklet tiling terminal windows in a master and stack layout on KDE Plasma](store/screenshot-tiling.png)
 
 ## Features
 
-- Only the apps you list get tiled (default: kitty, Konsole, Alacritty, Ghostty, foot, WezTerm). Everything else floats. Or tick "Tile all apps": then your work apps tile, while "Float system apps and utilities" (on by default) keeps System Settings, file pickers, password prompts, password managers, calculators, screenshot tools, image viewers and "Configure …" dialogs floating, and "Float games and media players" (also on) does the same for Steam, game launchers, Windows (.exe) apps and video and music players. Add your own apps under "Never tile". Meta+Alt+A adds or removes the focused window's app, so you never have to look up a window class.
+- Every normal window tiles by default ("Tile all apps"), while "Float system apps and utilities" (on by default) keeps System Settings, file pickers, password prompts, password managers, calculators, screenshot tools, image viewers and "Configure …" dialogs floating, and "Float games and media players" (also on) does the same for Steam, game launchers, Windows (.exe) apps and video and music players. Add your own apps under "Never tile". Meta+Alt+A adds or removes the focused window's app, so you never have to look up a window class.
 - Five layouts, each with a preview on the settings page:
   - **Master and stack**: the first window on the left or right, the rest stacked beside it.
   - **Spiral**: each new window takes half of the space left.
