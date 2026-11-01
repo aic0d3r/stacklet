@@ -501,12 +501,25 @@
       <item row="1" column="0"><widget class="QLabel"><property name="text"><string>Tile or untile this app (saved)</string></property></widget></item>
       <item row="1" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+A</string></property></widget></item>
       <item row="2" column="0"><widget class="QLabel"><property name="text"><string>Move focus (built into KWin)</string></property></widget></item>
-      <item row="2" column="1"><widget class="QLabel"><property name="text"><string>Meta+arrows</string></property></widget></item>
+      <item row="2" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+arrows</string></property></widget></item>
       <item row="3" column="0"><widget class="QLabel"><property name="text"><string>Swap with the neighbouring window</string></property></widget></item>
-      <item row="3" column="1"><widget class="QLabel"><property name="text"><string>Meta+Shift+arrows</string></property></widget></item>
+      <item row="3" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+Shift+arrows</string></property></widget></item>
       <item row="4" column="0"><widget class="QLabel"><property name="text"><string>Switch layout on this screen and desktop</string></property></widget></item>
       <item row="4" column="1"><widget class="QLabel"><property name="text"><string>Meta+Shift+Space</string></property></widget></item>
      </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="kcfg_metaArrows">
+     <property name="text"><string>Use Meta+arrows to focus and Meta+Shift+arrows to swap</string></property>
+     <property name="toolTip"><string>The Hyprland way. KWin's Quick Tile and Move to Screen shortcuts use these keys, so clear them first.</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="keysMetaArrowsHelp">
+     <property name="textFormat"><enum>Qt::RichText</enum></property>
+     <property name="wordWrap"><bool>true</bool></property>
+     <property name="text"><string>&lt;small&gt;KWin's own keys must be cleared first, or these won't work. Run stacklet-keys on (see the README), or do it by hand: System Settings &gt; Shortcuts &gt; System Services &gt; Window Management (older Plasma: Shortcuts &gt; KWin), then remove Quick Tile Window to the Left / Right / Top / Bottom and Move Window to Next / Previous Screen.&lt;/small&gt;</string></property>
     </widget>
    </item>
    <item>

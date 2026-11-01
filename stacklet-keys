@@ -1,0 +1,41 @@
+#!/bin/bash
+# stacklet-keys on|off: frees (or gives back) the KWin shortcuts that hold Meta+arrows and Meta+Shift+arrows,
+# so Stacklet's "Use Meta+arrows" setting can use them. A KWin script can't do this itself (it can't send typed D-Bus arrays).
+# Tick the setting first (Stacklet registers its shortcuts when it loads), then run `stacklet-keys on`.
+set -eu
+G="gdbus call --session -d org.kde.kglobalaccel -o /kglobalaccel -m org.kde.KGlobalAccel.setShortcut"
+META=268435456 SHIFT=33554432
+declare -A KEY=([Left]=16777234 [Up]=16777235 [Right]=16777236 [Down]=16777237)
+
+set_keys() { $G "['kwin','$1','KWin','$2']" "[$3]" 6 >/dev/null; }  # 6 = set it, ignore the saved value
+
+case "${1:-}" in
+on|off) ;;
+*) echo "usage: ${0##*/} on|off" >&2; exit 1 ;;
+esac
+
+# KWin action, its label, Plasma's default key
+kwin_actions() {
+    for d in Left Right Top Bottom; do
+        k=$d; [ "$d" = Top ] && k=Up; [ "$d" = Bottom ] && k=Down
+        echo "Window Quick Tile $d|Quick Tile Window to the ${d}|$((META + KEY[$k]))"
+    done
+    echo "Window to Next Screen|Move Window to Next Screen|$((META + SHIFT + KEY[Right]))"
+    echo "Window to Previous Screen|Move Window to Previous Screen|$((META + SHIFT + KEY[Left]))"
+}
+
+while IFS='|' read -r id label key; do
+    [ "$1" = on ] && set_keys "$id" "$label" 0 || set_keys "$id" "$label" "$key"
+done < <(kwin_actions)
+
+for d in Left Right Up Down; do
+    l=${d,,}
+    if [ "$1" = on ]; then
+        set_keys "StackletFocus$d" "Stacklet: Focus window $l" $((META + KEY[$d]))
+        set_keys "StackletSwapWindow$d" "Stacklet: Swap with window $l" $((META + SHIFT + KEY[$d]))
+    else
+        set_keys "StackletFocus$d" "Stacklet: Focus window $l" 0
+        set_keys "StackletSwapWindow$d" "Stacklet: Swap with window $l" 0
+    fi
+done
+[ "$1" = on ] && echo "Meta+arrows now belong to Stacklet" || echo "Meta+arrows are back with KWin"

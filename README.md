@@ -50,8 +50,8 @@ Every shortcut can be changed in System Settings → Shortcuts → KWin (search 
 | Meta+Shift+Return | Make the focused window the main one |
 | Meta+F | Float / re-tile the focused window. On a window Stacklet leaves floating, it tiles just that window (dragging a tile out also floats it, unless you turn that off under Behaviour) |
 | Meta+Alt+A | Tile / untile the focused window's app and save it to the settings ("Tile these apps", or "Never tile" with "Tile all apps" on; works on the built-in floating apps too) |
-| Meta+arrows | Focus the neighbouring tile (first clear KWin's Quick Tile keys in System Settings) |
-| Meta+Shift+arrows | Swap with the neighbouring tile |
+| Meta+Alt+arrows | Focus the neighbouring tile (KWin's own shortcut) |
+| Meta+Alt+Shift+arrows | Swap with the neighbouring tile |
 | Meta+Alt+] / Meta+Alt+[ | Grow / shrink the main window by 5% |
 | Meta+Shift+Space | Switch layout (master and stack, spiral, monocle, centered, dwindle) for this screen and desktop; kept after a restart |
 | Meta+Alt+H / Meta+Alt+V | Dwindle: the next new window opens beside / below the focused one (press again for automatic) |
@@ -63,6 +63,8 @@ Every shortcut can be changed in System Settings → Shortcuts → KWin (search 
 | Meta+S | Show the next scratchpad window; the press after the last one hides it |
 | Meta+Ctrl+S | Send the focused window to the scratchpad; on a shown scratchpad window, put it back (tiled, or floating for apps Stacklet doesn't tile) |
 | Drag a window onto another tile | Swap the two |
+
+Prefer the Hyprland way (Meta+arrows focus, Meta+Shift+arrows swap)? Tick **Use Meta+arrows** under Keys in Stacklet's settings. KWin's own Quick Tile and Move to Screen shortcuts hold those keys and a script can't free them, so after ticking it, run `./stacklet-keys on` from a checkout (`off` gives the keys back to KWin). Or clear **Quick Tile Window to the Left / Right / Top / Bottom** and **Move Window to Next / Previous Screen** by hand in System Settings > Shortcuts > System Services > Window Management (older Plasma: Shortcuts > KWin).
 
 ## Install
 

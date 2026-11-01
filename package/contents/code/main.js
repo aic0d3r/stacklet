@@ -729,17 +729,20 @@ if (typeof workspace !== "undefined") {
         osd("Stacklet: " + (now ? "tiling " : "not tiling ") + c + " (saved)");
     });
 
-    // Meta+arrows focus the neighbouring tile (taking them over from KWin's quick tile); Meta+Shift+arrows swap (new ids: older saved keys would override the default).
+    // Default: focus is KWin's own Meta+Alt+arrows, swap is Meta+Alt+Shift+arrows.
+    // metaArrows (Hyprland style): Meta+arrows focus, Meta+Shift+arrows swap. KWin's Quick Tile and Move to Screen keys hold those
+    // and a script can't free them (callDBus can't send typed arrays), so the user clears them. Own ids per style: saved keys beat defaults.
+    const metaArrows = flag("metaArrows");
     for (const dir of ["Left", "Right", "Up", "Down"]) {
         const d = dir.toLowerCase();
-        registerShortcut("StackletFocus" + dir, "Stacklet: Focus window " + d, "Meta+" + dir, () => {
+        if (metaArrows) registerShortcut("StackletFocus" + dir, "Stacklet: Focus window " + d, "Meta+" + dir, () => {
             const w = tiledWindow();
             if (!w) return;
             const wins = groupOf(w.output, w.desktops[0]);
             const j = pickNeighbor(wins.map(x => x.frameGeometry), wins.indexOf(w), d);
             if (j >= 0) workspace.activeWindow = wins[j];
         });
-        registerShortcut("StackletSwapWindow" + dir, "Stacklet: Swap with window " + d, "Meta+Shift+" + dir, () => {
+        registerShortcut(metaArrows ? "StackletSwapWindow" + dir : "StackletSwap" + dir, "Stacklet: Swap with window " + d, (metaArrows ? "Meta+Shift+" : "Meta+Alt+Shift+") + dir, () => {
             const w = tiledWindow();
             if (!w) return;
             const wins = groupOf(w.output, w.desktops[0]);
