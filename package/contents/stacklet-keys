@@ -1,7 +1,8 @@
 #!/bin/bash
-# stacklet-keys on|off: frees (or gives back) the KWin shortcuts that hold Meta+arrows and Meta+Shift+arrows,
+# stacklet-keys on|off|install: frees (or gives back) the KWin shortcuts that hold Meta+arrows and Meta+Shift+arrows,
 # so Stacklet's "Use Meta+arrows" setting can use them. A KWin script can't do this itself (it can't send typed D-Bus arrays).
 # Tick the setting first (Stacklet registers its shortcuts when it loads), then run `stacklet-keys on`.
+# install: adds two launchers to the app menu and KRunner, so later you don't need a terminal.
 set -eu
 G="gdbus call --session -d org.kde.kglobalaccel -o /kglobalaccel -m org.kde.KGlobalAccel.setShortcut"
 META=268435456 SHIFT=33554432
@@ -11,8 +12,19 @@ set_keys() { $G "['kwin','$1','KWin','$2']" "[$3]" 6 >/dev/null; }  # 6 = set it
 
 case "${1:-}" in
 on|off) ;;
-*) echo "usage: ${0##*/} on|off" >&2; exit 1 ;;
+install)
+    me=$(readlink -f "$0"); dir=${XDG_DATA_HOME:-$HOME/.local/share}/applications
+    mkdir -p "$dir"
+    for m in on off; do
+        name="Stacklet: use Meta+arrows"; [ $m = off ] && name="Stacklet: give Meta+arrows back to KWin"
+        printf '[Desktop Entry]\nType=Application\nName=%s\nIcon=input-keyboard\nCategories=Settings;\nExec=bash "%s" %s\n' "$name" "$me" $m > "$dir/stacklet-keys-$m.desktop"
+    done
+    echo "Added to the app menu and KRunner: \"Stacklet: use Meta+arrows\" and \"Stacklet: give Meta+arrows back to KWin\""
+    exit 0 ;;
+*) echo "usage: ${0##*/} on|off|install" >&2; exit 1 ;;
 esac
+# launched from a menu there is no terminal: say the result as a notification too
+say() { echo "$1"; [ -t 1 ] || ! command -v notify-send >/dev/null || notify-send -i input-keyboard Stacklet "$1"; }
 
 # KWin action, its label, Plasma's default key
 kwin_actions() {
@@ -38,4 +50,4 @@ for d in Left Right Up Down; do
         set_keys "StackletSwapWindow$d" "Stacklet: Swap with window $l" 0
     fi
 done
-[ "$1" = on ] && echo "Meta+arrows now belong to Stacklet" || echo "Meta+arrows are back with KWin"
+if [ "$1" = on ]; then say "Meta+arrows now belong to Stacklet"; else say "Meta+arrows are back with KWin"; fi

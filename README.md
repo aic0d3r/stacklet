@@ -64,7 +64,7 @@ Every shortcut can be changed in System Settings → Shortcuts → KWin (search 
 | Meta+Ctrl+S | Send the focused window to the scratchpad; on a shown scratchpad window, put it back (tiled, or floating for apps Stacklet doesn't tile) |
 | Drag a window onto another tile | Swap the two |
 
-Prefer the Hyprland way (Meta+arrows focus, Meta+Shift+arrows swap)? Tick **Use Meta+arrows** under Keys in Stacklet's settings. KWin's own Quick Tile and Move to Screen shortcuts hold those keys and a script can't free them, so after ticking it, run `./stacklet-keys on` from a checkout (`off` gives the keys back to KWin). Or clear **Quick Tile Window to the Left / Right / Top / Bottom** and **Move Window to Next / Previous Screen** by hand in System Settings > Shortcuts > System Services > Window Management (older Plasma: Shortcuts > KWin).
+Prefer the Hyprland way (Meta+arrows focus, Meta+Shift+arrows swap)? Tick **Use Meta+arrows** under Keys in Stacklet's settings. KWin's own Quick Tile and Move to Screen shortcuts hold those keys and a script can't free them, so after ticking it, run `bash ~/.local/share/kwin/scripts/stacklet/contents/stacklet-keys install` once (or `package/contents/stacklet-keys` from a checkout). That adds "Stacklet: use Meta+arrows" and "Stacklet: give Meta+arrows back to KWin" to the app menu and KRunner; you can also run the script with `on` or `off` yourself. Or clear **Quick Tile Window to the Left / Right / Top / Bottom** and **Move Window to Next / Previous Screen** by hand in System Settings > Shortcuts > System Services > Window Management (older Plasma: Shortcuts > KWin).
 
 ## Install
 
