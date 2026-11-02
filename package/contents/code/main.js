@@ -123,6 +123,12 @@ function centeredRects(n, centre, mirror = false, portrait = false) {
     return orient(rects, mirror, false);
 }
 
+// Sizes are saved in percent (55) since 1.5, as a fraction (0.55) before; minimums are >= 5%, so <= 1 is a fraction.
+function percentRatio(v) {
+    const n = Number(v);
+    return n > 1 ? n / 100 : n;
+}
+
 function clampRatio(r, lo = 0.15, hi = 0.85, d = 0.55) {
     r = Number(r);
     return r >= lo && r <= hi ? r : d;
@@ -220,7 +226,7 @@ function draggedRatio(root, portrait, kind = "m", mirror = false) {
     return portrait ? g.height : g.width;
 }
 
-if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, dwindleFlip, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, list, TERMINALS }; // node self-test
+if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, dwindleFlip, centeredRects, clampRatio, percentRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, list, TERMINALS }; // node self-test
 
 const kwinRead = typeof readConfig !== "undefined" ? readConfig : null;
 if (typeof workspace !== "undefined") {
@@ -239,7 +245,8 @@ if (typeof workspace !== "undefined") {
         for (const k in entries) if (seen[k]) seen[k].push(String(entries[k]));
         callDBus("org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell", "evaluateScript",
         "const c = ConfigFile('kwinrc', 'Script-stacklet');" +
-        Object.keys(entries).map(k => "c.writeEntry(" + JSON.stringify(k) + ", " + JSON.stringify(entries[k]) + ");").join(""),
+        // write "" first: plasmashell caches kwinrc and skips a value equal to its stale copy, even if the file lost it
+        Object.keys(entries).map(k => "c.writeEntry(" + JSON.stringify(k) + ", ''); c.writeEntry(" + JSON.stringify(k) + ", " + JSON.stringify(entries[k]) + ");").join(""),
         () => { for (const k in entries) confirmWrite(seen, k, String(entries[k])); }); // called on success only
     };
     const apps = { tileAll, system: flag("floatSystem", true), media: flag("floatMedia", true), tileClasses: list(readConfig("tileClasses", TERMINALS)),
@@ -250,7 +257,8 @@ if (typeof workspace !== "undefined") {
         for (const k of ["tileClasses", "floatClasses"]) if (k in migrated) apps[k] = list(migrated[k]);
         writeConfig(migrated);
     }
-    const defaultRatio = clampRatio(readConfig("masterRatio", 0.55));
+    // string defaults: a typed default would make KWin drop a value saved in the other format
+    const defaultRatio = clampRatio(percentRatio(readConfig("masterRatio", "55")));
     const mirror = Number(readConfig("mainSide", 0)) === 1;
     const mainCount = Math.max(1, Math.min(2, Number(readConfig("maxMain", 1)) || 1));
     const newWindow = Number(readConfig("newWindow", 0)); // 0 stack bottom, 1 stack top, 2 becomes main
@@ -266,14 +274,21 @@ if (typeof workspace !== "undefined") {
     const layoutDefault = flag("layoutDwindle") ? DWINDLE : flag("layoutCentered") ? CENTERED : flag("layoutMonocle") ? MONOCLE : flag("layoutSpiral") ? SPIRAL : TILE;
     const layoutNames = { master: TILE, tile: TILE, spiral: SPIRAL, dwindle: DWINDLE, monocle: MONOCLE, centered: CENTERED, center: CENTERED, centre: CENTERED };
     const stashDefault = flag("stash"); // centered master starts with narrow side columns
-    const stashSide = clampRatio(readConfig("stashWidth", 0.15), 0.05, 0.3, 0.15);
+    const stashSide = clampRatio(percentRatio(readConfig("stashWidth", "15")), 0.05, 0.3, 0.15);
     // main width per kind of layout: m = master/spiral, c = centered, s = centered with stash
     const WIDTHS = {
         m: [defaultRatio, 0.15, 0.85],
-        c: [clampRatio(readConfig("centerRatio", 0.5), 0.15, 0.85, 0.5), 0.15, 0.85],
+        c: [clampRatio(percentRatio(readConfig("centerRatio", "50")), 0.15, 0.85, 0.5), 0.15, 0.85],
         s: [1 - 2 * stashSide, 0.4, 0.9],
     };
-    const scratchSize = ["scratchWidth", "scratchHeight"].map(k => clampRatio(readConfig(k, 0.6), 0.2, 1, 0.6));
+    const scratchSize = ["scratchWidth", "scratchHeight"].map(k => clampRatio(percentRatio(readConfig(k, "60")), 0.2, 1, 0.6));
+    // rewrite sizes saved as fractions (up to 1.4) in percent, so the settings page shows them
+    const oldSizes = {};
+    for (const k of ["masterRatio", "centerRatio", "stashWidth", "scratchWidth", "scratchHeight"]) {
+        const n = Number(kwinRead(k, ""));
+        if (n > 0 && n <= 1) oldSizes[k] = String(Math.round(n * 100));
+    }
+    if (Object.keys(oldSizes).length) writeConfig(oldSizes);
     const desktopLayouts = {}; // desktop number -> layout, from "2=monocle,3=spiral"
     String(readConfig("desktopLayouts", "")).split(",").forEach(s => {
         const [d, n] = s.split("=").map(x => x.trim().toLowerCase());
@@ -345,7 +360,8 @@ if (typeof workspace !== "undefined") {
         const pinned = w => mainClasses.includes(cls(w));
         return [...g.filter(pinned), ...g.filter(w => !pinned(w))];
     };
-    const osd = text => callDBus("org.kde.plasmashell", "/org/kde/osdService", "org.kde.osdService",
+    const showOsd = flag("showOsd", true);
+    const osd = text => showOsd && callDBus("org.kde.plasmashell", "/org/kde/osdService", "org.kde.osdService",
         "showText", "view-split-left-right", text);
 
     const isPortrait = o => o.geometry.height > o.geometry.width;

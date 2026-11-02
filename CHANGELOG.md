@@ -1,8 +1,12 @@
 # Changelog
 
-## Unreleased
+## 1.4.1
 
 - Changed: on the Shortcuts tab, the "Use Meta+arrows" checkbox and its help now sit at the top, and the focus and swap rows name the Meta+arrows keys too. The README and the tab point to System Settings → Shortcuts (search for "Stacklet").
+- Changed: settings page polish. Sizes are set in percent (55 %) instead of fractions (0.55); saved sizes convert on the next start. Clicking a layout preview picks it. Settings that don't apply are grayed out or hidden: the tile list while "Tile all apps" is on, the side column width without the stash, the centered width with it. The Centered settings have their own heading. The Shortcuts tab shows the focus and swap keys that are actually active, bolds every key, and shows the KWin key help only once Meta+arrows is ticked. Shorter layout hints and per-desktop help; American spelling throughout (Behavior, centered).
+- New: "Show Stacklet's on-screen messages" (Shortcuts tab, on by default) turns Stacklet's popups off.
+- Fixed: the "Stacklet is on" message could come back every time you closed the settings, because a setting Stacklet saves through Plasma's shell was sometimes not written to disk.
+- Changed: a shorter description in the KWin Scripts list, so the settings button stays visible.
 
 ## 1.4.0
 

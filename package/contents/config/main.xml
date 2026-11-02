@@ -24,25 +24,25 @@
       <label>Layout: dwindle</label>
       <default>false</default>
     </entry>
-    <entry name="centerRatio" type="Double">
-      <label>Width of the centred main window (0.15 to 0.85)</label>
-      <default>0.5</default>
+    <entry name="centerRatio" type="Int">
+      <label>Width of the centered main window, percent (15 to 85)</label>
+      <default>50</default>
     </entry>
     <entry name="stash" type="Bool">
       <label>Centered master: narrow side columns (stash)</label>
       <default>false</default>
     </entry>
-    <entry name="stashWidth" type="Double">
-      <label>Width of each stash column (0.05 to 0.3)</label>
-      <default>0.15</default>
+    <entry name="stashWidth" type="Int">
+      <label>Width of each stash column, percent (5 to 30)</label>
+      <default>15</default>
     </entry>
-    <entry name="scratchWidth" type="Double">
-      <label>Scratchpad window width (0.2 to 1)</label>
-      <default>0.6</default>
+    <entry name="scratchWidth" type="Int">
+      <label>Scratchpad window width, percent (20 to 100)</label>
+      <default>60</default>
     </entry>
-    <entry name="scratchHeight" type="Double">
-      <label>Scratchpad window height (0.2 to 1)</label>
-      <default>0.6</default>
+    <entry name="scratchHeight" type="Int">
+      <label>Scratchpad window height, percent (20 to 100)</label>
+      <default>60</default>
     </entry>
     <entry name="desktopLayouts" type="String">
       <label>Layout per virtual desktop, e.g. 2=monocle,3=centered</label>
@@ -68,9 +68,9 @@
       <label>Tile every normal window except the never-tile apps</label>
       <default>true</default>
     </entry>
-    <entry name="masterRatio" type="Double">
-      <label>Width of the main window (0.15 to 0.85)</label>
-      <default>0.55</default>
+    <entry name="masterRatio" type="Int">
+      <label>Width of the main window, percent (15 to 85)</label>
+      <default>55</default>
     </entry>
     <entry name="mainSide" type="Int">
       <label>Main window side (0 left, 1 right)</label>
@@ -106,6 +106,10 @@
     </entry>
     <entry name="focusAfterClose" type="Bool">
       <label>After closing a tiled window, focus the tile before it</label>
+      <default>true</default>
+    </entry>
+    <entry name="showOsd" type="Bool">
+      <label>Show on-screen popups for shortcut feedback</label>
       <default>true</default>
     </entry>
     <entry name="dragFloats" type="Bool">

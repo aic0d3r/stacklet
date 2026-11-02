@@ -1,12 +1,12 @@
 {
     "KPackageStructure": "KWin/Script",
     "KPlugin": {
-        "Authors": [{ "Name": "ezflow" }],
+        "Authors": [{ "Name": "Aico" }],
         "Name": "Stacklet",
-        "Description": "Tiling window manager for KDE Plasma 6: auto-tile terminals and other listed apps on Plasma's native tiles (master and stack, spiral, monocle or centered master), plus a scratchpad. Everything else floats.",
+        "Description": "Auto-tiling on Plasma's native tiles, with a scratchpad",
         "Icon": "view-split-left-right",
         "Id": "stacklet",
-        "Version": "1.4.0",
+        "Version": "1.4.1",
         "License": "GPL-3.0-or-later",
         "Website": "https://github.com/aic0d3r/stacklet"
     },

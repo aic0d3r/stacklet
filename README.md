@@ -48,7 +48,7 @@ Every shortcut can be changed in System Settings → Shortcuts (search for "Stac
 | Key | Action |
 | --- | --- |
 | Meta+Shift+Return | Make the focused window the main one |
-| Meta+F | Float / re-tile the focused window. On a window Stacklet leaves floating, it tiles just that window (dragging a tile out also floats it, unless you turn that off under Behaviour) |
+| Meta+F | Float / re-tile the focused window. On a window Stacklet leaves floating, it tiles just that window (dragging a tile out also floats it, unless you turn that off under Behavior) |
 | Meta+Alt+A | Tile / untile the focused window's app and save it to the settings ("Tile these apps", or "Never tile" with "Tile all apps" on; works on the built-in floating apps too) |
 | Meta+Alt+arrows | Focus the neighbouring tile (KWin's own shortcut) |
 | Meta+Alt+Shift+arrows | Swap with the neighbouring tile (Meta+Shift+arrows with "Use Meta+arrows", see below) |

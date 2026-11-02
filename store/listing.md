@@ -98,6 +98,10 @@ Source and bug reports: https://github.com/aic0d3r/stacklet
 
 tiling, tiling window manager, window management, kwin script, plasma 6, terminals, i3, productivity
 
+## Changelog 1.4.1
+
+A tidier settings page: sizes in percent, click a layout preview to pick it, settings that don't apply are grayed out or hidden, and the Shortcuts tab shows the keys that are actually active. New option to turn Stacklet's on-screen messages off. Fixed the "Stacklet is on" message coming back every time you closed the settings.
+
 ## Changelog 1.4.0
 
 Tile all apps is now on for new installs: every normal window tiles, while system apps, password managers, games and media players stay floating. Existing installs keep their setting. New optional setting: Meta+arrows focus and Meta+Shift+arrows swap, as in Hyprland.

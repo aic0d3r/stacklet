@@ -1,6 +1,6 @@
 // node test.js — checks the layout math (the KWin part needs a live session)
 const assert = require("assert");
-const { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, centeredRects, clampRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, TERMINALS } = require("./package/contents/code/main.js");
+const { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, centeredRects, clampRatio, percentRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, TERMINALS } = require("./package/contents/code/main.js");
 
 assert.deepStrictEqual(slotRects(1, 0.55), [{ x: 0, y: 0, width: 1, height: 1 }]);
 const two = slotRects(2, 0.55);
@@ -15,6 +15,11 @@ four.slice(1).forEach((r, i) => {
 assert.strictEqual(clampRatio("0.7"), 0.7);
 assert.strictEqual(clampRatio(0.99), 0.55);
 assert.strictEqual(clampRatio("junk"), 0.55);
+// sizes: percent since 1.5, fractions before (1 = full width)
+assert.strictEqual(percentRatio("55"), 0.55);
+assert.strictEqual(percentRatio("0.7"), 0.7);
+assert.strictEqual(percentRatio("1"), 1);
+assert.strictEqual(percentRatio("100"), 1);
 // spiral: left, top-right, then the rest of the bottom-right split left/right
 const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, a + " != " + b);
 const sp = spiralRects(4, 0.5);
