@@ -486,6 +486,19 @@
       <attribute name="title"><string>Shortcuts</string></attribute>
       <layout class="QVBoxLayout" name="tabShortcutsBox">
    <item>
+    <widget class="QCheckBox" name="kcfg_metaArrows">
+     <property name="text"><string>Use Meta+arrows to focus and Meta+Shift+arrows to swap</string></property>
+     <property name="toolTip"><string>The Hyprland way. KWin's Quick Tile and Move to Screen shortcuts use these keys, so clear them first.</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="keysMetaArrowsHelp">
+     <property name="textFormat"><enum>Qt::RichText</enum></property>
+     <property name="wordWrap"><bool>true</bool></property>
+     <property name="text"><string>&lt;small&gt;Until KWin's own keys are cleared, these do nothing. Search "Stacklet: use Meta+arrows" in the app menu or KRunner (run stacklet-keys install once, see the README), or do it by hand: System Settings → Shortcuts → System Services → Window Management (older Plasma: Shortcuts → KWin), then remove Quick Tile Window to the Left / Right / Top / Bottom and Move Window to Next / Previous Screen.&lt;/small&gt;</string></property>
+    </widget>
+   </item>
+   <item>
     <widget class="QLabel" name="keysEssentialHeading">
      <property name="textFormat"><enum>Qt::RichText</enum></property>
      <property name="text"><string>&lt;b&gt;&lt;span style=&quot;font-size:large&quot;&gt;Start with these&lt;/span&gt;&lt;/b&gt;</string></property>
@@ -500,26 +513,13 @@
       <item row="0" column="1"><widget class="QLabel"><property name="text"><string>Meta+F</string></property></widget></item>
       <item row="1" column="0"><widget class="QLabel"><property name="text"><string>Tile or untile this app (saved)</string></property></widget></item>
       <item row="1" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+A</string></property></widget></item>
-      <item row="2" column="0"><widget class="QLabel"><property name="text"><string>Move focus (built into KWin)</string></property></widget></item>
-      <item row="2" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+arrows</string></property></widget></item>
+      <item row="2" column="0"><widget class="QLabel"><property name="text"><string>Move focus (KWin&apos;s own shortcut)</string></property></widget></item>
+      <item row="2" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+arrows (Meta+arrows if ticked above)</string></property></widget></item>
       <item row="3" column="0"><widget class="QLabel"><property name="text"><string>Swap with the neighbouring window</string></property></widget></item>
-      <item row="3" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+Shift+arrows</string></property></widget></item>
+      <item row="3" column="1"><widget class="QLabel"><property name="text"><string>Meta+Alt+Shift+arrows (Meta+Shift+arrows if ticked above)</string></property></widget></item>
       <item row="4" column="0"><widget class="QLabel"><property name="text"><string>Switch layout on this screen and desktop</string></property></widget></item>
       <item row="4" column="1"><widget class="QLabel"><property name="text"><string>Meta+Shift+Space</string></property></widget></item>
      </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="kcfg_metaArrows">
-     <property name="text"><string>Use Meta+arrows to focus and Meta+Shift+arrows to swap</string></property>
-     <property name="toolTip"><string>The Hyprland way. KWin's Quick Tile and Move to Screen shortcuts use these keys, so clear them first.</string></property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLabel" name="keysMetaArrowsHelp">
-     <property name="textFormat"><enum>Qt::RichText</enum></property>
-     <property name="wordWrap"><bool>true</bool></property>
-     <property name="text"><string>&lt;small&gt;KWin's own keys must be cleared first, or these won't work. Search "Stacklet: use Meta+arrows" in the app menu or KRunner (set up once, see the README), or do it by hand: System Settings &gt; Shortcuts &gt; System Services &gt; Window Management (older Plasma: Shortcuts &gt; KWin), then remove Quick Tile Window to the Left / Right / Top / Bottom and Move Window to Next / Previous Screen.&lt;/small&gt;</string></property>
     </widget>
    </item>
    <item>
@@ -559,7 +559,7 @@
        <widget class="QLabel" name="keysHint">
         <property name="wordWrap"><bool>true</bool></property>
         <property name="textFormat"><enum>Qt::RichText</enum></property>
-        <property name="text"><string>&lt;small&gt;Change keys in System Settings → Shortcuts → KWin. You can also resize by dragging the border between tiles.&lt;/small&gt;</string></property>
+        <property name="text"><string>&lt;small&gt;Change any key in System Settings → Shortcuts (search for &quot;Stacklet&quot;). You can also resize by dragging the border between tiles.&lt;/small&gt;</string></property>
        </widget>
       </item>
      </layout>
