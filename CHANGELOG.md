@@ -1,9 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Changed: on the Shortcuts tab, the "Use Meta+arrows" checkbox and its help now sit at the top, and the focus and swap rows name the Meta+arrows keys too. The README and the tab point to System Settings → Shortcuts (search for "Stacklet").
+
 ## 1.4.0
 
 - Changed: "Tile all apps" is now on for new installs, so every normal window tiles. System apps and utilities, games and media players still float (their own checkboxes), and the Apps tab lists what to leave floating. Existing installs keep what they had.
-- New: optional "Use Meta+arrows" setting (Keys tab): Meta+arrows focus the neighbouring tile and Meta+Shift+arrows swap, as in Hyprland. KWin's Quick Tile and Move to Screen shortcuts hold those keys; the bundled `stacklet-keys` script frees them (`on`) or gives them back (`off`); `stacklet-keys install` adds both as launchers to the app menu and KRunner. Or clear them by hand in System Settings. Off by default, so Meta+Alt+arrows (focus, KWin's own) and Meta+Alt+Shift+arrows (swap) work as before.
+- New: optional "Use Meta+arrows" setting (Shortcuts tab): Meta+arrows focus the neighbouring tile and Meta+Shift+arrows swap, as in Hyprland. KWin's Quick Tile and Move to Screen shortcuts hold those keys; the bundled `stacklet-keys` script frees them (`on`) or gives them back (`off`); `stacklet-keys install` adds both as launchers to the app menu and KRunner. Or clear them by hand in System Settings. Off by default, so Meta+Alt+arrows (focus, KWin's own) and Meta+Alt+Shift+arrows (swap) work as before.
 
 ## 1.3.3
 
