@@ -123,10 +123,20 @@ function centeredRects(n, centre, mirror = false, portrait = false) {
     return orient(rects, mirror, false);
 }
 
-// Sizes are saved in percent (55) since 1.5, as a fraction (0.55) before; minimums are >= 5%, so <= 1 is a fraction.
+// Sizes are saved in percent (55) since 1.4.1, as a fraction (0.55) before; minimums are >= 5%, so <= 1 is a fraction.
 function percentRatio(v) {
     const n = Number(v);
     return n > 1 ? n / 100 : n;
+}
+
+// Sizes still saved as fractions (up to 1.4.0), rewritten in percent so the settings page shows them. read(key, default)
+function fractionSizes(read) {
+    const out = {};
+    for (const k of ["masterRatio", "centerRatio", "stashWidth", "scratchWidth", "scratchHeight"]) {
+        const n = Number(read(k, ""));
+        if (n > 0 && n <= 1) out[k] = String(Math.round(n * 100));
+    }
+    return out;
 }
 
 function clampRatio(r, lo = 0.15, hi = 0.85, d = 0.55) {
@@ -226,7 +236,7 @@ function draggedRatio(root, portrait, kind = "m", mirror = false) {
     return portrait ? g.height : g.width;
 }
 
-if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, dwindleFlip, centeredRects, clampRatio, percentRatio, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, list, TERMINALS }; // node self-test
+if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, dwindleFlip, centeredRects, clampRatio, percentRatio, fractionSizes, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, list, TERMINALS }; // node self-test
 
 const kwinRead = typeof readConfig !== "undefined" ? readConfig : null;
 if (typeof workspace !== "undefined") {
@@ -282,12 +292,7 @@ if (typeof workspace !== "undefined") {
         s: [1 - 2 * stashSide, 0.4, 0.9],
     };
     const scratchSize = ["scratchWidth", "scratchHeight"].map(k => clampRatio(percentRatio(readConfig(k, "60")), 0.2, 1, 0.6));
-    // rewrite sizes saved as fractions (up to 1.4) in percent, so the settings page shows them
-    const oldSizes = {};
-    for (const k of ["masterRatio", "centerRatio", "stashWidth", "scratchWidth", "scratchHeight"]) {
-        const n = Number(kwinRead(k, ""));
-        if (n > 0 && n <= 1) oldSizes[k] = String(Math.round(n * 100));
-    }
+    const oldSizes = fractionSizes(kwinRead);
     if (Object.keys(oldSizes).length) writeConfig(oldSizes);
     const desktopLayouts = {}; // desktop number -> layout, from "2=monocle,3=spiral"
     String(readConfig("desktopLayouts", "")).split(",").forEach(s => {
