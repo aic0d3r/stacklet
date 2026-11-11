@@ -9,6 +9,8 @@ META=268435456 SHIFT=33554432
 declare -A KEY=([Left]=16777234 [Up]=16777235 [Right]=16777236 [Down]=16777237)
 
 set_keys() { $G "['kwin','$1','KWin','$2']" "[$3]" 6 >/dev/null; }  # 6 = set it, ignore the saved value
+# first key now bound to a KWin action; empty if none
+cur_key() { gdbus call --session -d org.kde.kglobalaccel -o /kglobalaccel -m org.kde.KGlobalAccel.shortcut "['kwin','$1','KWin','$2']" | grep -o '[0-9]\+' | head -1 || true; }
 
 case "${1:-}" in
 on|off) ;;
@@ -36,8 +38,13 @@ kwin_actions() {
     echo "Window to Previous Screen|Move Window to Previous Screen|$((META + SHIFT + KEY[Left]))"
 }
 
+# Only touch an action that still has Plasma's default key (on) or no key (off): a key you set yourself stays.
+kept=0
 while IFS='|' read -r id label key; do
-    [ "$1" = on ] && set_keys "$id" "$label" 0 || set_keys "$id" "$label" "$key"
+    cur=$(cur_key "$id" "$label")
+    if [ "$1" = on ]; then
+        if [ -z "$cur" ] || [ "$cur" = "$key" ] || [ "$cur" = 0 ]; then set_keys "$id" "$label" 0; else kept=$((kept + 1)); fi
+    elif [ -z "$cur" ] || [ "$cur" = 0 ]; then set_keys "$id" "$label" "$key"; fi
 done < <(kwin_actions)
 
 for d in Left Right Up Down; do
@@ -50,4 +57,7 @@ for d in Left Right Up Down; do
         set_keys "StackletSwapWindow$d" "Stacklet: Swap with window $l" 0
     fi
 done
-if [ "$1" = on ]; then say "Meta+arrows now belong to Stacklet"; else say "Meta+arrows are back with KWin"; fi
+if [ "$1" = on ]; then
+    say "Meta+arrows now belong to Stacklet"
+    [ $kept -eq 0 ] || say "$kept KWin shortcuts with keys you set yourself were left alone; clear them in System Settings if a Meta+arrow key does nothing"
+else say "Meta+arrows are back with KWin"; fi

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.2
+
+- Fixed: settings Stacklet saves through Plasma's shell (including the size conversion from 1.4.1) were lost if plasmashell wasn't running yet at login. They are now sent again until they are stored.
+- Fixed: changing a setting while a scratchpad window was shown left it pinned on top of every desktop. Stacklet now hands scratchpad windows back before it restarts.
+- Fixed: in dwindle, Meta+Alt+] and Meta+Alt+[ undid inner borders you had dragged.
+- Fixed: Meta+Shift+M turned monocle off into the settings layout; it now goes back to the layout you came from (until Stacklet restarts).
+- Fixed: `stacklet-keys` no longer clears KWin shortcuts you set yourself, and `off` only restores keys it cleared.
+- Changed: the website and the store listing share one set of images (`docs/`).
+
 ## 1.4.1
 
 - Changed: on the Shortcuts tab, the "Use Meta+arrows" checkbox and its help now sit at the top, and the focus and swap rows name the Meta+arrows keys too. The README and the tab point to System Settings → Shortcuts (search for "Stacklet").
@@ -10,7 +19,7 @@
 
 ## 1.4.0
 
-- Changed: "Tile all apps" is now on for new installs, so every normal window tiles. System apps and utilities, games and media players still float (their own checkboxes), and the Apps tab lists what to leave floating. Existing installs keep what they had.
+- Changed: "Tile all apps" is now on for new installs, so every normal window tiles. System apps and utilities, games and media players still float (their own checkboxes), and the Apps tab lists what to leave floating. Existing installs keep what they had, except one that skipped 1.2 to 1.3 (upgraded straight from 1.1.x or older) and never touched the setting: it counts as new, so untick "Tile all apps" to go back.
 - New: optional "Use Meta+arrows" setting (Shortcuts tab): Meta+arrows focus the neighbouring tile and Meta+Shift+arrows swap, as in Hyprland. KWin's Quick Tile and Move to Screen shortcuts hold those keys; the bundled `stacklet-keys` script frees them (`on`) or gives them back (`off`); `stacklet-keys install` adds both as launchers to the app menu and KRunner. Or clear them by hand in System Settings. Off by default, so Meta+Alt+arrows (focus, KWin's own) and Meta+Alt+Shift+arrows (swap) work as before.
 
 ## 1.3.3

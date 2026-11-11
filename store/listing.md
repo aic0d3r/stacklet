@@ -5,9 +5,9 @@ Everything to paste into the store form, plus the files to upload.
 ## Files to upload
 
 - **File:** `build/stacklet-1.3.3.kwinscript` (build it with `./package.sh`)
-- **Screenshots:** `store/screenshot-tiling.png`, `store/screenshot-settings.png`
-- **Icon / logo:** `store/logo-256.png` (source: `store/logo.svg`)
-- **GitHub social preview:** `store/social-preview.png` (Settings → Social preview)
+- **Screenshots:** `docs/screenshot-tiling.png`, `docs/screenshot-settings.png`
+- **Icon / logo:** `store/logo-256.png` (source: `docs/logo.svg`)
+- **GitHub social preview:** `docs/social-preview.png` (Settings → Social preview)
 
 ## Category
 

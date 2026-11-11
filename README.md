@@ -1,4 +1,4 @@
-<img src="store/logo.svg" width="96" align="right" alt="Stacklet logo">
+<img src="docs/logo.svg" width="96" align="right" alt="Stacklet logo">
 
 # Stacklet: tiling window manager script for KDE Plasma 6
 
@@ -20,7 +20,7 @@ So I wrote Stacklet, made for Plasma 6.8 and newer. It drives Plasma's native ti
 
 Everything tiles by default except system apps, games and media players; you change that from a normal settings page.
 
-![Stacklet tiling terminal windows in a master and stack layout on KDE Plasma](store/screenshot-tiling.png)
+![Stacklet tiling terminal windows in a master and stack layout on KDE Plasma](docs/screenshot-tiling.png)
 
 ## Features
 
@@ -39,7 +39,7 @@ Everything tiles by default except system apps, games and media players; you cha
 - Pin apps as "always main", for example a browser kept big with terminals beside it. After closing a window, focus moves to the tile before it.
 - Drag the border between tiles to resize. The width sticks until that desktop has no tiled windows.
 
-![Stacklet settings page in KDE System Settings: layout choice with preview, app list and gaps](store/screenshot-settings.png)
+![Stacklet settings page in KDE System Settings: layout choice with preview, app list and gaps](docs/screenshot-settings.png)
 
 ## Shortcuts
 

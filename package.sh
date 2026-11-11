@@ -3,6 +3,7 @@
 # Uses bsdtar (libarchive, in base) because zip may not be installed.
 set -eu
 cd "$(dirname "$0")"
+node test.js >/dev/null # no release with broken layout maths
 version=$(sed -n 's/.*"Version": *"\([^"]*\)".*/\1/p' package/metadata.json)
 out="build/stacklet-$version.kwinscript"
 mkdir -p build

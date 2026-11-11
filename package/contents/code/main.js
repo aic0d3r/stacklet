@@ -1,5 +1,5 @@
-// Stacklet: master + stack auto-tiling on Plasma's native tiles, for listed apps only.
-// Everything else floats. Layout per (screen, virtual desktop): main window(s) on one side, rest stacked on the other.
+// Stacklet: auto-tiling on Plasma's native tiles (master and stack, spiral, monocle, centered, dwindle).
+// Tiles every normal window, or only the listed apps; the rest float. Layout per (screen, virtual desktop).
 
 const HORIZONTAL = 1, VERTICAL = 2; // KWin::Tile::LayoutDirection
 
@@ -249,15 +249,23 @@ if (typeof workspace !== "undefined") {
     const tileAllUnset = String(kwinRead("tileAll", "unset")) === "unset";
     const tileAll = flag("tileAll", !flag("appListsV2"));
     // KWin 6.8 scripts can read their config but have no writeConfig; Plasma's desktop scripting can write it.
-    // shortcut: needs plasmashell running; nothing is saved without it.
-    const writeConfig = entries => {
-        // our own writes are no reason to restart, whether plasmashell stored them yet or not
-        for (const k in entries) if (seen[k]) seen[k].push(String(entries[k]));
+    // Writes plasmashell hasn't confirmed yet (it may start after KWin at login): sent again on the next window focus.
+    const pending = {};
+    const sendWrites = () => {
+        const sent = Object.assign({}, pending);
+        if (!Object.keys(sent).length) return;
         callDBus("org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell", "evaluateScript",
         "const c = ConfigFile('kwinrc', 'Script-stacklet');" +
         // write "" first: plasmashell caches kwinrc and skips a value equal to its stale copy, even if the file lost it
-        Object.keys(entries).map(k => "c.writeEntry(" + JSON.stringify(k) + ", ''); c.writeEntry(" + JSON.stringify(k) + ", " + JSON.stringify(entries[k]) + ");").join(""),
-        () => { for (const k in entries) confirmWrite(seen, k, String(entries[k])); }); // called on success only
+        Object.keys(sent).map(k => "c.writeEntry(" + JSON.stringify(k) + ", ''); c.writeEntry(" + JSON.stringify(k) + ", " + JSON.stringify(sent[k]) + ");").join(""),
+        () => { // called on success only
+            for (const k in sent) { confirmWrite(seen, k, String(sent[k])); if (pending[k] === sent[k]) delete pending[k]; }
+        });
+    };
+    const writeConfig = entries => {
+        // our own writes are no reason to restart, whether plasmashell stored them yet or not
+        for (const k in entries) { if (seen[k]) seen[k].push(String(entries[k])); pending[k] = entries[k]; }
+        sendWrites();
     };
     const apps = { tileAll, system: flag("floatSystem", true), media: flag("floatMedia", true), tileClasses: list(readConfig("tileClasses", TERMINALS)),
         floatClasses: list(readConfig("floatClasses", "")), tileAnyway: list(readConfig("tileAnyway", "")) };
@@ -604,11 +612,14 @@ if (typeof workspace !== "undefined") {
         if (!settingsChanged(seen, kwinRead)) return;
         // A clean off and on. Unload only deletes us later, so a direct Scripting.start would still see us
         // loaded; reconfigure runs start after its timer, once we're gone.
+        // The scratchpad list dies with us: hand its windows back first (a shown one is pinned on top, on every desktop).
+        for (const w of scratch) { w.keepAbove = false; w.onAllDesktops = false; w.minimized = false; }
         callDBus("org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting", "unloadScript", "stacklet");
         reconfigure();
     });
     workspace.windowActivated.connect(a => {
         if (settingsApp(active) && !settingsApp(a)) reconfigure();
+        sendWrites();
         // KWin may move focus before windowRemoved fires: remember if the old active window just died
         if (active && active !== a && active.deleted) closedActive = active;
         if (a && a !== active) prevActive = active;
@@ -787,7 +798,7 @@ if (typeof workspace !== "undefined") {
         const n = groupOf(output, desktop).length;
         if (!n) { osd("Stacklet: no tiled windows on this screen and desktop"); return; }
         const k = key(output, desktop);
-        const now = pick(modeOf(k, desktop).mode, baseOf(desktop));
+        const now = pick(modeOf(k, desktop).mode, baseOf(desktop), k);
         setMode(k, desktop, { mode: now, stash: stashDefault }); // also ends focus
         focusOrder.delete(k);
         retileAll([k]);
@@ -817,11 +828,18 @@ if (typeof workspace !== "undefined") {
         retileAll([k]);
     });
 
+    // shortcut: the layout before monocle is forgotten on restart, then monocle off goes back to the settings layout.
+    const beforeMonocle = {};
     registerShortcut("StackletMonocle", "Stacklet: Monocle on / off (focused window fills the screen)", "Meta+Shift+M", () =>
-        switchLayout((cur, base) => cur === MONOCLE ? (base === MONOCLE ? TILE : base) : MONOCLE));
+        switchLayout((cur, base, k) => {
+            if (cur !== MONOCLE) { beforeMonocle[k] = cur; return MONOCLE; }
+            const b = beforeMonocle[k];
+            delete beforeMonocle[k];
+            return b !== undefined ? b : base === MONOCLE ? TILE : base;
+        }));
 
     registerShortcut("StackletNextLayout", "Stacklet: Switch layout (master and stack / spiral / monocle / centered / dwindle)", "Meta+Shift+Space", () =>
-        switchLayout(cur => (cur + 1) % LAYOUT_LABELS.length));
+        switchLayout((cur, base, k) => { delete beforeMonocle[k]; return (cur + 1) % LAYOUT_LABELS.length; }));
 
     // focus the next / previous tile in layout order (cycles windows in monocle, where directions don't apply)
     for (const [name, keys, dir] of [["Next", "Meta+Alt+.", 1], ["Prev", "Meta+Alt+,", -1]]) {
@@ -866,6 +884,11 @@ if (typeof workspace !== "undefined") {
                 osd("Stacklet: main window is already at its " + (delta > 0 ? "largest" : "smallest") +
                     " (" + Math.round((delta > 0 ? hi : lo) * 100) + "%)");
                 return;
+            }
+            // take in inner dwindle borders dragged since the last layout; the root ratio is the new main size
+            if (st.mode === DWINDLE && trees[k] && trees[k].kids && laid[k] === kind) {
+                trees[k] = dwindleRatios(trees[k], x => !x.deleted && x.tile ? x.tile.relativeGeometry : null);
+                delete trees[k].ratio;
             }
             delete laid[k]; // so layOut uses this value instead of re-reading the old tiles
             retileAll([k]);
