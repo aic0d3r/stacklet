@@ -52,8 +52,8 @@ sleep 5
 [ "$(qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded stacklet)" = true ] || { echo "Stacklet did not load"; exit 1; }
 
 export QT_NO_XDG_DESKTOP_PORTAL=1 GTK_USE_PORTAL=0 QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY=kwdialog-$$
-python3 "$HERE/windows.py" "$APP" 20 > /dev/null 2>&1 &
-sleep 8
+python3 "$HERE/windows.py" "$APP" 22 > /dev/null 2>&1 &
+sleep 10
 
 # after it is tiled, like Video Bridge setting its state on an already mapped window
 printf '%s\n' 'const g = workspace.windowList().find(w => w.caption === "ghost"); g.skipTaskbar = true; g.skipSwitcher = true; g.opacity = 0;' > "$WORK/ghost.js"
@@ -83,5 +83,5 @@ while read -r caption state rest; do
     case "$caption" in normal-*|dialog-parentless) want=$NORMAL ;; *) want=floating ;; esac
     [ "$state" = "$want" ] || { echo "!! $caption should be $want"; fail=1; }
 done <<< "$(echo "$LINE" | tr ';' '\n' | sed 's/^ *//')"
-[ $seen -ge 10 ] || { echo "!! expected 10 windows, saw $seen"; fail=1; }
+[ $seen -ge 11 ] || { echo "!! expected 11 windows, saw $seen"; fail=1; }
 exit $fail

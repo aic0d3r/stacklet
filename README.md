@@ -137,7 +137,13 @@ Same private virtual KWin, plus Plasma's activity service with a second Activity
 tests/reload/run.sh            # do changed settings apply without turning Stacklet off and on?
 ```
 
-Same private virtual KWin. It floats a window, has KWin re-read its config with nothing changed (Stacklet must keep running, so the window stays floating), then changes the gap and checks that Stacklet restarted with it.
+Same private virtual KWin. It floats a window, has KWin re-read its config with nothing changed (Stacklet must keep running, so the window stays floating), then changes the gap and checks that it applies in place (the window still floats), then turns on Meta+arrows and checks that Stacklet restarted.
+
+```sh
+tests/desktops/run.sh          # desktops not in view, stack borders, dwindle round trips
+```
+
+Same private virtual KWin, with three desktops. It lays out a desktop while it is hidden and sends it a window from another desktop, and fails unless every window gets its own slot. It drags a border inside the stack and checks a stack rotation keeps it. In dwindle it checks that a window going fullscreen or minimized and back, and a monocle round trip, keep the splits.
 
 The settings page is checked by hand in a live Plasma session.
 
@@ -145,9 +151,11 @@ The settings page is checked by hand in a live Plasma session.
 
 ## Known limits
 
-- Windows on all desktops, minimized, maximized or fullscreen are left alone (a maximized window re-tiles when restored), and so are windows hidden from both the taskbar and the task switcher (helpers such as Xwayland Video Bridge).
+- Windows on all desktops, minimized, maximized or fullscreen are left alone (they re-tile when restored, in dwindle in the same tile), and so are windows that ask to stay on top, browsers' picture-in-picture windows and windows hidden from both the taskbar and the task switcher (helpers such as Xwayland Video Bridge).
 - Dialogs, About boxes and tool windows that belong to a parent window never tile, and neither do modal dialogs or windows that can't be resized (also when the minimum and maximum size are the same). A non-modal dialog an app opens without a parent looks like a normal window on Wayland, so it tiles: Meta+F floats it.
-- Settings apply when you close or leave System Settings: Stacklet then restarts if one of its settings changed. Like turning it off and on, that tiles windows floated with Meta+F again and brings back hidden scratchpad windows.
+- Settings apply when you close or leave System Settings. Changing "Use Meta+arrows" restarts Stacklet (shortcuts can't be removed otherwise): like turning it off and on, that tiles windows floated with Meta+F again and brings back hidden scratchpad windows.
+- Resizing a tiled window from an outer screen edge (or any edge in monocle) doesn't stick: it snaps back to its tile when you let go.
+- A window's minimum size widens its column in master and stack and centered, but a stack can still be shorter than its windows need.
 - Spiral looks the same as master and stack until the fourth window.
 - Dwindle remembers which window split which only until Stacklet restarts; after that it rebuilds the splits in layout order, each window splitting the one before it.
 - Stacklet replaces the Meta+T tile layout on every desktop where it tiles a window.

@@ -24,6 +24,18 @@ def win(title, w, size=(300, 200), prep=None):
 
 
 main = win("normal-1", QWidget())
+
+
+def fullscreen_then_restore():
+    # opens fullscreen (KWin calls it not resizeable then), back to normal 2 s later: should tile like normal-1
+    w = QWidget()
+    w.setWindowTitle("normal-fullscreen")
+    w.resize(300, 200)
+    w.showFullScreen()
+    keep.append(w)
+    QTimer.singleShot(2000, w.showNormal)
+
+
 steps = [
     lambda: win("normal-2", QWidget()),
     lambda: win("dialog-child", QDialog(main)),                       # transient for main
@@ -34,6 +46,7 @@ steps = [
     lambda: win("fixed-parentless", QWidget(), prep=lambda w: w.setFixedSize(320, 180)),  # plain window that can't be resized
     lambda: win("tool-child", QWidget(main, Qt.WindowType.Tool)),
     lambda: win("ghost", QWidget()),  # run.sh hides it from taskbar + switcher, like Xwayland Video Bridge
+    fullscreen_then_restore,
 ]
 
 

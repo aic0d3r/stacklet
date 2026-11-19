@@ -190,9 +190,11 @@ const GAMES_MEDIA = list(
     "*.exe,wine," + // games & launchers
     "mpv,vlc,org.kde.haruna,io.github.celluloid_player.celluloid,spotify,org.kde.elisa,strawberry"); // media
 const SYSTEM_TITLE = /^(configure\b|settings$|preferences$)/i; // parentless "Configure — App" dialogs
+const PIP_TITLE = /^picture[- ]in[- ]picture$/i; // browsers' video popouts: plain toplevels, always float
 const matches = (l, c) => l.some(p => p.endsWith("*") ? c.startsWith(p.slice(0, -1)) : p.startsWith("*") ? c.endsWith(p.slice(1)) : p === c);
 // Should a window of class `c` titled `title` tile? o: {tileAll, system, media, tileClasses, floatClasses, tileAnyway}
 function appTiles(c, title, o) {
+    if (PIP_TITLE.test(title)) return false;
     if (!o.tileAll) return matches(o.tileClasses, c);
     if (matches(o.floatClasses, c)) return false;
     if (o.tileAnyway.includes(c)) return true; // Meta+Alt+A over the built-in list
@@ -227,6 +229,13 @@ function confirmWrite(seen, k, v) {
     if (l && l.indexOf(v, 1) > 1) l.splice(1, l.indexOf(v, 1) - 1);
 }
 
+// Main size moved just enough that no column is narrower than its widest window's minimum (fractions of the
+// screen), unchanged if both can't fit. sides: columns sharing what's left (centered: 2).
+function fitMain(ratio, mainMin, sideMin, sides = 1) {
+    const hi = 1 - sides * sideMin;
+    return mainMin > hi ? ratio : Math.min(hi, Math.max(mainMin, ratio));
+}
+
 // Main size as laid out in root's tiles, or undefined if the layout isn't ours. Not clamped: the caller caps it.
 function draggedRatio(root, portrait, kind = "m", mirror = false) {
     if (kind !== "m" && !portrait) // centered: three columns, main in the middle
@@ -236,7 +245,7 @@ function draggedRatio(root, portrait, kind = "m", mirror = false) {
     return portrait ? g.height : g.width;
 }
 
-if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, dwindleFlip, centeredRects, clampRatio, percentRatio, fractionSizes, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, list, TERMINALS }; // node self-test
+if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, dwindleFlip, centeredRects, clampRatio, percentRatio, fractionSizes, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, fitMain, list, TERMINALS }; // node self-test
 
 const kwinRead = typeof readConfig !== "undefined" ? readConfig : null;
 if (typeof workspace !== "undefined") {
@@ -247,7 +256,6 @@ if (typeof workspace !== "undefined") {
     // Tile all apps is on for new installs. appListsV2 is set on the first run of 1.2+, so an install without it is new;
     // older installs that never touched the setting keep false, and get it written so the settings page agrees.
     const tileAllUnset = String(kwinRead("tileAll", "unset")) === "unset";
-    const tileAll = flag("tileAll", !flag("appListsV2"));
     // KWin 6.8 scripts can read their config but have no writeConfig; Plasma's desktop scripting can write it.
     // Writes plasmashell hasn't confirmed yet (it may start after KWin at login): sent again on the next window focus.
     const pending = {};
@@ -267,46 +275,57 @@ if (typeof workspace !== "undefined") {
         for (const k in entries) { if (seen[k]) seen[k].push(String(entries[k])); pending[k] = entries[k]; }
         sendWrites();
     };
-    const apps = { tileAll, system: flag("floatSystem", true), media: flag("floatMedia", true), tileClasses: list(readConfig("tileClasses", TERMINALS)),
-        floatClasses: list(readConfig("floatClasses", "")), tileAnyway: list(readConfig("tileAnyway", "")) };
+    const TILE = 0, SPIRAL = 1, MONOCLE = 2, CENTERED = 3, DWINDLE = 4; // saved by number: append only
+    const LAYOUT_LABELS = ["master and stack", "spiral", "monocle", "centered master", "dwindle"];
+    const layoutNames = { master: TILE, tile: TILE, spiral: SPIRAL, dwindle: DWINDLE, monocle: MONOCLE, centered: CENTERED, center: CENTERED, centre: CENTERED };
+    // Settings. Read again in place when the settings page changes them, so floated windows, the scratchpad
+    // and dwindle trees survive (see options.configChanged).
+    const apps = {};
+    let defaultRatio, mirror, mainCount, newWindow, gap, smartGaps, mainClasses, focusAfterClose, dragFloats, offScreens, offDesktops,
+        layoutDefault, stashDefault, stashSide, WIDTHS, scratchSize, desktopLayouts, showOsd;
+    function loadSettings() {
+        Object.assign(apps, { tileAll: flag("tileAll", !flag("appListsV2")), system: flag("floatSystem", true), media: flag("floatMedia", true),
+            tileClasses: list(readConfig("tileClasses", TERMINALS)), floatClasses: list(readConfig("floatClasses", "")), tileAnyway: list(readConfig("tileAnyway", "")) });
+        // string defaults: a typed default would make KWin drop a value saved in the other format
+        defaultRatio = clampRatio(percentRatio(readConfig("masterRatio", "55")));
+        mirror = Number(readConfig("mainSide", 0)) === 1;
+        mainCount = Math.max(1, Math.min(2, Number(readConfig("maxMain", 1)) || 1));
+        newWindow = Number(readConfig("newWindow", 0)); // 0 stack bottom, 1 stack top, 2 becomes main
+        gap = Math.max(0, Number(readConfig("gap", 0)) || 0);
+        smartGaps = flag("smartGaps", true); // no gap around a lone window
+        mainClasses = list(readConfig("mainClasses", "")); // apps that always take the main slot
+        focusAfterClose = flag("focusAfterClose", true);
+        dragFloats = flag("dragFloats", true);
+        offScreens = list(readConfig("disabledScreens", ""));
+        offDesktops = list(readConfig("disabledDesktops", ""));
+        layoutDefault = flag("layoutDwindle") ? DWINDLE : flag("layoutCentered") ? CENTERED : flag("layoutMonocle") ? MONOCLE : flag("layoutSpiral") ? SPIRAL : TILE;
+        stashDefault = flag("stash"); // centered master starts with narrow side columns
+        stashSide = clampRatio(percentRatio(readConfig("stashWidth", "15")), 0.05, 0.3, 0.15);
+        // main width per kind of layout: m = master/spiral, c = centered, s = centered with stash
+        WIDTHS = {
+            m: [defaultRatio, 0.15, 0.85],
+            c: [clampRatio(percentRatio(readConfig("centerRatio", "50")), 0.15, 0.85, 0.5), 0.15, 0.85],
+            s: [1 - 2 * stashSide, 0.4, 0.9],
+        };
+        scratchSize = ["scratchWidth", "scratchHeight"].map(k => clampRatio(percentRatio(readConfig(k, "60")), 0.2, 1, 0.6));
+        desktopLayouts = {}; // desktop number -> layout, from "2=monocle,3=spiral"
+        String(readConfig("desktopLayouts", "")).split(",").forEach(s => {
+            const [d, n] = s.split("=").map(x => x.trim().toLowerCase());
+            if (d && n in layoutNames) desktopLayouts[d] = layoutNames[n];
+        });
+        showOsd = flag("showOsd", true);
+    }
+    loadSettings();
+    const metaArrows = flag("metaArrows"); // not in loadSettings: shortcuts can't be unregistered, so a change restarts Stacklet
+    const tileAll = apps.tileAll;
     if (tileAllUnset) writeConfig({ tileAll: String(tileAll) });
     const migrated = migrateApps(flag("appListsV2"), tileAll, readConfig("tileClasses", TERMINALS), readConfig("floatClasses", ""));
     if (migrated) {
         for (const k of ["tileClasses", "floatClasses"]) if (k in migrated) apps[k] = list(migrated[k]);
         writeConfig(migrated);
     }
-    // string defaults: a typed default would make KWin drop a value saved in the other format
-    const defaultRatio = clampRatio(percentRatio(readConfig("masterRatio", "55")));
-    const mirror = Number(readConfig("mainSide", 0)) === 1;
-    const mainCount = Math.max(1, Math.min(2, Number(readConfig("maxMain", 1)) || 1));
-    const newWindow = Number(readConfig("newWindow", 0)); // 0 stack bottom, 1 stack top, 2 becomes main
-    const gap = Math.max(0, Number(readConfig("gap", 0)) || 0);
-    const smartGaps = flag("smartGaps", true); // no gap around a lone window
-    const mainClasses = list(readConfig("mainClasses", "")); // apps that always take the main slot
-    const focusAfterClose = flag("focusAfterClose", true);
-    const dragFloats = flag("dragFloats", true);
-    const offScreens = list(readConfig("disabledScreens", ""));
-    const offDesktops = list(readConfig("disabledDesktops", ""));
-    const TILE = 0, SPIRAL = 1, MONOCLE = 2, CENTERED = 3, DWINDLE = 4; // saved by number: append only
-    const LAYOUT_LABELS = ["master and stack", "spiral", "monocle", "centered master", "dwindle"];
-    const layoutDefault = flag("layoutDwindle") ? DWINDLE : flag("layoutCentered") ? CENTERED : flag("layoutMonocle") ? MONOCLE : flag("layoutSpiral") ? SPIRAL : TILE;
-    const layoutNames = { master: TILE, tile: TILE, spiral: SPIRAL, dwindle: DWINDLE, monocle: MONOCLE, centered: CENTERED, center: CENTERED, centre: CENTERED };
-    const stashDefault = flag("stash"); // centered master starts with narrow side columns
-    const stashSide = clampRatio(percentRatio(readConfig("stashWidth", "15")), 0.05, 0.3, 0.15);
-    // main width per kind of layout: m = master/spiral, c = centered, s = centered with stash
-    const WIDTHS = {
-        m: [defaultRatio, 0.15, 0.85],
-        c: [clampRatio(percentRatio(readConfig("centerRatio", "50")), 0.15, 0.85, 0.5), 0.15, 0.85],
-        s: [1 - 2 * stashSide, 0.4, 0.9],
-    };
-    const scratchSize = ["scratchWidth", "scratchHeight"].map(k => clampRatio(percentRatio(readConfig(k, "60")), 0.2, 1, 0.6));
     const oldSizes = fractionSizes(kwinRead);
     if (Object.keys(oldSizes).length) writeConfig(oldSizes);
-    const desktopLayouts = {}; // desktop number -> layout, from "2=monocle,3=spiral"
-    String(readConfig("desktopLayouts", "")).split(",").forEach(s => {
-        const [d, n] = s.split("=").map(x => x.trim().toLowerCase());
-        if (d && n in layoutNames) desktopLayouts[d] = layoutNames[n];
-    });
     const baseOf = desktop => String(desktop.x11DesktopNumber) in desktopLayouts ? desktopLayouts[String(desktop.x11DesktopNumber)] : layoutDefault;
     // group key -> {mode, stash, base, prev?} picked with the shortcuts, kept across restarts in `savedState`.
     // `base` is the settings layout at the time: once the settings page changes it, the entry is ignored.
@@ -337,9 +356,12 @@ if (typeof workspace !== "undefined") {
     // entry and the next lookup segfaults KWin. Plain Set/Map, cleaned in windowRemoved, instead.
     const hooked = new Set();     // windows whose signals we already connected
     const moving = new Set();     // windows being dragged right now
+    const resizing = new Set();   // windows being resized with the mouse right now
+    const forced = new Set();     // windows tiled with Meta+F although the app lists say float
     const draggedOut = new Set(); // tiled windows the current drag pulled out of the layout
     const home = new Map();       // window -> {output, desktop} it was last laid out in
-    const parked = new Map();     // maximized window -> its group's dwindle tree from before, so restoring puts it back in the same tile
+    const parked = new Map();     // window out of the layout for now -> {k, tree}: its group's dwindle tree from before, so coming back puts it in the same tile
+    const assigned = new Map();   // window -> the tile we last put it in
     const maxing = new Set();     // windows asked to maximize whose client hasn't answered yet: already out of the layout
     const inTree = (n, w) => n && (n.kids ? n.kids.some(x => inTree(x, w)) : n === w);
     let active = null, prevActive = null, closedActive = null, pendingFocus = null;
@@ -348,17 +370,32 @@ if (typeof workspace !== "undefined") {
     const newSplit = new Map(); // new window -> that direction, until its group is laid out
     let scratch = [];           // windows in the scratchpad, in the order they were sent
     const focusOrder = new Map(); // group key -> its windows in layout order before the focus shortcut
-    const laid = {};            // group key -> width kind of the tiles we built last, to read drags from
+    const laid = {};            // group key -> {kind, mode, portrait, mirror, ratio, slots} of the tiles we built last, to read drags from
     let groups = {};            // group key -> {output, desktop} that we laid out last time
     let busy = false;           // ignore tile changes we cause ourselves
+    // a window's tile rect, if it is still in the tile we gave it (KWin may have moved it, or put two in one tile)
+    const tileRect = w => !w.deleted && w.tile && w.tile === assigned.get(w) ? w.tile.relativeGeometry : null;
 
-    const key = (o, d) => o.name + "|" + d.x11DesktopNumber; // saved across restarts, so no desktop uuid
+    // a monitor by its identity, like KWin's own tile config: the connector name (DP-1) changes with the port or dock.
+    // Name when there's no serial, or two screens share it.
+    const outKey = o => o.serialNumber && workspace.screens.filter(x => x.serialNumber === o.serialNumber && x.model === o.model).length < 2 ?
+        [o.manufacturer, o.model, o.serialNumber].join(" ") : o.name;
+    // up to 1.4.2 saved groups were keyed by connector name: move them to the monitor's identity
+    for (const o of workspace.screens) for (const m of [modes, ratios]) for (const k of Object.keys(m)) {
+        const i = k.lastIndexOf("|"), id = outKey(o) + k.slice(i);
+        if (k.slice(0, i) === o.name && id !== k && !(id in m)) { m[id] = m[k]; delete m[k]; }
+    }
+    // is desktop d the one on screen o? (KWin can switch desktops per screen)
+    const shown = (o, d) => (workspace.currentDesktopForScreen ? workspace.currentDesktopForScreen(o) : workspace.currentDesktop) === d;
+    const key = (o, d) => outKey(o) + "|" + d.x11DesktopNumber; // saved across restarts, so no desktop uuid
     const cls = w => String(w.resourceClass).toLowerCase();
     // same min and max size: a window that can't be resized, even if KWin calls it resizeable
     const fixedSize = w => w.minSize && w.maxSize && w.minSize.width > 0 && w.minSize.width === w.maxSize.width && w.minSize.height === w.maxSize.height;
-    // modal: a dialog opened without a parent (dialog and utility types aren't normalWindow already)
-    const wanted = w => w.normalWindow && !w.specialWindow && !w.transient && !w.modal &&
-        w.resizeable && !fixedSize(w) && appTiles(cls(w), String(w.caption), apps);
+    // modal: a dialog opened without a parent (dialog and utility types aren't normalWindow already).
+    // KWin calls a fullscreen window not resizeable: it still counts, else one that is fullscreen at start is never tracked
+    // keepAbove: asked to stay on top (picture-in-picture and the like), not a window to tile
+    const wanted = w => w.normalWindow && !w.specialWindow && !w.transient && !w.modal && !w.keepAbove &&
+        (w.resizeable || w.fullScreen) && !fixedSize(w) && appTiles(cls(w), String(w.caption), apps);
     // a window on another Activity still sits on this screen and desktop: counting it leaves an empty tile
     const onActivity = w => !w.activities.length || w.activities.includes(workspace.currentActivity);
     // hidden from taskbar and switcher = not a window the user manages (e.g. Xwayland Video Bridge: invisible, type normal)
@@ -373,7 +410,6 @@ if (typeof workspace !== "undefined") {
         const pinned = w => mainClasses.includes(cls(w));
         return [...g.filter(pinned), ...g.filter(w => !pinned(w))];
     };
-    const showOsd = flag("showOsd", true);
     const osd = text => showOsd && callDBus("org.kde.plasmashell", "/org/kde/osdService", "org.kde.osdService",
         "showText", "view-split-left-right", text);
 
@@ -397,39 +433,73 @@ if (typeof workspace !== "undefined") {
         if (!root) return false;
         const portrait = isPortrait(output);
         const [outer, inner] = portrait ? [VERTICAL, HORIZONTAL] : [HORIZONTAL, VERTICAL];
-        const st = modeOf(k, desktop), mode = st.mode, kind = kindOf(st);
+        const st = modeOf(k, desktop), mode = st.mode, kind = kindOf(st), one = mode === MONOCLE;
+        const last = groups[k] && laid[k] && laid[k].kind === kind ? laid[k] : null; // the tiles we built last, if for this kind
         // keep a main size the user dragged, if the tiles are still the ones we built for this kind
-        const dragged = groups[k] && laid[k] === kind && draggedRatio(root, portrait, kind, mirror);
+        const dragged = last && draggedRatio(root, portrait, kind, mirror);
         if (dragged) setWidth(k, kind, dragged);
         // dwindle: every split keeps a border the user dragged (the root one is the main width)
-        if (mode === DWINDLE && trees[k] && groups[k] && laid[k] === kind) {
-            trees[k] = dwindleRatios(trees[k], w => !w.deleted && w.tile ? w.tile.relativeGeometry : null);
+        if (mode === DWINDLE && trees[k] && last && last.mode === DWINDLE) {
+            trees[k] = dwindleRatios(trees[k], tileRect);
             if (trees[k].ratio) setWidth(k, kind, trees[k].ratio);
         }
-        const ratio = widthOf(k, kind);
-        laid[k] = kind;
+        let ratio = widthOf(k, kind);
+        if (mode === DWINDLE) {
+            // A window away for a moment (fullscreen, minimized, other Activity; maximized: see maximizedAboutToChange) keeps
+            // the tree it left, so coming back puts it in the same tile. The tree is kept in the other layouts too, for the way back.
+            // shortcut: borders dragged while it was away are lost on its return, if that brings the old tree back
+            const leaves = n => !n ? [] : n.kids ? [...leaves(n.kids[0]), ...leaves(n.kids[1])] : [n];
+            // order first: a leaf may be a window already gone, whose properties can't be read
+            for (const w of leaves(trees[k])) if (!wins.includes(w) && order.includes(w) && !w.deleted && !parked.has(w) && (w.fullScreen || w.minimized || !onActivity(w)) &&
+                w.output === output && w.desktops.includes(desktop))
+                parked.set(w, { k, tree: trees[k] });
+            for (const w of wins) {
+                const p = parked.get(w);
+                parked.delete(w);
+                if (p && p.k === k && !inTree(trees[k], w)) trees[k] = p.tree;
+            }
+            trees[k] = dwindleSync(trees[k], wins, w => newSplit.get(w));
+        }
+        for (const w of wins) newSplit.delete(w);
+        // apps have minimum sizes KWin's tiles ignore: widen a column rather than have its windows overlap the next one
+        if ((mode === TILE || mode === CENTERED) && wins.length > 1) {
+            const area = workspace.clientArea(KWin.MaximizeArea, output, desktop), len = portrait ? area.height : area.width;
+            const need = ws => Math.max(0, ...ws.map(w => (w.minSize ? (portrait ? w.minSize.height : w.minSize.width) : 0) + gap)) / len;
+            const m = Math.min(mainsOf(mode), wins.length - 1);
+            ratio = fitMain(ratio, need(wins.slice(0, m)), need(wins.slice(m)), mode === CENTERED && !portrait ? 2 : 1);
+        }
+
+        // where the slots go (relative to the screen)
+        let rects = null, splits = [];
+        if (wins.length > 1 && mode === DWINDLE) ({ rects, splits } = dwindleRects(trees[k], ratio, output.geometry.width / output.geometry.height, mirror));
+        else if (wins.length > 1 && mode === SPIRAL) rects = spiralRects(wins.length, ratio, mirror, portrait);
+        else if (wins.length > 1 && mode === CENTERED && !portrait) rects = centeredRects(wins.length, ratio, mirror);
+        else if (wins.length > 1 && !one) rects = slotRects(wins.length, ratio, mainsOf(mode), mirror, portrait);
+        // same layout, windows count and main size (dragged or not): keep borders dragged inside a stack, not only the main one
+        if (rects && last && last.mode === mode && mode !== DWINDLE && last.portrait === portrait && last.mirror === mirror &&
+            last.slots.length === rects.length && Math.abs(ratio - (dragged || last.ratio)) < 1e-3) {
+            try {
+                const old = last.slots.map(t => t.relativeGeometry);
+                if (old.every(r => r && r.width > 0 && r.height > 0)) rects = old.map(r => ({ x: r.x, y: r.y, width: r.width, height: r.height }));
+            } catch (e) { /* tiles gone: use the computed ones */ }
+        }
 
         busy = true;
         try {
+            // On a desktop not in view, KWin doesn't move windows into the tiles we give them, and tiles we remove later
+            // re-home what they still hold to the new tile nearest the window's old spot: the wrong slot. Let go of them first.
+            if (!shown(output, desktop)) {
+                const drop = t => { for (const x of t.tiles) { for (const w of x.windows) x.unmanage(w); drop(x); } };
+                drop(root);
+            }
             for (const t of root.tiles.slice()) t.remove();
-            const one = mode === MONOCLE;
             root.padding = smartGaps && (wins.length === 1 || one) ? 0 : gap; // KWin spreads it: full at screen edges, half between tiles
-            root.minimumSize = { width: 0.05, height: 0.05 }; // default 0.15 breaks stacks of 7+ windows; children inherit
+            // KWin refuses tiles smaller than this (default 0.15 breaks stacks of 7+ windows); children inherit it when split
+            const small = d => Math.min(0.05, ...(rects || []).map(r => r[d] * 0.9));
+            root.minimumSize = { width: small("width"), height: small("height") };
             let slots = [root]; // monocle: every window shares the root tile, the focused one is on top
-            let rects = null, cols = [], colRects = []; // where slots (and centered's columns) go
-            if (mode === DWINDLE) {
-                // shortcut: ratios dragged while it was maximized are lost on restore, and so is its place if the tree was rebuilt meanwhile
-                for (const w of wins) {
-                    const old = parked.get(w);
-                    parked.delete(w);
-                    if (old && !inTree(trees[k], w)) trees[k] = old;
-                }
-                trees[k] = dwindleSync(trees[k], wins, w => newSplit.get(w));
-            } else delete trees[k];
-            for (const w of wins) newSplit.delete(w);
+            let cols = [], colRects = []; // centered's columns
             if (wins.length > 1 && mode === DWINDLE) {
-                let splits;
-                ({ rects, splits } = dwindleRects(trees[k], ratio, output.geometry.width / output.geometry.height, mirror));
                 slots = [];
                 let s = 0;
                 const build = (n, tile) => {
@@ -440,7 +510,6 @@ if (typeof workspace !== "undefined") {
                 };
                 build(trees[k], root);
             } else if (wins.length > 1 && mode === SPIRAL) {
-                rects = spiralRects(wins.length, ratio, mirror, portrait);
                 slots = [];
                 let cur = root;
                 for (let i = 0; i < wins.length - 1; i++) {
@@ -456,18 +525,17 @@ if (typeof workspace !== "undefined") {
                 slots.push(cur);
             } else if (wins.length > 1 && mode === CENTERED && !portrait) {
                 // left | main | right columns; with 2 windows one side stays empty so the main stays centred
-                const k1 = wins.length - 1, s = (1 - ratio) / 2;
-                rects = centeredRects(wins.length, ratio, mirror);
+                const k1 = wins.length - 1;
                 cols = column(root, 3, HORIZONTAL);
                 const first = column(cols[mirror ? 0 : 2], Math.ceil(k1 / 2), VERTICAL);
                 const second = k1 > 1 ? column(cols[mirror ? 2 : 0], Math.floor(k1 / 2), VERTICAL) : [];
                 slots = [cols[1]];
                 for (let j = 0; j < k1; j++) slots.push((j % 2 ? second : first)[j >> 1]);
-                colRects = [0, s, s + ratio].map((x, i) => ({ x, y: 0, width: i === 1 ? ratio : s, height: 1 }));
+                // columns from the main slot's rect, so kept stack borders and the main width agree
+                const c = rects[0], left = c.x, right = 1 - c.x - c.width;
+                colRects = [{ x: 0, y: 0, width: left, height: 1 }, { x: c.x, y: 0, width: c.width, height: 1 }, { x: c.x + c.width, y: 0, width: right, height: 1 }];
             } else if (wins.length > 1 && !one) {
-                const main = mainsOf(mode); // centered on a portrait screen: one main row on top
-                rects = slotRects(wins.length, ratio, main, mirror, portrait);
-                const m = Math.min(main, wins.length - 1);
+                const m = Math.min(mainsOf(mode), wins.length - 1); // centered on a portrait screen: one main row on top
                 const halves = root.split(outer);
                 slots = [...column(halves[mirror ? 1 : 0], m, inner), ...column(halves[mirror ? 0 : 1], wins.length - m, inner)];
             }
@@ -476,9 +544,14 @@ if (typeof workspace !== "undefined") {
                 cols.forEach((t, i) => { t.relativeGeometry = colRects[i]; });
                 slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
             }
+            laid[k] = { kind, mode, portrait, mirror, ratio, slots };
             wins.forEach((w, i) => {
-                if (!slots[one ? 0 : i].manage(w)) // root.manage can refuse; fall back to filling the work area
+                const t = slots[one ? 0 : i];
+                if (t.manage(w)) assigned.set(w, t);
+                else { // root.manage can refuse; fall back to filling the work area
+                    assigned.delete(w);
                     w.frameGeometry = workspace.clientArea(KWin.MaximizeArea, output, desktop);
+                }
             });
         } finally {
             busy = false;
@@ -497,7 +570,7 @@ if (typeof workspace !== "undefined") {
         return w && order.includes(w) ? w : null;
     };
     const tiledWindow = () => { const w = tracked(); return w && tileable(w) ? w : null; };
-    function release(w) { busy = true; w.tile.unmanage(w); busy = false; }
+    function release(w) { busy = true; try { w.tile.unmanage(w); } finally { busy = false; } }
 
     // Re-lay out the groups named in `only` (keys), or all of them when omitted.
     function retileAll(only) {
@@ -505,13 +578,21 @@ if (typeof workspace !== "undefined") {
         for (const w of order) if (tileable(w)) next[key(w.output, w.desktops[0])] = { output: w.output, desktop: w.desktops[0] };
         for (const k in next) {
             if (only && !only.includes(k)) continue;
-            layOut(next[k].output, next[k].desktop);
+            try { layOut(next[k].output, next[k].desktop); } catch (e) { print("Stacklet: laying out " + k + " failed: " + e); } // one bad group shouldn't stop the rest
             for (const w of groupOf(next[k].output, next[k].desktop)) home.set(w, next[k]);
         }
         // groups that just lost their last window: nothing to lay out, forget the saved ratio
         // (windows on other Activities keep it: visiting an empty Activity shouldn't reset a dragged width)
         const held = new Set(order.filter(w => !w.deleted && w.output && w.desktops.length === 1).map(w => key(w.output, w.desktops[0])));
-        for (const k in groups) if (!next[k]) { delete laid[k]; delete trees[k]; if (!held.has(k)) delete ratios[k]; }
+        // A screen that went away (asleep, unplugged) keeps its tree and sizes for when it comes back.
+        // shortcut: state of a screen that never comes back stays in savedState; prune it if that ever grows
+        const outs = workspace.screens.map(outKey);
+        for (const k in groups) if (!next[k]) {
+            delete laid[k];
+            if (!outs.includes(k.slice(0, k.lastIndexOf("|")))) continue;
+            delete trees[k];
+            if (!held.has(k)) delete ratios[k];
+        }
         groups = next;
         save();
     }
@@ -521,9 +602,16 @@ if (typeof workspace !== "undefined") {
     function track(w, force) {
         if (!(force ? w.normalWindow && !w.specialWindow : wanted(w)) || order.includes(w)) return false;
         order.push(w);
+        if (force) forced.add(w);
         if (!hooked.has(w)) {
             hooked.add(w);
-            for (const sig of ["desktopsChanged", "outputChanged", "minimizedChanged", "fullScreenChanged", "activitiesChanged", "skipTaskbarChanged", "skipSwitcherChanged"])
+            // moved in from another desktop or screen: placed like a new window, not by age (a screen that went away doesn't count)
+            for (const sig of ["desktopsChanged", "outputChanged"]) w[sig].connect(() => {
+                const h = home.get(w);
+                if (h && tileable(w) && key(h.output, h.desktop) !== key(w.output, w.desktops[0]) && workspace.screens.includes(h.output)) place(w);
+                retileAll(keysOf(w));
+            });
+            for (const sig of ["minimizedChanged", "fullScreenChanged", "activitiesChanged", "skipTaskbarChanged", "skipSwitcherChanged"])
                 w[sig].connect(() => retileAll(keysOf(w)));
             // fires before KWin drops the tile and before the client answers: the tree and the tiles are still intact
             w.maximizedAboutToChange.connect(mode => {
@@ -531,7 +619,7 @@ if (typeof workspace !== "undefined") {
                 const h = home.get(w), k = h && key(h.output, h.desktop);
                 if (!h || floating.has(w) || maxing.has(w) || w.maximizeMode || !tileable(w)) return;
                 // take in borders dragged since the last layout, or restoring would bring the old ones back
-                if (laid[k] && inTree(trees[k], w)) parked.set(w, dwindleRatios(trees[k], x => !x.deleted && x.tile ? x.tile.relativeGeometry : null));
+                if (laid[k] && laid[k].mode === DWINDLE && inTree(trees[k], w)) parked.set(w, { k, tree: dwindleRatios(trees[k], tileRect) });
                 maxing.add(w);
             });
             w.maximizedChanged.connect(() => { maxing.delete(w); retileAll(keysOf(w)); });
@@ -539,6 +627,8 @@ if (typeof workspace !== "undefined") {
                 // KWin moves windows out of tiles we remove into another tile, later (Wayland is async):
                 // one we don't lay out (helper, other Activity, ...) would sit invisibly in someone else's tile
                 if (!busy && w.tile && order.includes(w) && !floating.has(w) && !tileable(w)) { release(w); return; }
+                // KWin put it in a tile we didn't give it (a removed tile re-homing it, KWin's own tile keys): back to its own
+                if (!busy && w.tile && assigned.has(w) && w.tile !== assigned.get(w) && order.includes(w) && !floating.has(w) && !moving.has(w)) { retileAll(keysOf(w)); return; }
                 // user dropped a floating window into a tile (KWin's snap): it's tiled again, else it sits there untracked
                 if (!busy && w.tile && order.includes(w) && floating.has(w)) { floating.delete(w); retileAll(keysOf(w)); return; }
                 // dragFloats off: leave its tile empty while dragging; on drop it swaps or snaps back
@@ -546,19 +636,25 @@ if (typeof workspace !== "undefined") {
                 // user dragged a tiled window out: let it float instead of snapping it back.
                 // Lost its tile some other way (KWin's own keys): back into the layout. Maximized windows aren't tileable: they float until restored.
                 if (!busy && !w.tile && maxing.has(w)) { retileAll(keysOf(w)); return; } // maximizing: close the gap now
-                if (!busy && order.includes(w) && !w.tile && tileable(w)) {
+                if (resizing.has(w)) return; // resized from an outer edge: it goes back in when the resize ends
+                // KWin lets go of the tile of a window on a desktop not in view when we lay that desktop out: nothing lost
+                if (!busy && order.includes(w) && !w.tile && tileable(w) && shown(w.output, w.desktops[0])) {
                     if (moving.has(w)) { floating.add(w); draggedOut.add(w); }
                     retileAll(keysOf(w));
                 }
             });
-            w.interactiveMoveResizeStarted.connect(() => moving.add(w));
+            // resizes fire these too: KWin drops the tile when an edge the tile can't move is dragged (any edge in monocle)
+            w.interactiveMoveResizeStarted.connect(() => (w.resize ? resizing : moving).add(w));
             w.interactiveMoveResizeFinished.connect(() => {
                 moving.delete(w);
+                if (resizing.delete(w)) { if (order.includes(w) && !w.tile && tileable(w)) retileAll(keysOf(w)); return; } // back into its tile
                 if (!draggedOut.delete(w) || !order.includes(w)) return;
                 // dropped onto another tile: take its place, it takes ours
                 const p = workspace.cursorPos;
                 const hit = order.find(x => x !== w && tileable(x) && x.output === w.output && x.desktops[0] === w.desktops[0] && (g => p.x >= g.x && p.x < g.x + g.width && p.y >= g.y && p.y < g.y + g.height)(x.frameGeometry));
-                if (!hit) { if (!dragFloats) retileAll(keysOf(w)); return; }
+                // dropped on no tile: snaps back (dragFloats off), floats, or tiles there if it went to another screen
+                const h = home.get(w);
+                if (!hit) { if (!dragFloats || (h && h.output !== w.output)) { floating.delete(w); retileAll(keysOf(w)); } return; }
                 floating.delete(w);
                 swapOrder(order, order.indexOf(w), order.indexOf(hit));
                 retileAll(keysOf(w));
@@ -567,10 +663,12 @@ if (typeof workspace !== "undefined") {
         return true;
     }
 
-    // move a freshly added window to where the "new windows go" setting wants it
+    // move a freshly added (or arrived) window to where the "new windows go" setting wants it; else last
     function place(w) {
         if (!w.output || w.desktops.length !== 1) return;
         const mode = modeOf(key(w.output, w.desktops[0]), w.desktops[0]).mode;
+        order = order.filter(x => x !== w);
+        order.push(w);
         if (mode === DWINDLE) {
             // dwindle: right after the window that had focus, so it splits that one (KWin focuses w before windowAdded)
             const f = active === w ? prevActive : active;
@@ -587,6 +685,15 @@ if (typeof workspace !== "undefined") {
         order.splice(order.indexOf(target), 0, w);
     }
 
+    // an app that sets its parent, class or title after mapping: decide again (not for Meta+F or scratchpad windows)
+    function reclassify(w) {
+        if (w.deleted || forced.has(w) || scratch.includes(w) || order.includes(w) === wanted(w)) return;
+        if (order.includes(w)) untile(w);
+        else if (track(w)) place(w);
+        retileAll(keysOf(w));
+    }
+    const watch = w => { for (const sig of ["transientChanged", "windowClassChanged", "captionChanged"]) w[sig].connect(() => reclassify(w)); };
+
     function untile(w) {
         order = order.filter(x => x !== w);
         floating.delete(w);
@@ -602,7 +709,7 @@ if (typeof workspace !== "undefined") {
     hookScreens();
     workspace.screensChanged.connect(() => { hookScreens(); retileAll(); });
     workspace.currentActivityChanged.connect(() => retileAll());
-    workspace.windowAdded.connect(w => { if (track(w)) { place(w); retileAll(keysOf(w)); } });
+    workspace.windowAdded.connect(w => { watch(w); if (track(w)) { place(w); retileAll(keysOf(w)); } });
     // Apply on the settings page only writes kwinrc: KWin neither re-reads it nor restarts scripts. So when the
     // user leaves or closes System Settings, have KWin re-read it, and restart Stacklet if its settings changed.
     // kcmshell6 <module> windows take the module's id as class, e.g. kcm_kwin4_genericscripted for our own page
@@ -610,7 +717,15 @@ if (typeof workspace !== "undefined") {
     const reconfigure = () => callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure");
     options.configChanged.connect(() => {
         if (!settingsChanged(seen, kwinRead)) return;
-        // A clean off and on. Unload only deletes us later, so a direct Scripting.start would still see us
+        if ((String(kwinRead("metaArrows", false)) === "true") === metaArrows) {
+            // apply in place: floated windows, the scratchpad and dwindle trees stay
+            loadSettings();
+            for (const x of workspace.windowList()) reclassify(x);
+            for (const w of order) if (!w.deleted && w.tile && !floating.has(w) && !tileable(w)) release(w); // on a screen or desktop now off
+            retileAll();
+            return;
+        }
+        // Shortcuts can't be unregistered, so the Meta+arrows switch needs a clean off and on. Unload only deletes us later, so a direct Scripting.start would still see us
         // loaded; reconfigure runs start after its timer, once we're gone.
         // The scratchpad list dies with us: hand its windows back first (a shown one is pinned on top, on every desktop).
         for (const w of scratch) { w.keepAbove = false; w.onAllDesktops = false; w.minimized = false; }
@@ -632,7 +747,8 @@ if (typeof workspace !== "undefined") {
         if (settingsApp(w)) reconfigure();
         let next = null;
         const h = home.get(w), ks = keysOf(w);
-        if (focusAfterClose && (w === active || w === closedActive) && h && order.includes(w)) {
+        // only on the desktop in view: a floating or scratchpad window's last tiled home may be elsewhere, and focusing there switches desktop
+        if (focusAfterClose && (w === active || w === closedActive) && h && order.includes(w) && shown(h.output, h.desktop)) {
             // focus the tile before the closed one, else the first remaining
             const g = groupOf(h.output, h.desktop).filter(x => x !== w), pos = order.indexOf(w);
             next = g.filter(x => order.indexOf(x) < pos).pop() || g[0] || null;
@@ -642,10 +758,13 @@ if (typeof workspace !== "undefined") {
         for (const [k, g] of focusOrder) focusOrder.set(k, g.filter(x => x !== w));
         floating.delete(w);
         moving.delete(w);
+        resizing.delete(w);
+        forced.delete(w);
         draggedOut.delete(w);
         hooked.delete(w);
         home.delete(w);
         parked.delete(w);
+        assigned.delete(w);
         maxing.delete(w);
         if (active === w) active = null;
         if (closedActive === w) closedActive = null;
@@ -768,7 +887,6 @@ if (typeof workspace !== "undefined") {
     // Default: focus is KWin's own Meta+Alt+arrows, swap is Meta+Alt+Shift+arrows.
     // metaArrows (Hyprland style): Meta+arrows focus, Meta+Shift+arrows swap. KWin's Quick Tile and Move to Screen keys hold those
     // and a script can't free them (callDBus can't send typed arrays), so the user clears them. Own ids per style: saved keys beat defaults.
-    const metaArrows = flag("metaArrows");
     for (const dir of ["Left", "Right", "Up", "Down"]) {
         const d = dir.toLowerCase();
         if (metaArrows) registerShortcut("StackletFocus" + dir, "Stacklet: Focus window " + d, "Meta+" + dir, () => {
@@ -878,7 +996,7 @@ if (typeof workspace !== "undefined") {
             if (st.mode === MONOCLE) { osd("Stacklet: monocle has no main window to resize"); return; }
             if (groupOf(o, d).length < 2) { osd("Stacklet: only one window here, nothing to resize"); return; }
             const [, lo, hi] = WIDTHS[kind];
-            const cur = Math.min(hi, Math.max(lo, (root && laid[k] === kind && draggedRatio(root, isPortrait(o), kind, mirror)) || widthOf(k, kind)));
+            const cur = Math.min(hi, Math.max(lo, (root && laid[k] && laid[k].kind === kind && draggedRatio(root, isPortrait(o), kind, mirror)) || widthOf(k, kind)));
             setWidth(k, kind, cur + delta);
             if (Math.abs(ratios[k][kind] - cur) < 0.001) {
                 osd("Stacklet: main window is already at its " + (delta > 0 ? "largest" : "smallest") +
@@ -886,8 +1004,8 @@ if (typeof workspace !== "undefined") {
                 return;
             }
             // take in inner dwindle borders dragged since the last layout; the root ratio is the new main size
-            if (st.mode === DWINDLE && trees[k] && trees[k].kids && laid[k] === kind) {
-                trees[k] = dwindleRatios(trees[k], x => !x.deleted && x.tile ? x.tile.relativeGeometry : null);
+            if (st.mode === DWINDLE && trees[k] && trees[k].kids && laid[k] && laid[k].kind === kind && laid[k].mode === DWINDLE) {
+                trees[k] = dwindleRatios(trees[k], tileRect);
                 delete trees[k].ratio;
             }
             delete laid[k]; // so layOut uses this value instead of re-reading the old tiles
@@ -895,8 +1013,11 @@ if (typeof workspace !== "undefined") {
         });
     }
 
-    for (const w of workspace.windowList()) track(w);
-    retileAll();
+    // an error here at the top level makes KWin delete the script while it still shows as enabled
+    try {
+        for (const w of workspace.windowList()) { watch(w); track(w); }
+        retileAll();
+    } catch (e) { print("Stacklet: start failed: " + e); }
     if (!flag("welcomed")) { // once: nothing visible happens until a tiled app opens
         osd(tileAll ? "Stacklet is on: tiling all apps. Meta+F floats a window."
             : "Stacklet is on: tiling terminals only. Meta+Alt+A tiles an app; Tile all apps is in its settings.");

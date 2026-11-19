@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+- Changed: settings now apply in place, so windows floated with Meta+F, the scratchpad and dwindle splits survive a settings change. Only "Use Meta+arrows" still restarts Stacklet.
+- Fixed: a desktop laid out while not in view (a window sent there, a screen change, startup) could put several windows in one slot and leave others empty.
+- Fixed: resizing a tiled window from an outer edge (any edge in monocle, or with Meta+right-drag) floated it; it now goes back to its tile.
+- Fixed: in dwindle, a window that went fullscreen, minimized or to another Activity came back in a different place, and monocle or Spotlight forgot the splits. They now keep their tile.
+- Fixed: borders dragged inside a stack snapped back on the next re-layout with the same windows (swap, rotate).
+- Fixed: a window already fullscreen when Stacklet started was never tiled.
+- Fixed: closing a floating or scratchpad window could switch to another desktop to focus its old neighbour.
+- Fixed: a window that KWin moved into a tile Stacklet didn't give it stayed there, and could save a wrong dwindle split.
+- Fixed: a window moved in from another desktop or screen now goes where "New windows go" says, not by age; one dragged to an empty screen tiles there.
+- Fixed: a screen that sleeps or is unplugged keeps its dragged widths and dwindle splits for when it comes back. Saved layouts now follow the monitor rather than the port it's plugged into.
+- Fixed: with many windows in spiral or dwindle, the smallest tiles were refused by KWin.
+- Fixed: a column narrower than its windows' minimum width (common with the stash) now widens instead of the windows overlapping.
+- Fixed: windows that set their parent, class or title after opening are sorted again. Picture-in-picture and keep-above windows float.
+- Fixed: an error while laying out one screen no longer stops the others, or removes Stacklet at startup; it is logged to the journal.
+
 ## 1.4.2
 
 - Fixed: settings Stacklet saves through Plasma's shell (including the size conversion from 1.4.1) were lost if plasmashell wasn't running yet at login. They are now sent again until they are stored.
