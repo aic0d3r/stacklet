@@ -98,6 +98,10 @@ Source and bug reports: https://github.com/aic0d3r/stacklet
 
 tiling, tiling window manager, window management, kwin script, plasma 6, terminals, i3, productivity
 
+## Changelog 1.5.0
+
+Settings now apply in place: windows floated with Meta+F, the scratchpad and dwindle splits survive a settings change (only "Use Meta+arrows" still restarts Stacklet). Many layout fixes: a desktop laid out while not in view no longer stacks several windows in one slot; resizing a tiled window from an outer edge returns it to its tile; windows that go fullscreen, minimized or to another Activity keep their tile in dwindle, monocle and Spotlight; stacks of nine or more rows stay equal; dragged widths and dwindle splits survive a sleeping or unplugged monitor; an error on one screen no longer stops the others. `stacklet-keys off` now gives back only the keys `on` cleared.
+
 ## Changelog 1.4.2
 
 Fixed settings Stacklet saves through Plasma's shell (including the size conversion from 1.4.1) being lost when plasmashell wasn't running yet at login: they are now sent again until they are stored. A scratchpad window shown while you changed a setting no longer stays pinned on top of every desktop. In dwindle, grow and shrink main window no longer undo inner borders you dragged. Monocle off goes back to the layout you came from. `stacklet-keys` no longer clears KWin shortcuts you set yourself. The website and the store listing share one set of images.

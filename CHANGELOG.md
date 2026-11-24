@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.5.0
 
 - Changed: settings now apply in place, so windows floated with Meta+F, the scratchpad and dwindle splits survive a settings change. Only "Use Meta+arrows" still restarts Stacklet.
 - Changed: on a Plasma older than 6.8 Stacklet now says in the journal why it stops (KWin scripts have no version check).

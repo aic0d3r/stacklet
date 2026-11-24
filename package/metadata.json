@@ -6,7 +6,7 @@
         "Description": "Auto-tiling on Plasma's native tiles, with a scratchpad",
         "Icon": "view-split-left-right",
         "Id": "stacklet",
-        "Version": "1.4.2",
+        "Version": "1.5.0",
         "License": "GPL-3.0-or-later",
         "Website": "https://github.com/aic0d3r/stacklet"
     },
