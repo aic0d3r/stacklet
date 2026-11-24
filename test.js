@@ -148,4 +148,12 @@ assert.strictEqual(fitMain(0.6, 0.7, 0.4), 0.6);
 const pipOpts = { tileAll: true, system: true, media: true, tileClasses: ["firefox"], floatClasses: [], tileAnyway: [] };
 assert.ok(!appTiles("firefox", "Picture-in-Picture", pipOpts) && !appTiles("firefox", "Picture in picture", Object.assign({}, pipOpts, { tileAll: false })));
 assert.ok(appTiles("firefox", "Picture-in-Picture tips - Mozilla Firefox", pipOpts));
+// too old a Plasma (no readConfig, no rootTile): KWin's journal says why Stacklet stopped, not an error somewhere inside
+const mainJs = require.resolve("./package/contents/code/main.js");
+for (const globals of [{ workspace: {} }, { workspace: {}, readConfig: () => "" }]) {
+    Object.assign(global, globals);
+    delete require.cache[mainJs];
+    assert.throws(() => require(mainJs), /Plasma 6\.8.*this KWin has no (readConfig|workspace\.rootTile)$/);
+    for (const k of Object.keys(globals)) delete global[k];
+}
 console.log("ok");

@@ -249,6 +249,8 @@ if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dw
 
 const kwinRead = typeof readConfig !== "undefined" ? readConfig : null;
 if (typeof workspace !== "undefined") {
+    // KWin reads no minimum version for scripts: on an older Plasma (no readConfig, no rootTile) say why we stop
+    if (!kwinRead || !workspace.rootTile) throw new Error("Stacklet needs KDE Plasma 6.8 or later: this KWin has no " + (kwinRead ? "workspace.rootTile" : "readConfig"));
     // Every setting read at start, to restart when one changes (see settingsChanged)
     const seen = {};
     const readConfig = (k, d) => { const v = kwinRead(k, d); seen[k] = [d, String(v)]; return v; };
@@ -257,12 +259,16 @@ if (typeof workspace !== "undefined") {
     // older installs that never touched the setting keep false, and get it written so the settings page agrees.
     const tileAllUnset = String(kwinRead("tileAll", "unset")) === "unset";
     // KWin 6.8 scripts can read their config but have no writeConfig; Plasma's desktop scripting can write it.
-    // Writes plasmashell hasn't confirmed yet (it may start after KWin at login): sent again on the next window focus.
+    // plasmashell's method, but only while plasmashell runs (at login it can start after KWin): a call to a name without an
+    // owner fails, and KWin logs a warning for each one
+    const shellCall = (path, iface, method, ...args) => callDBus("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus",
+        "NameHasOwner", "org.kde.plasmashell", owned => { if (owned) callDBus("org.kde.plasmashell", path, iface, method, ...args); });
+    // Writes plasmashell hasn't confirmed yet: sent again on the next window focus.
     const pending = {};
     const sendWrites = () => {
         const sent = Object.assign({}, pending);
         if (!Object.keys(sent).length) return;
-        callDBus("org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell", "evaluateScript",
+        shellCall("/PlasmaShell", "org.kde.PlasmaShell", "evaluateScript",
         "const c = ConfigFile('kwinrc', 'Script-stacklet');" +
         // write "" first: plasmashell caches kwinrc and skips a value equal to its stale copy, even if the file lost it
         Object.keys(sent).map(k => "c.writeEntry(" + JSON.stringify(k) + ", ''); c.writeEntry(" + JSON.stringify(k) + ", " + JSON.stringify(sent[k]) + ");").join(""),
@@ -410,14 +416,14 @@ if (typeof workspace !== "undefined") {
         const pinned = w => mainClasses.includes(cls(w));
         return [...g.filter(pinned), ...g.filter(w => !pinned(w))];
     };
-    const osd = text => showOsd && callDBus("org.kde.plasmashell", "/org/kde/osdService", "org.kde.osdService",
-        "showText", "view-split-left-right", text);
+    const osd = text => showOsd && shellCall("/org/kde/osdService", "org.kde.osdService", "showText", "view-split-left-right", text);
 
     const isPortrait = o => o.geometry.height > o.geometry.width;
     // main windows of a layout: only master and stack has a setting for it
     const mainsOf = mode => mode === TILE ? mainCount : 1;
 
-    // n tiles in a row (or column) inside one tile, split along dir
+    // n tiles in a row (or column) inside one tile, split along dir. Splits the last tile again and again, so the rows go
+    // 1/2, 1/4, 1/8 ... until the two passes in layOut set them all to 1/n: that only works while the tiles have no minimum size.
     function column(col, n, dir) {
         if (n === 1) return [col];
         col.split(dir);
@@ -475,9 +481,9 @@ if (typeof workspace !== "undefined") {
         else if (wins.length > 1 && mode === SPIRAL) rects = spiralRects(wins.length, ratio, mirror, portrait);
         else if (wins.length > 1 && mode === CENTERED && !portrait) rects = centeredRects(wins.length, ratio, mirror);
         else if (wins.length > 1 && !one) rects = slotRects(wins.length, ratio, mainsOf(mode), mirror, portrait);
-        // same layout, windows count and main size (dragged or not): keep borders dragged inside a stack, not only the main one
+        // same layout, windows count, main windows and main size (dragged or not): keep borders dragged inside a stack, not only the main one
         if (rects && last && last.mode === mode && mode !== DWINDLE && last.portrait === portrait && last.mirror === mirror &&
-            last.slots.length === rects.length && Math.abs(ratio - (dragged || last.ratio)) < 1e-3) {
+            last.mains === mainsOf(mode) && last.slots.length === rects.length && Math.abs(ratio - (dragged || last.ratio)) < 1e-3) {
             try {
                 const old = last.slots.map(t => t.relativeGeometry);
                 if (old.every(r => r && r.width > 0 && r.height > 0)) rects = old.map(r => ({ x: r.x, y: r.y, width: r.width, height: r.height }));
@@ -494,9 +500,11 @@ if (typeof workspace !== "undefined") {
             }
             for (const t of root.tiles.slice()) t.remove();
             root.padding = smartGaps && (wins.length === 1 || one) ? 0 : gap; // KWin spreads it: full at screen edges, half between tiles
-            // KWin refuses tiles smaller than this (default 0.15 breaks stacks of 7+ windows); children inherit it when split
+            // KWin refuses tiles smaller than the minimum (its default 0.15 breaks stacks of 7+ windows); children inherit it
+            // when split. Tiny while building: a real minimum clamps the rows column() halves (from 1/32 on) and pushes the
+            // new tile off the column. The real one is set afterwards, for borders the user drags.
             const small = d => Math.min(0.05, ...(rects || []).map(r => r[d] * 0.9));
-            root.minimumSize = { width: small("width"), height: small("height") };
+            root.minimumSize = { width: 1e-6, height: 1e-6 };
             let slots = [root]; // monocle: every window shares the root tile, the focused one is on top
             let cols = [], colRects = []; // centered's columns
             if (wins.length > 1 && mode === DWINDLE) {
@@ -544,7 +552,9 @@ if (typeof workspace !== "undefined") {
                 cols.forEach((t, i) => { t.relativeGeometry = colRects[i]; });
                 slots.forEach((t, i) => { t.relativeGeometry = rects[i]; });
             }
-            laid[k] = { kind, mode, portrait, mirror, ratio, slots };
+            const all = t => [t].concat(...[...t.tiles].map(all));
+            all(root).forEach(t => { t.minimumSize = { width: small("width"), height: small("height") }; });
+            laid[k] = { kind, mode, mains: mainsOf(mode), portrait, mirror, ratio, slots };
             wins.forEach((w, i) => {
                 const t = slots[one ? 0 : i];
                 if (t.manage(w)) assigned.set(w, t);

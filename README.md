@@ -64,7 +64,7 @@ Every shortcut can be changed in System Settings → Shortcuts (search for "Stac
 | Meta+Ctrl+S | Send the focused window to the scratchpad; on a shown scratchpad window, put it back (tiled, or floating for apps Stacklet doesn't tile) |
 | Drag a window onto another tile | Swap the two |
 
-Prefer the Hyprland way (Meta+arrows focus, Meta+Shift+arrows swap)? Tick **Use Meta+arrows** on the Shortcuts tab of Stacklet's settings. KWin's own Quick Tile and Move to Screen shortcuts hold those keys and a script can't free them, so after ticking it, run `bash ~/.local/share/kwin/scripts/stacklet/contents/stacklet-keys install` once (or `package/contents/stacklet-keys` from a checkout). That adds "Stacklet: use Meta+arrows" and "Stacklet: give Meta+arrows back to KWin" to the app menu and KRunner; you can also run the script with `on` or `off` yourself. Or clear **Quick Tile Window to the Left / Right / Top / Bottom** and **Move Window to Next / Previous Screen** by hand in System Settings → Shortcuts → System Services → Window Management (older Plasma: Shortcuts → KWin).
+Prefer the Hyprland way (Meta+arrows focus, Meta+Shift+arrows swap)? Tick **Use Meta+arrows** on the Shortcuts tab of Stacklet's settings. KWin's own Quick Tile and Move to Screen shortcuts hold those keys and a script can't free them, so after ticking it, run `bash ~/.local/share/kwin/scripts/stacklet/contents/stacklet-keys install` once (or `package/contents/stacklet-keys` from a checkout). That adds "Stacklet: use Meta+arrows" and "Stacklet: give Meta+arrows back to KWin" to the app menu and KRunner; you can also run the script with `on` or `off` yourself. `off` gives back only the KWin keys that `on` cleared (it keeps a list in `~/.local/state/stacklet/keys`). Or clear **Quick Tile Window to the Left / Right / Top / Bottom** and **Move Window to Next / Previous Screen** by hand in System Settings → Shortcuts → System Services → Window Management (older Plasma: Shortcuts → KWin).
 
 ## Install
 
@@ -97,17 +97,19 @@ node test.js
 
 Checks the layout maths.
 
+Each suite below starts Stacklet in a private virtual KWin: its own D-Bus session, config, data, cache and state folders, so your real session is not touched. `tests/common.sh` holds that setup and the helpers. They need `kwin_wayland`, `dbus-run-session`, `qdbus6` and python3 with PyQt6; `tests/save` also python's `dbus` module.
+
 ```sh
 tests/stress/run.sh            # or: tests/stress/run.sh spiral
 ```
 
-Crash stress test: runs Stacklet in a private virtual KWin (its own D-Bus session, config and script folder, your session is not touched) and opens and closes a few hundred windows in each layout. It fails if KWin dies. Needs `kwin_wayland`, `dbus-run-session`, `qdbus6` and python3 with PyQt6. It exists because holding windows in a `WeakSet`/`WeakMap` crashed KWin when a window closed.
+Crash stress test: opens and closes a few hundred windows in each layout, and fails if KWin dies. It exists because holding windows in a `WeakSet`/`WeakMap` crashed KWin when a window closed.
 
 ```sh
-tests/layouts/run.sh            # where do 2, 3, 4 and 6 windows end up in each layout?
+tests/layouts/run.sh            # where does every window end up in each layout, with 2 to 20 windows, and on a portrait screen?
 ```
 
-Same private virtual KWin. It prints every window's position and fails if a layout has the wrong shape (for example monocle not stacking windows). To reproduce a setup, pass your own kwinrc section: `KWINRC=$'[Script-stacklet]\nlayoutSpiral=true' tests/layouts/run.sh - 5`.
+It prints every window's position and fails unless each window is where the layout maths puts it (20 windows in master and stack and in centered, 10 in the others, then 4 on a portrait screen), or monocle doesn't stack. To reproduce a setup, pass your own kwinrc section: `KWINRC=$'[Script-stacklet]\nlayoutSpiral=true' tests/layouts/run.sh - 5`; `SIZE=2560x1080` picks another screen size.
 
 ```sh
 tests/dwindle/run.sh
@@ -119,7 +121,7 @@ Same private virtual KWin. It opens three windows, focuses the first, opens a fo
 tests/shortcuts/run.sh         # fires every shortcut and checks what it did, and that its key is free
 ```
 
-Same private virtual KWin, with four windows. It also starts from a 1.0.0-style saved config, to check that upgrading picks up the new keys. It sees a fresh Plasma's KWin and service shortcuts (Spectacle, screen reader, …) but not plasmashell's, so check new keys against `kglobalshortcutsrc` too.
+Same private virtual KWin, with four windows. It also starts from a 1.0.0-style saved config, to check that upgrading picks up the new keys, and fails if Stacklet makes a failed call to Plasma's shell, which doesn't run there. It sees a fresh Plasma's KWin and service shortcuts (Spectacle, screen reader, …) but not plasmashell's, so check new keys against `kglobalshortcutsrc` too.
 
 ```sh
 tests/dialogs/run.sh           # do dialogs, About boxes and tool windows stay floating?
@@ -140,10 +142,22 @@ tests/reload/run.sh            # do changed settings apply without turning Stack
 Same private virtual KWin. It floats a window, has KWin re-read its config with nothing changed (Stacklet must keep running, so the window stays floating), then changes the gap and checks that it applies in place (the window still floats), then turns on Meta+arrows and checks that Stacklet restarted.
 
 ```sh
+tests/keys/run.sh             # does stacklet-keys free the right keys, and give back only those?
+```
+
+Same private virtual KWin with "Use Meta+arrows" on, so kglobalaccel and its saved keys are private too. It runs the bundled `stacklet-keys` against them: `on` clears KWin's Quick Tile and Move to Screen keys and leaves keys of your own alone (a second key on an action, another action cleared by hand), `off` gives back only the keys `on` cleared.
+
+```sh
+tests/save/run.sh             # is what Stacklet saves written, and still there after a restart?
+```
+
+Same private virtual KWin. Stacklet saves through Plasma's shell, which doesn't run in these tests, so this one starts a stand-in for it (`shell.py`) after a while. What waited for the shell must go out on the next window focus: the layout switched by shortcut, the grown main width and a Meta+Alt+A app change must be in kwinrc, and still be there after Stacklet restarts. A stand-in, not the real plasmashell: started next to a private KWin, it has D-Bus-activated services (activities, portals, KDE Connect, …) started by your own session, with your real config.
+
+```sh
 tests/desktops/run.sh          # desktops not in view, stack borders, dwindle round trips
 ```
 
-Same private virtual KWin, with three desktops. It lays out a desktop while it is hidden and sends it a window from another desktop, and fails unless every window gets its own slot. It drags a border inside the stack and checks a stack rotation keeps it. In dwindle it checks that a window going fullscreen or minimized and back, and a monocle round trip, keep the splits.
+Same private virtual KWin, with three desktops. It lays out a desktop while it is hidden and sends it a window from another desktop, and fails unless every window gets its own slot. It drags a border inside the stack and checks a stack rotation keeps it, and that "Windows in the main column" changed from 1 to 2 and back gives the rows of the setting. In dwindle it checks that a window going fullscreen or minimized and back, and a monocle round trip, keep the splits.
 
 The settings page is checked by hand in a live Plasma session.
 
@@ -158,7 +172,8 @@ The settings page is checked by hand in a live Plasma session.
 - A window's minimum size widens its column in master and stack and centered, but a stack can still be shorter than its windows need.
 - Spiral looks the same as master and stack until the fourth window.
 - Dwindle remembers which window split which only until Stacklet restarts; after that it rebuilds the splits in layout order, each window splitting the one before it.
-- Stacklet replaces the Meta+T tile layout on every desktop where it tiles a window.
+- Stacklet replaces the Meta+T tile layout on every desktop where it tiles a window. Turning Stacklet off leaves those tiles behind: KWin saves every tile layout and gives a script no hook when it is unloaded, so windows still snap into them. To remove them, hold Meta+T and click the delete button on each tile (the full-screen root stays), on every screen and desktop where Stacklet tiled; or, if you made no tiles of your own, delete the `[Tiling]` group from `~/.config/kwinrc` and log out and in.
+- A script that sends several windows to the other screen at once moves only the first: Stacklet re-tiles the others the moment it moves, and that cancels their move. Send them one at a time.
 - Saved layouts, widths and Meta+Alt+A app changes are written through Plasma's shell (KWin scripts can't write their config), so nothing is saved while plasmashell isn't running. If the settings page is open, close it before using Meta+Alt+A or Apply will overwrite the change. A width still resets when its desktop has no tiled windows, which usually happens when you log out.
 - Scratchpad windows are minimized while hidden, so they stay in the taskbar; restoring one from there shows it.
 

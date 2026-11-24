@@ -10,7 +10,6 @@
 
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
-PKG=${PKG:-$HERE/../../package}
 
 if [ "${STACKLET_ACT_INNER:-}" != 1 ]; then
     STACKLET_ACT_INNER=1 timeout 120 dbus-run-session -- "$0"; r=$?
@@ -18,13 +17,7 @@ if [ "${STACKLET_ACT_INNER:-}" != 1 ]; then
     exit $r
 fi
 
-WORK=$(mktemp -d)
-export XDG_CONFIG_HOME=$WORK/config XDG_DATA_HOME=$WORK/data XDG_CACHE_HOME=$WORK/cache
-unset DISPLAY WAYLAND_DISPLAY
-mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME/kwin/scripts" "$XDG_CACHE_HOME"
-cp -r "$PKG" "$XDG_DATA_HOME/kwin/scripts/stacklet"
-printf '[Plugins]\nstackletEnabled=true\n' > "$XDG_CONFIG_HOME/kwinrc"
-trap 'kill $(jobs -p) 2>/dev/null; rm -rf "$WORK"' EXIT
+. "$HERE/../common.sh"
 
 QT_QPA_PLATFORM=offscreen /usr/lib/kactivitymanagerd > "$WORK/kamd.log" 2>&1 &
 sleep 2
@@ -32,27 +25,17 @@ A=$(qdbus6 org.kde.ActivityManager /ActivityManager/Activities CurrentActivity)
 B=$(qdbus6 org.kde.ActivityManager /ActivityManager/Activities AddActivity Other)
 [ -n "$A" ] && [ -n "$B" ] || { echo "!! activity service did not start, so nothing was checked"; exit 1; }
 
-kwin_wayland --virtual --width 1600 --height 900 --socket "kwact-$$" --no-lockscreen --no-global-shortcuts \
-    > "$WORK/kwin.log" 2>&1 &
-KWIN=$!
-sleep 5
-[ "$(qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded stacklet)" = true ] || { echo "Stacklet did not load"; exit 1; }
+start_kwin --no-global-shortcuts
 
-export QT_NO_XDG_DESKTOP_PORTAL=1 GTK_USE_PORTAL=0 QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY=kwact-$$
 python3 "$HERE/../layouts/hold.py" org.kde.konsole 3 60 > /dev/null 2>&1 &
 sleep 5
 
 n=0
-run() {
-    n=$((n + 1)); printf '%s\n' "$1" > "$WORK/s$n.js"
-    qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "$WORK/s$n.js" "s$n" > /dev/null
-    qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start > /dev/null
-    sleep 2
-}
+run() { n=$((n + 1)); kjs "s$n" "$1"; sleep 1; }
 # sets L to "w1=x,y_WxH w2=... w3=..." (not called as $(geo): a subshell would lose n, and KWin ignores a reused script name)
 geo() {
-    run 'print("DUMP'$n' " + workspace.windowList().filter(w => w.normalWindow).sort((a, b) => a.caption < b.caption ? -1 : 1).map(w => { const g = w.frameGeometry; return w.caption + "=" + Math.round(g.x) + "," + Math.round(g.y) + "_" + Math.round(g.width) + "x" + Math.round(g.height); }).join(" "));'
-    L=$( { journalctl --user -b --no-pager "_PID=$KWIN" 2>/dev/null; cat "$WORK/kwin.log"; } | grep -o "DUMP$((n - 1)) .*" | tail -1 | cut -d' ' -f2-)
+    run 'print("DUMP'$n' " + workspace.windowList().filter(w => w.normalWindow).sort((a, b) => a.caption < b.caption ? -1 : 1).map(w => w.caption + "=" + Math.round(w.frameGeometry.x) + "," + Math.round(w.frameGeometry.y) + "_" + Math.round(w.frameGeometry.width) + "x" + Math.round(w.frameGeometry.height)).join(" "));'
+    L=$(kwin_log | grep -o "DUMP$((n - 1)) .*" | tail -1 | cut -d' ' -f2-)
 }
 fail=0
 expect() { # step, window, wanted geometry, line

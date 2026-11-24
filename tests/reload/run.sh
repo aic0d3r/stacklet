@@ -10,36 +10,21 @@
 
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
-PKG=${PKG:-$HERE/../../package}
 
 if [ "${STACKLET_RL_INNER:-}" != 1 ]; then
     STACKLET_RL_INNER=1 exec timeout 120 dbus-run-session -- "$0"
 fi
 
-WORK=$(mktemp -d)
-export XDG_CONFIG_HOME=$WORK/config XDG_DATA_HOME=$WORK/data XDG_CACHE_HOME=$WORK/cache
-unset DISPLAY WAYLAND_DISPLAY
-mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME/kwin/scripts" "$XDG_CACHE_HOME"
-cp -r "$PKG" "$XDG_DATA_HOME/kwin/scripts/stacklet"
-printf '[Plugins]\nstackletEnabled=true\n[Script-stacklet]\nwelcomed=true\n' > "$XDG_CONFIG_HOME/kwinrc"
+KWINRC=$'[Script-stacklet]\nwelcomed=true' # no first-start message: it is saved through plasmashell, which doesn't run here
+. "$HERE/../common.sh"
+start_kwin
 
-trap 'kill $(jobs -p) 2>/dev/null; rm -rf "$WORK"' EXIT
-kwin_wayland --virtual --width 1600 --height 900 --socket "kwrl-$$" --no-lockscreen > "$WORK/kwin.log" 2>&1 &
-KWIN=$!
-sleep 5
-[ "$(qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded stacklet)" = true ] || { echo "Stacklet did not load"; exit 1; }
-
-export QT_NO_XDG_DESKTOP_PORTAL=1 GTK_USE_PORTAL=0 QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY=kwrl-$$
 python3 "$HERE/../layouts/hold.py" org.kde.konsole 2 60 > /dev/null 2>&1 &
 sleep 6
 
-dump() { # dump <n>: prints "caption tiled|floating x" per window (n: unique per call, it runs in a subshell)
-    n=$1
-    printf '%s\n' 'print("DUMP'$n' " + workspace.windowList().filter(w => w.normalWindow).sort((a, b) => a.caption < b.caption ? -1 : 1).map(w => w.caption + " " + (w.tile ? "tiled" : "floating") + " " + Math.round(w.frameGeometry.x)).join(" ; "));' > "$WORK/dump$n.js"
-    qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "$WORK/dump$n.js" "dump$n" > /dev/null
-    qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start > /dev/null
-    sleep 1
-    { journalctl --user -b --no-pager "_PID=$KWIN" 2>/dev/null; cat "$WORK/kwin.log"; } | grep -o "DUMP$n .*" | tail -1 | sed "s/^DUMP$n //"
+dump() { # dump <n>: prints "caption tiled|floating x" per window (n: unique per call, KWin ignores a reused script name)
+    kjs "dump$1" 'print("DUMP'$1' " + workspace.windowList().filter(w => w.normalWindow).sort((a, b) => a.caption < b.caption ? -1 : 1).map(w => w.caption + " " + (w.tile ? "tiled" : "floating") + " " + Math.round(w.frameGeometry.x)).join(" ; "));'
+    kwin_log | grep -o "DUMP$1 .*" | tail -1 | sed "s/^DUMP$1 //"
 }
 reconfigure() { qdbus6 org.kde.KWin /KWin org.kde.KWin.reconfigure; sleep 3; }
 

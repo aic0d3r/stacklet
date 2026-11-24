@@ -14,7 +14,6 @@
 
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
-PKG=${PKG:-$HERE/../../package}
 
 if [ "${STACKLET_DIALOG_INNER:-}" != 1 ]; then
     bad=0
@@ -26,51 +25,32 @@ if [ "${STACKLET_DIALOG_INNER:-}" != 1 ]; then
 fi
 
 MODE=$1
-WORK=$(mktemp -d)
-export XDG_CONFIG_HOME=$WORK/config XDG_DATA_HOME=$WORK/data XDG_CACHE_HOME=$WORK/cache
-unset DISPLAY WAYLAND_DISPLAY
-mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME/kwin/scripts" "$XDG_CACHE_HOME"
-cp -r "$PKG" "$XDG_DATA_HOME/kwin/scripts/stacklet"
 NORMAL=tiled # what the normal windows (and the parentless non-modal dialog) should be
 if [ "$MODE" = all ]; then
     APP=org.example.anyapp  # not in the list, so only "Tile all apps" tiles it
-    printf '[Plugins]\nstackletEnabled=true\n[Script-stacklet]\ntileAll=true\n' > "$XDG_CONFIG_HOME/kwinrc"
+    KWINRC=$'[Script-stacklet]\ntileAll=true'
 elif [ "${MODE#media-}" != "$MODE" ]; then
     APP=mpv                 # on the games and media list
     [ "$MODE" = media-on ] && MEDIA=true NORMAL=floating || MEDIA=false
-    printf '[Plugins]\nstackletEnabled=true\n[Script-stacklet]\ntileAll=true\nfloatMedia=%s\n' "$MEDIA" > "$XDG_CONFIG_HOME/kwinrc"
+    KWINRC=$(printf '[Script-stacklet]\ntileAll=true\nfloatMedia=%s' "$MEDIA")
 else
     APP=org.kde.konsole     # in the default list
-    printf '[Plugins]\nstackletEnabled=true\n' > "$XDG_CONFIG_HOME/kwinrc"
 fi
+. "$HERE/../common.sh"
+start_kwin --no-global-shortcuts
 
-trap 'kill $(jobs -p) 2>/dev/null; rm -rf "$WORK"' EXIT
-kwin_wayland --virtual --width 1600 --height 900 --socket "kwdialog-$$" --no-lockscreen --no-global-shortcuts \
-    > "$WORK/kwin.log" 2>&1 &
-KWIN=$!
-sleep 5
-[ "$(qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded stacklet)" = true ] || { echo "Stacklet did not load"; exit 1; }
-
-export QT_NO_XDG_DESKTOP_PORTAL=1 GTK_USE_PORTAL=0 QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY=kwdialog-$$
 python3 "$HERE/windows.py" "$APP" 22 > /dev/null 2>&1 &
 sleep 10
 
 # after it is tiled, like Video Bridge setting its state on an already mapped window
-printf '%s\n' 'const g = workspace.windowList().find(w => w.caption === "ghost"); g.skipTaskbar = true; g.skipSwitcher = true; g.opacity = 0;' > "$WORK/ghost.js"
-qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "$WORK/ghost.js" ghost > /dev/null
-qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start > /dev/null
-sleep 2
-
-cat > "$WORK/dump.js" <<'EOF'
-print("DUMP " + workspace.windowList().filter(w => w.caption).map(w =>
-    [w.caption, w.tile ? "tiled" : "floating", "normal=" + w.normalWindow, "transient=" + w.transient,
-     "dialog=" + w.dialog, "modal=" + w.modal, "resizeable=" + w.resizeable, "skip=" + (w.skipTaskbar && w.skipSwitcher)].join(" ")).join(" ; "));
-EOF
-qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "$WORK/dump.js" dump > /dev/null
-qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start > /dev/null
+kjs ghost 'const g = workspace.windowList().find(w => w.caption === "ghost"); g.skipTaskbar = true; g.skipSwitcher = true; g.opacity = 0;'
 sleep 1
+
+kjs dump 'print("DUMP " + workspace.windowList().filter(w => w.caption).map(w =>
+    [w.caption, w.tile ? "tiled" : "floating", "normal=" + w.normalWindow, "transient=" + w.transient,
+     "dialog=" + w.dialog, "modal=" + w.modal, "resizeable=" + w.resizeable, "skip=" + (w.skipTaskbar && w.skipSwitcher)].join(" ")).join(" ; "));'
 kill -0 $KWIN 2>/dev/null || { echo "KWin died"; exit 1; }
-LINE=$( { journalctl --user -b --no-pager "_PID=$KWIN" 2>/dev/null; cat "$WORK/kwin.log"; } | grep -o "DUMP .*" | tail -1 | sed 's/^DUMP //')
+LINE=$(kwin_log | grep -o "DUMP .*" | tail -1 | sed 's/^DUMP //')
 [ -n "$LINE" ] || { echo "!! no window dump came back, so nothing was checked"; exit 1; }
 
 echo "== $MODE ($APP)"

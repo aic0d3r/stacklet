@@ -7,10 +7,12 @@ set -eu
 G="gdbus call --session -d org.kde.kglobalaccel -o /kglobalaccel -m org.kde.KGlobalAccel.setShortcut"
 META=268435456 SHIFT=33554432
 declare -A KEY=([Left]=16777234 [Up]=16777235 [Right]=16777236 [Down]=16777237)
+# the KWin actions `on` cleared, one "action|label|key" line each: all that `off` gives back
+STATE=${XDG_STATE_HOME:-$HOME/.local/state}/stacklet/keys
 
 set_keys() { $G "['kwin','$1','KWin','$2']" "[$3]" 6 >/dev/null; }  # 6 = set it, ignore the saved value
-# first key now bound to a KWin action; empty if none
-cur_key() { gdbus call --session -d org.kde.kglobalaccel -o /kglobalaccel -m org.kde.KGlobalAccel.shortcut "['kwin','$1','KWin','$2']" | grep -o '[0-9]\+' | head -1 || true; }
+# every key bound to a KWin action, as a list: "[268435460]", "[268435460, 33554432]" or "[]"
+keys() { gdbus call --session -d org.kde.kglobalaccel -o /kglobalaccel -m org.kde.KGlobalAccel.shortcut "['kwin','$1','KWin','$2']" | grep -o '\[.*\]' || true; }
 
 case "${1:-}" in
 on|off) ;;
@@ -38,14 +40,24 @@ kwin_actions() {
     echo "Window to Previous Screen|Move Window to Previous Screen|$((META + SHIFT + KEY[Left]))"
 }
 
-# Only touch an action that still has Plasma's default key (on) or no key (off): a key you set yourself stays.
-kept=0
-while IFS='|' read -r id label key; do
-    cur=$(cur_key "$id" "$label")
-    if [ "$1" = on ]; then
-        if [ -z "$cur" ] || [ "$cur" = "$key" ] || [ "$cur" = 0 ]; then set_keys "$id" "$label" 0; else kept=$((kept + 1)); fi
-    elif [ -z "$cur" ] || [ "$cur" = 0 ]; then set_keys "$id" "$label" "$key"; fi
-done < <(kwin_actions)
+# `on` clears a KWin action only while its keys are exactly Plasma's default: one you changed, or added a key to, is yours
+# to clear. What it cleared is written to STATE; `off` gives back only those, and only while they still have no key.
+kept=0; restored=0
+if [ "$1" = on ]; then
+    while IFS='|' read -r id label key; do
+        case "$(keys "$id" "$label")" in
+            "[]") ;;  # already free
+            "[$key]") set_keys "$id" "$label" 0; mkdir -p "${STATE%/*}"; echo "$id|$label|$key" >> "$STATE" ;;
+            *) kept=$((kept + 1)) ;;
+        esac
+    done < <(kwin_actions)
+elif [ -f "$STATE" ]; then
+    while IFS='|' read -r id label key; do
+        [ "$(keys "$id" "$label")" != "[]" ] && continue  # you gave it a key since: it stays
+        set_keys "$id" "$label" "$key"; restored=$((restored + 1))
+    done < "$STATE"
+    rm "$STATE"
+fi
 
 for d in Left Right Up Down; do
     l=${d,,}
@@ -60,4 +72,6 @@ done
 if [ "$1" = on ]; then
     say "Meta+arrows now belong to Stacklet"
     [ $kept -eq 0 ] || say "$kept KWin shortcuts with keys you set yourself were left alone; clear them in System Settings if a Meta+arrow key does nothing"
+elif [ $restored -eq 0 ]; then
+    say "No KWin key to give back: Quick Tile and Move to Screen keys keep what they have now (keys cleared by hand or by 1.4.2 stay cleared). Set them in System Settings → Shortcuts if one is missing"
 else say "Meta+arrows are back with KWin"; fi

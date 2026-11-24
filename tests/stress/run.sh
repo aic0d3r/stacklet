@@ -17,7 +17,6 @@
 
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
-PKG=${PKG:-$HERE/../../package}
 TRACKED=${TRACKED:-120}
 UNTRACKED=${UNTRACKED:-60}
 
@@ -34,38 +33,16 @@ if [ "${STACKLET_STRESS_INNER:-}" != 1 ]; then
 fi
 
 LAYOUT=$1
-WORK=$(mktemp -d)
-export XDG_CONFIG_HOME=$WORK/config XDG_DATA_HOME=$WORK/data XDG_CACHE_HOME=$WORK/cache
-unset DISPLAY WAYLAND_DISPLAY
-mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME/kwin/scripts" "$XDG_CACHE_HOME"
-cp -r "$PKG" "$XDG_DATA_HOME/kwin/scripts/stacklet"
 on() { [ "$LAYOUT" = "$1" ] && echo true || echo false; }
-cat > "$XDG_CONFIG_HOME/kwinrc" <<EOF
-[Plugins]
-stackletEnabled=true
-[Script-stacklet]
-layoutTile=$(on tile)
-layoutSpiral=$(on spiral)
-layoutMonocle=$(on monocle)
-layoutCentered=$(on centered)
-layoutDwindle=$(on dwindle)
-EOF
-
-trap 'kill $(jobs -p) 2>/dev/null; rm -rf "$WORK"' EXIT
-kwin_wayland --virtual --width 1600 --height 900 --socket "kwtest-$$" --no-lockscreen \
-    > "$WORK/kwin.log" 2>&1 &
-KWIN=$!
-sleep 5
-
+KWINRC=$(printf '[Script-stacklet]\nlayoutTile=%s\nlayoutSpiral=%s\nlayoutMonocle=%s\nlayoutCentered=%s\nlayoutDwindle=%s\n' \
+    "$(on tile)" "$(on spiral)" "$(on monocle)" "$(on centered)" "$(on dwindle)")
 fail() { echo "  FAIL: $1"; tail -n 8 "$WORK/kwin.log" | sed 's/^/    kwin: /'; exit 1; }
+. "$HERE/../common.sh"
+start_kwin
 alive() { kill -0 $KWIN 2>/dev/null || fail "KWin died ($1)"; echo "  KWin alive after $1"; }
 
 echo "layout=$LAYOUT package=$PKG"
 alive "startup"
-[ "$(qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded stacklet)" = true ] ||
-    fail "Stacklet did not load (a pass would mean nothing)"
-
-export QT_NO_XDG_DESKTOP_PORTAL=1 GTK_USE_PORTAL=0 QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY=kwtest-$$
 
 # org.kde.konsole is in the default tile list, org.test.untracked is not
 echo "phase 1: $TRACKED tiled windows, 3 open at a time"

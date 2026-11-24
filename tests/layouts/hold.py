@@ -1,12 +1,13 @@
 """Opens N plain Qt windows under an app id (= window class) and keeps them open, for tests/layouts/run.sh.
 
-usage: hold.py <app id> <count> <seconds to stay open>
+usage: hold.py <app id> <count> <seconds to stay open> [title prefix, "w"]
 """
 import sys
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QApplication, QWidget
 
 app_id, count, seconds = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
+prefix = sys.argv[4] if len(sys.argv) > 4 else "w"
 app = QApplication(sys.argv)
 app.setDesktopFileName(app_id)
 windows = []
@@ -14,7 +15,7 @@ windows = []
 
 def open_next():
     w = QWidget()
-    w.setWindowTitle(f"w{len(windows) + 1}")
+    w.setWindowTitle(f"{prefix}{len(windows) + 1}")
     w.resize(300, 200)
     w.show()
     windows.append(w)

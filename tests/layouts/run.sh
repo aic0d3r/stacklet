@@ -2,63 +2,54 @@
 # Layout check. Runs Stacklet in a private, virtual KWin (own D-Bus session, config and script folder;
 # your real session is not touched), opens N windows, and prints where each one ended up.
 #
-#   tests/layouts/run.sh                    # every layout with 2, 3, 4 and 6 windows
+#   tests/layouts/run.sh                    # every layout with 2, 3, 4, 6 and 10 windows, 20 in master and stack and in centered,
+#                                           # then 4 windows on a portrait (900x1600) screen
 #   tests/layouts/run.sh spiral 4           # one layout, one window count
 #   KWINRC=$'[Script-stacklet]\nlayoutSpiral=true\nlayoutTile=false' tests/layouts/run.sh - 5
-#        ^ run with your own kwinrc section instead of a preset (layout "-")
+#        ^ run with your own kwinrc section instead of a preset (layout "-"): printed and shape-checked, positions not compared
+#   SIZE=2560x1080 tests/layouts/run.sh     # one screen size of your own (default 1600x900, then 900x1600)
 #
-# Output per run: "layout n=N  : x,y WxH ; ..." in the order the windows were opened. A line that
-# starts with "!!" means the shape is not what the layout should produce.
+# Output per run: "layout n=N  : x,y WxH ; ..." in the order the windows were opened. A line that starts with
+# "!!" means the shape is wrong, or (presets only) a window is not where the layout maths of test.js puts it.
 
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
-PKG=${PKG:-$HERE/../../package}
 
 if [ "${STACKLET_LAYOUT_INNER:-}" != 1 ]; then
-    layouts=("${1:-tile spiral monocle centered dwindle}"); counts=("${2:-2 3 4 6}")
+    layouts=("${1:-tile spiral monocle centered dwindle}")
+    runs=()
+    for l in ${layouts[@]}; do
+        for n in ${2:-2 3 4 6 10}; do runs+=("$l $n"); done
+        if [ -z "${2:-}" ]; then
+            case $l in tile|centered) runs+=("$l 20") ;; esac # long stacks: spiral and dwindle would make tiles a few pixels wide
+            runs+=("$l 4 portrait") # four windows do: centered is master and stack there
+        fi
+    done
     bad=0
-    for l in ${layouts[@]}; do for n in ${counts[@]}; do
-        STACKLET_LAYOUT_INNER=1 timeout 120 dbus-run-session -- "$0" "$l" "$n" || bad=1
-    done; done
+    for run in "${runs[@]}"; do
+        read -r l n portrait <<< "$run"
+        size=1600x900; [ -z "$portrait" ] || size=${SIZE:-900x1600}
+        SIZE=$size STACKLET_LAYOUT_INNER=1 timeout 150 dbus-run-session -- "$0" "$l" "$n" || bad=1
+    done
     [ $bad -eq 0 ] && echo "PASS" || echo "FAIL"
     exit $bad
 fi
 
 LAYOUT=$1; N=$2
-WORK=$(mktemp -d)
-export XDG_CONFIG_HOME=$WORK/config XDG_DATA_HOME=$WORK/data XDG_CACHE_HOME=$WORK/cache
-unset DISPLAY WAYLAND_DISPLAY
-mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME/kwin/scripts" "$XDG_CACHE_HOME"
-cp -r "$PKG" "$XDG_DATA_HOME/kwin/scripts/stacklet"
-if [ "$LAYOUT" = "-" ]; then
-    printf '[Plugins]\nstackletEnabled=true\n%s\n' "${KWINRC:-}" > "$XDG_CONFIG_HOME/kwinrc"
-else
+if [ "$LAYOUT" != - ]; then
     on() { [ "$LAYOUT" = "$1" ] && echo true || echo false; }
-    printf '[Plugins]\nstackletEnabled=true\n[Script-stacklet]\nlayoutTile=%s\nlayoutSpiral=%s\nlayoutMonocle=%s\nlayoutCentered=%s\nlayoutDwindle=%s\n' \
-        "$(on tile)" "$(on spiral)" "$(on monocle)" "$(on centered)" "$(on dwindle)" > "$XDG_CONFIG_HOME/kwinrc"
+    KWINRC=$(printf '[Script-stacklet]\nlayoutTile=%s\nlayoutSpiral=%s\nlayoutMonocle=%s\nlayoutCentered=%s\nlayoutDwindle=%s\n' \
+        "$(on tile)" "$(on spiral)" "$(on monocle)" "$(on centered)" "$(on dwindle)")
 fi
+. "$HERE/../common.sh"
+start_kwin --no-global-shortcuts
 
-trap 'kill $(jobs -p) 2>/dev/null; rm -rf "$WORK"' EXIT
-kwin_wayland --virtual --width 1600 --height 900 --socket "kwlayout-$$" --no-lockscreen --no-global-shortcuts \
-    > "$WORK/kwin.log" 2>&1 &
-KWIN=$!
-sleep 5
-[ "$(qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded stacklet)" = true ] || { echo "Stacklet did not load"; exit 1; }
-
-export QT_NO_XDG_DESKTOP_PORTAL=1 GTK_USE_PORTAL=0 QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY=kwlayout-$$
-python3 "$HERE/hold.py" org.kde.konsole "$N" 14 > /dev/null 2>&1 &
+python3 "$HERE/hold.py" org.kde.konsole "$N" $((N / 2 + 12)) > /dev/null 2>&1 &
 sleep $((N / 2 + 5))
 
-cat > "$WORK/dump.js" <<'EOF'
-const ws = workspace.windowList().filter(w => w.normalWindow).sort((a, b) => a.caption < b.caption ? -1 : 1);
-print("DUMP " + ws.map(w => { const g = w.frameGeometry; return Math.round(g.x) + "," + Math.round(g.y) + " " + Math.round(g.width) + "x" + Math.round(g.height); }).join(" ; "));
-EOF
-qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "$WORK/dump.js" dump > /dev/null
-qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start > /dev/null
-sleep 1
+kjs dump 'print("DUMP " + workspace.windowList().filter(w => w.normalWindow).sort((a, b) => parseInt(a.caption.slice(1)) - parseInt(b.caption.slice(1))).map(w => { const g = w.frameGeometry; return Math.round(g.x) + "," + Math.round(g.y) + " " + Math.round(g.width) + "x" + Math.round(g.height); }).join(" ; "));'
 kill -0 $KWIN 2>/dev/null || { echo "KWin died"; exit 1; }
-# the script's print() goes to the journal (or kwin.log when not run under systemd)
-LINE=$( { journalctl --user -b --no-pager "_PID=$KWIN" 2>/dev/null; cat "$WORK/kwin.log"; } | grep -o "DUMP .*" | tail -1 | sed 's/^DUMP //')
+LINE=$(kwin_log | grep -o "DUMP .*" | tail -1 | cut -d' ' -f2-)
 [ -n "$LINE" ] || { echo "!! no window dump came back, so nothing was checked"; exit 1; }
 printf '%-8s n=%-2s: %s\n' "$LAYOUT" "$N" "$LINE"
 
@@ -68,9 +59,23 @@ case "$LAYOUT" in
     monocle) [ "$N" -gt 1 ] && [ "$distinct" -ne 1 ] && { echo "!! monocle should give every window the same rectangle, got $distinct"; exit 1; } ;;
     tile|spiral|centered|dwindle) [ "$distinct" -ne "$N" ] && { echo "!! $LAYOUT should give $N different rectangles, got $distinct"; exit 1; } ;;
 esac
-# centered: the first window opened (the main one) sits in the middle of the 1600px screen
-if [ "$LAYOUT" = centered ] && [ "$N" -gt 1 ]; then
-    read -r x _ w _ <<< "$(echo "$LINE" | cut -d';' -f1 | tr ',x' '  ')"
-    [ $((x + w / 2)) -eq 800 ] || { echo "!! centered main window is not in the middle: x=$x width=$w"; exit 1; }
-fi
-exit 0
+# Every window where the layout maths put it, with Stacklet's defaults (main width 55%, centered 50%, no gap, not mirrored)
+[ "$LAYOUT" = - ] && exit 0
+node -e '
+const m = require(process.argv[1] + "/contents/code/main.js"), [layout, n, w, h] = process.argv.slice(2), W = +w, H = +h, line = process.argv[6];
+let r, tree = null; // dwindle: each window splits the one before it, as when none was focused
+if (layout === "monocle") r = Array(+n).fill({ x: 0, y: 0, width: 1, height: 1 });
+else if (layout === "dwindle") {
+    for (let i = 1; i <= n; i++) tree = m.dwindleSync(tree, Array.from({ length: i }, (_, j) => "w" + (j + 1)));
+    r = m.dwindleRects(tree, 0.55, W / H).rects;
+} else if (layout === "spiral") r = m.spiralRects(+n, 0.55, false, H > W);
+else if (layout === "centered") r = m.centeredRects(+n, 0.5, false, H > W);
+else r = m.slotRects(+n, 0.55, 1, false, H > W);
+const got = line.split(";").map(s => s.trim().split(/[^0-9]+/).map(Number));
+const px = e => [e.x * W, e.y * H, e.width * W, e.height * H].map(Math.round);
+const off = got.filter((g, i) => !r[i] || px(r[i]).some((v, j) => Math.abs(v - g[j]) > 1)); // 1 pixel off is rounding
+if (off.length || got.length !== +n) {
+    console.log(`!! ${layout} with ${n} windows on ${W}x${H}: ${got.length - off.length} of ${n} windows are where the layout maths puts them`);
+    console.log(`   expected: ${r.map(e => { const [x, y, w, h] = px(e); return `${x},${y} ${w}x${h}`; }).join(" ; ")}`);
+    process.exit(1);
+}' "$PKG" "$LAYOUT" "$N" "${SIZE%x*}" "${SIZE#*x}" "$LINE"

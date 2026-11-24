@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Changed: settings now apply in place, so windows floated with Meta+F, the scratchpad and dwindle splits survive a settings change. Only "Use Meta+arrows" still restarts Stacklet.
+- Changed: on a Plasma older than 6.8 Stacklet now says in the journal why it stops (KWin scripts have no version check).
+- Changed: the website and the store listing no longer say that Stacklet tiles terminals only (every normal window tiles since 1.4.0). Known limits now say how to remove the tiles Stacklet leaves behind when you turn it off.
 - Fixed: a desktop laid out while not in view (a window sent there, a screen change, startup) could put several windows in one slot and leave others empty.
 - Fixed: resizing a tiled window from an outer edge (any edge in monocle, or with Meta+right-drag) floated it; it now goes back to its tile.
 - Fixed: in dwindle, a window that went fullscreen, minimized or to another Activity came back in a different place, and monocle or Spotlight forgot the splits. They now keep their tile.
@@ -16,6 +18,10 @@
 - Fixed: a column narrower than its windows' minimum width (common with the stash) now widens instead of the windows overlapping.
 - Fixed: windows that set their parent, class or title after opening are sorted again. Picture-in-picture and keep-above windows float.
 - Fixed: an error while laying out one screen no longer stops the others, or removes Stacklet at startup; it is logged to the journal.
+- Fixed: stacks of nine or more rows came out wrong (one window in a thin strip over the others, another taking most of the column): KWin's minimum tile size got in the way while the tiles were built. Rows stay equal with 20 windows in a stack.
+- Fixed: changing "Windows in the main column" kept the row sizes of the old setting until a window opened or closed on that desktop.
+- Fixed: without plasmashell (at login before it starts, or on a session without it) every window focus and every shortcut made a failed D-Bus call and logged a warning in the journal. Stacklet now asks whether plasmashell is running first.
+- Fixed: `stacklet-keys` clears a KWin shortcut only while it has exactly Plasma's default keys; before, one with the default key plus a key of your own lost both. `off` now gives back only the keys `on` cleared (it keeps a list in `~/.local/state/stacklet/keys`), not any KWin shortcut without a key. Keys cleared by hand or by 1.4.2 stay cleared: set those again if you want them.
 
 ## 1.4.2
 

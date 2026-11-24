@@ -9,45 +9,15 @@
 # Needs kwin_wayland, dbus-run-session, qdbus6 and python3 with PyQt6.
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
-PKG=${PKG:-$HERE/../../package}
 [ "${STACKLET_DWINDLE_INNER:-}" = 1 ] || { STACKLET_DWINDLE_INNER=1 timeout 120 dbus-run-session -- "$0"; r=$?; [ $r -eq 0 ] && echo PASS || echo FAIL; exit $r; }
 
-WORK=$(mktemp -d)
-export XDG_CONFIG_HOME=$WORK/config XDG_DATA_HOME=$WORK/data XDG_CACHE_HOME=$WORK/cache
-unset DISPLAY WAYLAND_DISPLAY
-mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME/kwin/scripts" "$XDG_CACHE_HOME"
-cp -r "$PKG" "$XDG_DATA_HOME/kwin/scripts/stacklet"
-printf '[Plugins]\nstackletEnabled=true\n[Script-stacklet]\nwelcomed=true\ndesktopLayouts=1=dwindle\n' > "$XDG_CONFIG_HOME/kwinrc"
+KWINRC=$'[Script-stacklet]\nwelcomed=true\ndesktopLayouts=1=dwindle'
+. "$HERE/../common.sh"
+trap 'exec 3>&- 2>/dev/null; kill $(jobs -p) 2>/dev/null; rm -rf "$WORK"' EXIT # the window helper reads from a fifo on fd 3
+start_kwin
 
-trap 'exec 3>&- 2>/dev/null; kill $(jobs -p) 2>/dev/null; rm -rf "$WORK"' EXIT
-kwin_wayland --virtual --width 1600 --height 900 --socket "kwdwindle-$$" --no-lockscreen \
-    > "$WORK/kwin.log" 2>&1 &
-KWIN=$!
-sleep 5
-[ "$(qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded stacklet)" = true ] || { echo "Stacklet did not load"; exit 1; }
-
-# run a one-off KWin script under a unique name
-kjs() {
-    echo "$2" > "$WORK/$1.js"
-    qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "$WORK/$1.js" "$1" > /dev/null
-    qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start > /dev/null
-    sleep 1
-}
-DUMP='const ws = workspace.windowList().filter(w => w.normalWindow).sort((a, b) => a.caption < b.caption ? -1 : 1);
-print("DUMP" + TAG + " " + ws.map(w => w.caption + "=" + Math.round(w.frameGeometry.x) + "," + Math.round(w.frameGeometry.y) + " " + Math.round(w.frameGeometry.width) + "x" + Math.round(w.frameGeometry.height)).join(" "));'
-bad=0
-check() { # tag, expected
-    local got
-    kjs "$1" "const TAG = '$1'; $DUMP"
-    got=$( { journalctl --user -b --no-pager "_PID=$KWIN" 2>/dev/null; cat "$WORK/kwin.log"; } | grep -o "DUMP$1 .*" | tail -1 | sed "s/^DUMP$1 //")
-    printf '%-14s %s\n' "$1:" "$got"
-    [ "$got" = "$2" ] || { echo "!! expected      $2"; bad=1; }
-}
 focus() { kjs "focus$1$RANDOM" "workspace.activeWindow = workspace.windowList().find(w => w.caption === '$1');"; }
-fire() { qdbus6 org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component.invokeShortcut "$1" > /dev/null; sleep 1; }
-win() { echo "$1 ${2:-}" >&3; sleep 1.5; } # open|close, name
 
-export QT_NO_XDG_DESKTOP_PORTAL=1 GTK_USE_PORTAL=0 QT_QPA_PLATFORM=wayland WAYLAND_DISPLAY=kwdwindle-$$
 mkfifo "$WORK/cmd"
 python3 "$HERE/steps.py" org.kde.konsole < "$WORK/cmd" > /dev/null 2>&1 &
 exec 3> "$WORK/cmd"

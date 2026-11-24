@@ -4,7 +4,7 @@ Everything to paste into the store form, plus the files to upload.
 
 ## Files to upload
 
-- **File:** `build/stacklet-1.3.3.kwinscript` (build it with `./package.sh`)
+- **File:** the newest `build/stacklet-<version>.kwinscript` (`./package.sh` builds it)
 - **Screenshots:** `docs/screenshot-tiling.png`, `docs/screenshot-settings.png`
 - **Icon / logo:** `store/logo-256.png` (source: `docs/logo.svg`)
 - **GitHub social preview:** `docs/social-preview.png` (Settings → Social preview)
@@ -19,11 +19,11 @@ Stacklet
 
 ## Summary (one line)
 
-Tiling window manager for KDE Plasma 6: auto-tile your terminals on Plasma's own tiles with master and stack, spiral, dwindle, monocle or centered master, plus a scratchpad.
+Tiling window manager for KDE Plasma 6: auto-tile your windows on Plasma's own tiles with master and stack, spiral, dwindle, monocle or centered master, plus a scratchpad.
 
 ## Description (plain text only: the store mangles BBCode lists)
 
-Stacklet is a tiling window manager script for KDE Plasma 6 (a KWin script). It tiles the apps you choose into a main window plus a stack, and leaves everything else floating. It drives Plasma's native tiles, so resizing, Meta+T layouts and per-desktop tile layouts keep working.
+Stacklet is a tiling window manager script for KDE Plasma 6 (a KWin script). Every normal window tiles by default; system apps, games and media players stay floating, or you tile only the apps you choose. It drives Plasma's native tiles, so resizing, Meta+T layouts and per-desktop tile layouts keep working.
 
 Five layouts, with a preview when you pick one:
 
@@ -97,6 +97,10 @@ Source and bug reports: https://github.com/aic0d3r/stacklet
 ## Tags
 
 tiling, tiling window manager, window management, kwin script, plasma 6, terminals, i3, productivity
+
+## Changelog 1.4.2
+
+Fixed settings Stacklet saves through Plasma's shell (including the size conversion from 1.4.1) being lost when plasmashell wasn't running yet at login: they are now sent again until they are stored. A scratchpad window shown while you changed a setting no longer stays pinned on top of every desktop. In dwindle, grow and shrink main window no longer undo inner borders you dragged. Monocle off goes back to the layout you came from. `stacklet-keys` no longer clears KWin shortcuts you set yourself. The website and the store listing share one set of images.
 
 ## Changelog 1.4.1
 
