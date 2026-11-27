@@ -288,7 +288,7 @@ if (typeof workspace !== "undefined") {
     // and dwindle trees survive (see options.configChanged).
     const apps = {};
     let defaultRatio, mirror, mainCount, newWindow, gap, smartGaps, mainClasses, focusAfterClose, dragFloats, offScreens, offDesktops,
-        layoutDefault, stashDefault, stashSide, WIDTHS, scratchSize, desktopLayouts, showOsd;
+        layoutDefault, stashDefault, stashSide, WIDTHS, scratchSize, desktopLayouts, showOsd, widthWins;
     function loadSettings() {
         Object.assign(apps, { tileAll: flag("tileAll", !flag("appListsV2")), system: flag("floatSystem", true), media: flag("floatMedia", true),
             tileClasses: list(readConfig("tileClasses", TERMINALS)), floatClasses: list(readConfig("floatClasses", "")), tileAnyway: list(readConfig("tileAnyway", "")) });
@@ -299,6 +299,7 @@ if (typeof workspace !== "undefined") {
         newWindow = Number(readConfig("newWindow", 0)); // 0 stack bottom, 1 stack top, 2 becomes main
         gap = Math.max(0, Number(readConfig("gap", 0)) || 0);
         smartGaps = flag("smartGaps", true); // no gap around a lone window
+        widthWins = flag("widthWins"); // a new main width also resets widths dragged on screens
         mainClasses = list(readConfig("mainClasses", "")); // apps that always take the main slot
         focusAfterClose = flag("focusAfterClose", true);
         dragFloats = flag("dragFloats", true);
@@ -337,9 +338,15 @@ if (typeof workspace !== "undefined") {
     // `base` is the settings layout at the time: once the settings page changes it, the entry is ignored.
     let modes = {}, ratios = {}; // ratios: group key -> {m, c, s} main widths the user dragged or set
     let savedJson = String(kwinRead("savedState", "")); // not in `seen`: our own state, no reason to restart
+    const ratioBase = () => String(defaultRatio) + (widthWins ? "!" : "");
     try {
         const s = JSON.parse(savedJson || "{}");
-        if (s && typeof s.modes === "object" && typeof s.ratios === "object") ({ modes, ratios } = s);
+        if (s && typeof s.modes === "object" && typeof s.ratios === "object") {
+            modes = s.modes;
+            // `ratioBase` is the "Main window width" the dragged widths were measured against. With widthWins on,
+            // one that no longer matches is dropped, the way `base` above retires a mode picked on a screen.
+            ratios = !widthWins || String(s.ratioBase) === ratioBase() ? s.ratios : {};
+        }
     } catch (e) { /* unreadable: start fresh */ }
     const modeOf = (k, desktop) => {
         const m = modes[k];
@@ -350,7 +357,7 @@ if (typeof workspace !== "undefined") {
     const widthOf = (k, kind) => clampRatio((ratios[k] || {})[kind], WIDTHS[kind][1], WIDTHS[kind][2], WIDTHS[kind][0]);
     const setWidth = (k, kind, v) => { (ratios[k] = ratios[k] || {})[kind] = Math.min(WIDTHS[kind][2], Math.max(WIDTHS[kind][1], Number(v) || WIDTHS[kind][0])); };
     function save() {
-        const json = JSON.stringify({ modes, ratios });
+        const json = JSON.stringify({ modes, ratios, ratioBase: ratioBase() });
         if (json === savedJson) return;
         savedJson = json;
         writeConfig({ savedState: json });
