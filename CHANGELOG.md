@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Fixed: changing "Main window width" (and the centered and side column widths) didn't reach a screen that already had windows: every screen laid out twice kept its width as if you had dragged it. Now only a border you really dragged keeps its width. Widths that older versions stored this way are dropped when they match the setting, so the setting applies again.
+- Changed: changing a width on the settings page (main window width, centered main window width, side column width) now also resets the widths you dragged for that layout, so the new width applies on every screen. Thanks to RixzZ (#2).
 
 ## 1.5.0
 

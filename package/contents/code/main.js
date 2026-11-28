@@ -251,7 +251,15 @@ function movedRatio(live, laid) {
     return live && !(laid && Math.abs(live - laid) < 0.01) ? live : undefined;
 }
 
-if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, dwindleFlip, centeredRects, clampRatio, percentRatio, fractionSizes, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, movedRatio, fitMain, list, TERMINALS }; // node self-test
+// A width setting changed from `was` to `now` (WIDTHS): drop the widths dragged for that kind, so the new one applies everywhere.
+function dropChangedWidths(ratios, was, now) {
+    for (const k in ratios) {
+        for (const kind in ratios[k]) if (was[kind] && now[kind] && was[kind][0] !== now[kind][0]) delete ratios[k][kind];
+        if (!Object.keys(ratios[k]).length) delete ratios[k];
+    }
+}
+
+if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, dwindleFlip, centeredRects, clampRatio, percentRatio, fractionSizes, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, movedRatio, dropChangedWidths, fitMain, list, TERMINALS }; // node self-test
 
 const kwinRead = typeof readConfig !== "undefined" ? readConfig : null;
 if (typeof workspace !== "undefined") {
@@ -742,7 +750,9 @@ if (typeof workspace !== "undefined") {
         if (!settingsChanged(seen, kwinRead)) return;
         if ((String(kwinRead("metaArrows", false)) === "true") === metaArrows) {
             // apply in place: floated windows, the scratchpad and dwindle trees stay
+            const was = WIDTHS;
             loadSettings();
+            dropChangedWidths(ratios, was, WIDTHS);
             for (const x of workspace.windowList()) reclassify(x);
             for (const w of order) if (!w.deleted && w.tile && !floating.has(w) && !tileable(w)) release(w); // on a screen or desktop now off
             retileAll();

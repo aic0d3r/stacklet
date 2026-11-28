@@ -1,6 +1,6 @@
 // node test.js — checks the layout math (the KWin part needs a live session)
 const assert = require("assert");
-const { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, centeredRects, clampRatio, percentRatio, fractionSizes, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, movedRatio, fitMain, TERMINALS } = require("./package/contents/code/main.js");
+const { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, centeredRects, clampRatio, percentRatio, fractionSizes, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, movedRatio, dropChangedWidths, fitMain, TERMINALS } = require("./package/contents/code/main.js");
 
 assert.deepStrictEqual(slotRects(1, 0.55), [{ x: 0, y: 0, width: 1, height: 1 }]);
 const two = slotRects(2, 0.55);
@@ -144,6 +144,12 @@ assert.strictEqual(movedRatio(0.5549, 0.55), undefined); // KWin's rounding
 assert.strictEqual(movedRatio(0.4, 0.55), 0.4);
 assert.strictEqual(movedRatio(0.4, undefined), 0.4);
 assert.strictEqual(movedRatio(undefined, 0.55), undefined);
+// a changed width setting drops the widths dragged for its kind only
+const dragged = { a: { m: 0.4, c: 0.3 }, b: { m: 0.7 } };
+dropChangedWidths(dragged, { m: [0.55], c: [0.5], s: [0.7] }, { m: [0.65], c: [0.5], s: [0.7] });
+assert.deepStrictEqual(dragged, { a: { c: 0.3 } });
+dropChangedWidths(dragged, { m: [0.65], c: [0.5] }, { m: [0.65], c: [0.5] }); // nothing changed
+assert.deepStrictEqual(dragged, { a: { c: 0.3 } });
 // client minimum sizes: widen the column that needs it, leave the ratio alone when nothing fits
 assert.strictEqual(fitMain(0.7, 0.1, 0.2), 0.7);
 near(fitMain(0.9, 0.1, 0.25), 0.75);

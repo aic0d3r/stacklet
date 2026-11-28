@@ -37,7 +37,7 @@ Everything tiles by default except system apps, games and media players; you cha
 - Settings: main width, side, 1–2 main windows, where new windows land, gap, whether dragging a window out of its tile floats it, and screens or desktops where tiling is off.
 - Portrait screens get the layout turned 90°: main window on top, the rest side by side below. It re-tiles when you rotate a screen.
 - Pin apps as "always main", for example a browser kept big with terminals beside it. After closing a window, focus moves to the tile before it.
-- Drag the border between tiles to resize. The width sticks until that desktop has no tiled windows.
+- Drag the border between tiles to resize. The width sticks until that desktop has no tiled windows, or you change that width on the settings page.
 
 ![Stacklet settings page in KDE System Settings: layout choice with preview, app list and gaps](docs/screenshot-settings.png)
 
