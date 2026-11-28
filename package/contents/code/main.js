@@ -245,7 +245,13 @@ function draggedRatio(root, portrait, kind = "m", mirror = false) {
     return portrait ? g.height : g.width;
 }
 
-if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, dwindleFlip, centeredRects, clampRatio, percentRatio, fractionSizes, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, fitMain, list, TERMINALS }; // node self-test
+// A main size read back from the tiles, if the user moved it off the `laid` one we set; KWin hands ours back unchanged.
+// Without this every screen laid out twice saved its width as dragged, and a new "Main window width" reached none of them.
+function movedRatio(live, laid) {
+    return live && !(laid && Math.abs(live - laid) < 0.01) ? live : undefined;
+}
+
+if (typeof module !== "undefined") module.exports = { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, dwindleFlip, centeredRects, clampRatio, percentRatio, fractionSizes, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, movedRatio, fitMain, list, TERMINALS }; // node self-test
 
 const kwinRead = typeof readConfig !== "undefined" ? readConfig : null;
 if (typeof workspace !== "undefined") {
@@ -341,6 +347,12 @@ if (typeof workspace !== "undefined") {
         const s = JSON.parse(savedJson || "{}");
         if (s && typeof s.modes === "object" && typeof s.ratios === "object") ({ modes, ratios } = s);
     } catch (e) { /* unreadable: start fresh */ }
+    // up to 1.5.0 every screen saved its width as dragged (see movedRatio): one equal to the setting is no drag, so it follows the setting again
+    // shortcut: one saved under an older setting can't be told from a real drag and stays; drag that border once
+    for (const k in ratios) {
+        for (const kind in ratios[k]) if (WIDTHS[kind] && Math.abs(ratios[k][kind] - WIDTHS[kind][0]) < 0.01) delete ratios[k][kind];
+        if (!Object.keys(ratios[k] || {}).length) delete ratios[k];
+    }
     const modeOf = (k, desktop) => {
         const m = modes[k];
         return m && m.base === baseOf(desktop) && LAYOUT_LABELS[m.mode] ? m : { mode: baseOf(desktop), stash: stashDefault };
@@ -442,12 +454,13 @@ if (typeof workspace !== "undefined") {
         const st = modeOf(k, desktop), mode = st.mode, kind = kindOf(st), one = mode === MONOCLE;
         const last = groups[k] && laid[k] && laid[k].kind === kind ? laid[k] : null; // the tiles we built last, if for this kind
         // keep a main size the user dragged, if the tiles are still the ones we built for this kind
-        const dragged = last && draggedRatio(root, portrait, kind, mirror);
+        const dragged = last && movedRatio(draggedRatio(root, portrait, kind, mirror), last.ratio);
         if (dragged) setWidth(k, kind, dragged);
         // dwindle: every split keeps a border the user dragged (the root one is the main width)
         if (mode === DWINDLE && trees[k] && last && last.mode === DWINDLE) {
             trees[k] = dwindleRatios(trees[k], tileRect);
-            if (trees[k].ratio) setWidth(k, kind, trees[k].ratio);
+            const moved = movedRatio(trees[k].ratio, last.ratio);
+            if (moved) setWidth(k, kind, moved);
         }
         let ratio = widthOf(k, kind);
         if (mode === DWINDLE) {

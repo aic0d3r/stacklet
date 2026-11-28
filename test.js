@@ -1,6 +1,6 @@
 // node test.js — checks the layout math (the KWin part needs a live session)
 const assert = require("assert");
-const { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, centeredRects, clampRatio, percentRatio, fractionSizes, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, fitMain, TERMINALS } = require("./package/contents/code/main.js");
+const { slotRects, spiralRects, dwindleSync, dwindleRatios, dwindleRects, centeredRects, clampRatio, percentRatio, fractionSizes, pickNeighbor, swapOrder, rotateOrder, placeInSlots, appTiles, toggleApp, migrateApps, settingsChanged, confirmWrite, draggedRatio, movedRatio, fitMain, TERMINALS } = require("./package/contents/code/main.js");
 
 assert.deepStrictEqual(slotRects(1, 0.55), [{ x: 0, y: 0, width: 1, height: 1 }]);
 const two = slotRects(2, 0.55);
@@ -138,6 +138,12 @@ const root = (dir, ws) => ({ layoutDirection: dir, tiles: ws.map(width => ({ rel
 assert.strictEqual(draggedRatio(root(1, [0.9, 0.1]), false), 0.9);
 assert.strictEqual(draggedRatio(root(1, [0.1, 0.9]), false, "m", true), 0.9); // mirrored: main on the right
 assert.strictEqual(draggedRatio(root(2, [0.5, 0.5]), false), undefined); // not a layout we built
+// only a width the user moved off ours counts as dragged, so a new "Main window width" still reaches the screen
+assert.strictEqual(movedRatio(0.55, 0.55), undefined);
+assert.strictEqual(movedRatio(0.5549, 0.55), undefined); // KWin's rounding
+assert.strictEqual(movedRatio(0.4, 0.55), 0.4);
+assert.strictEqual(movedRatio(0.4, undefined), 0.4);
+assert.strictEqual(movedRatio(undefined, 0.55), undefined);
 // client minimum sizes: widen the column that needs it, leave the ratio alone when nothing fits
 assert.strictEqual(fitMain(0.7, 0.1, 0.2), 0.7);
 near(fitMain(0.9, 0.1, 0.25), 0.75);
