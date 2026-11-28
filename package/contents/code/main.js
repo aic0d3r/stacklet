@@ -642,8 +642,9 @@ if (typeof workspace !== "undefined") {
                 if (h && tileable(w) && key(h.output, h.desktop) !== key(w.output, w.desktops[0]) && workspace.screens.includes(h.output)) place(w);
                 retileAll(keysOf(w));
             });
-            for (const sig of ["minimizedChanged", "fullScreenChanged", "activitiesChanged", "skipTaskbarChanged", "skipSwitcherChanged"])
+            for (const sig of ["minimizedChanged", "activitiesChanged", "skipTaskbarChanged", "skipSwitcherChanged"])
                 w[sig].connect(() => retileAll(keysOf(w)));
+            w.fullScreenChanged.connect(() => { if (!w.fullScreen) retileAll(keysOf(w)); });
             // fires before KWin drops the tile and before the client answers: the tree and the tiles are still intact
             w.maximizedAboutToChange.connect(mode => {
                 if (!mode) { maxing.delete(w); return; }
